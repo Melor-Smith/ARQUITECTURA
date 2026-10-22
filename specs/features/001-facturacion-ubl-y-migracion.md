@@ -1,4 +1,5 @@
-# Especificación BDD y Matriz de Trazabilidad Normativa (SDD)
+# Especificación BDD y TABLA DE MATCH Normativa (SDD)
+> Índice: la sección **[TABLA DE MATCH: LEGADO <-> SUNAT PERÚ <-> OASIS UBL-Invoice-2.1.xsd](#tabla-de-match-legado---sunat-perú---oasis-ubl-invoice-21xsd)** está al final de este documento (Sección 2).
 ## Proyecto: ABC Software Corp - Facturación UBL 2.1 y Migración Legado
 
 ---
@@ -18,7 +19,7 @@ Característica: Emisión de Factura Electrónica UBL 2.1
 
   Escenario: Emisión exitosa de factura electrónica gravada
     Dado que el emisor tiene RUC "20556677889" y el comprador tiene RUC "20123456789"
-    Y la serie y correlativo es "F001-000001"
+    Y el `serie_numero` (mapea a cbc:ID) es "F001-000001"
     Y se incluye el producto "Saco de Arroz Extra 50kg" por valor unitario 100.00 con IGV al 18% (afectación 10)
     Cuando se envía la solicitud al endpoint POST "/api/v1/facturas"
     Entonces el código de respuesta HTTP debe ser 201
@@ -93,42 +94,51 @@ Característica: Migración de Fichas Informales de Almacén
 
 ### HU-04: Consulta de Comprobante Emitido y Trazabilidad XML/Hash
 **Como** Auditor o Cliente Receptor  
-**Quiero** consultar un comprobante por su serie y correlativo  
+**Quiero** consultar un comprobante por su `serie_numero`  
 **Para** descargar el XML UBL 2.1 generado y verificar el Hash CPE y estado SUNAT.
 
 ```gherkin
 Característica: Consulta de Comprobante UBL
   Como receptor del comprobante
-  Quiero consultar el comprobante por su ID "F001-000001"
+  Quiero consultar el comprobante por su serie_numero "F001-000001"
   Para recuperar su constancia y XML
 
   Escenario: Consulta exitosa de comprobante existente
-    Dado que existe una factura emitida con ID "F001-000001"
+    Dado que existe una factura emitida con serie_numero "F001-000001"
     Cuando se realiza una petición GET a "/api/v1/facturas/F001-000001"
     Entonces el código de respuesta HTTP es 200
     Y el objeto contiene el "hash_cpe" y "xml_ubl_generado"
 
   Escenario: Consulta de comprobante inexistente
-    Dado que no existe ningún comprobante con ID "F999-999999"
+    Dado que no existe ningún comprobante con serie_numero "F999-999999"
     Cuando se realiza una petición GET a "/api/v1/facturas/F999-999999"
     Entonces el código de respuesta HTTP es 404
 ```
 
 ---
 
-## 2. Matriz de Trazabilidad Normativa (Punto 4 del Examen)
-Cruce exacto entre datos del sistema legado, normativa tributaria peruana SUNAT (RS N° 097-2012 y Catálogos SUNAT), estándar internacional OASIS UBL 2.1, contrato OpenAPI y tests automatizados.
+## TABLA DE MATCH: LEGADO <-> SUNAT PERÚ <-> OASIS UBL-Invoice-2.1.xsd
 
-| Campo Legado (Ficha Almacén) | Regla / Catálogo SUNAT (RS 097-2012 / Catálogo 8) | Elemento XML OASIS `UBL-Invoice-2.1.xsd` | Schema DTO OpenAPI | Test Automatizado que Valida |
+Cruce explícito entre el **Sistema Legado** de almacén de ABC Software Corp, el **Modelo SUNAT Perú** (DTOs del contrato `specs/contracts/ubl-invoice-api.yaml`, RS N° 097-2012 y Catálogos SUNAT) y el estándar **OASIS `UBL-Invoice-2.1.xsd`**.
+
+| Campo Sistema Legado | Nombre en Modelo SUNAT Perú (DTO) | Nodo / XPath en `UBL-Invoice-2.1.xsd` (OASIS) | Catálogo / Regla SUNAT (RS 097-2012) | Ejemplo Real |
 | :--- | :--- | :--- | :--- | :--- |
-| `nro_documento` (ej. "VALE-SALIDA-0042") | **Trazabilidad de Referencia Documentaria**: Permite referenciar guías, vales o documentos internos autorizados según Anexo 1 RS 097-2012. | `/Invoice/cac:DespatchDocumentReference/cbc:ID` o `/Invoice/cac:AdditionalDocumentReference/cbc:ID` | `FacturaRequest.nro_documento_legado_origen` y `FichaLegadoRequest.nro_documento` | `test_migracion_ficha_legado_exitosa`, `test_factura_con_referencia_legada` |
-| `fecha` (ej. "2026-10-15") | **Fecha de Emisión del Comprobante**: Formato obligatorio `YYYY-MM-DD` (Art. 13 RS 097-2012). | `/Invoice/cbc:IssueDate` | `FacturaRequest.fecha_emision` y `FichaLegadoRequest.fecha` | `test_emision_factura_valida`, `test_formato_fecha_emision` |
-| `producto` (ej. "Saco de Azúcar Rubia 50kg") | **Descripción del Bien o Servicio**: Descripción clara y detallada del bien transferido (Catálogo 16 / Anexo 1). | `/Invoice/cac:InvoiceLine/cac:Item/cbc:Description` | `ItemFactura.descripcion` y `FichaLegadoRequest.producto` | `test_emision_factura_valida`, `test_item_descripcion_requerida` |
-| `salida` / `ingreso` (cantidades operativas) | **Cantidad de Unidades Físicas**: Debe ser número mayor a cero en líneas de comprobante (Anexo 1 RS 097-2012). | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` | `ItemFactura.cantidad` | `test_emision_factura_valida`, `test_calculo_totales_igv_18` |
-| *(Derivado del costo unitario)* | **Valor Unitario por Ítem**: Sin IGV en operaciones gravadas (Regla de cálculo Anexo 1). | `/Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` | `ItemFactura.valor_unitario` | `test_calculo_totales_igv_18` |
-| *(Nuevo requisito fiscal)* | **Catálogo 06 SUNAT**: Tipo de documento del receptor y emisor. RUC obligatorio para facturas (código "6"), 11 dígitos iniciando en 10 o 20. | `/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID='6']` y `cac:AccountingCustomerParty/...` | `ActorParty.ruc`, `ActorParty.codigo_tipo_documento` | `test_validacion_ruc_11_digitos_invalido`, `test_validacion_ruc_prefijo` |
-| *(Nuevo requisito fiscal)* | **Catálogo 07 SUNAT**: Afectación del IGV (ej. "10" = Gravado - Operación Onerosa, tasa 18%). | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` | `ItemFactura.codigo_afectacion_igv`, `ItemFactura.igv_item` | `test_afectacion_igv_catalogo_07` |
-| *(Requisito Obligatorio ISC)* | **Catálogo 08 SUNAT**: Códigos de Sistema de ISC: `01` (Al valor), `02` (Monto fijo), `03` (Precio venta público). | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TierRange` | `ItemFactura.codigo_sistema_isc`, `ItemFactura.isc_item` | `test_catalogo_08_isc_valido`, `test_catalogo_08_isc_codigo_invalido` |
-| *(Nuevo requisito fiscal)* | **Catálogo 02 SUNAT**: Código internacional de moneda según ISO 4217 (ej. "PEN", "USD"). | `/Invoice/cbc:DocumentCurrencyCode` | `FacturaRequest.codigo_moneda` | `test_moneda_catalogo_02` |
-| *(Control Fiscal OSE)* | **Firma Digital y Resumen Hash**: Resumen SHA-256 del comprobante firmado digitalmente por el emisor/OSE. | `/Invoice/cac:Signature` y `/Invoice/ext:UBLExtensions/.../ds:DigestValue` | `FacturaResponse.hash_cpe` | `test_emision_factura_valida`, `test_generacion_hash_cpe` |
-| *(Control Legal OSE)* | **Constancia de Recepción (CDR) y Aceptación**: Dictamen del OSE o SUNAT que confiere validez jurídica. | Documento ApplicationResponse (CDR) UBL | `FacturaResponse.estado_sunat`, `FacturaResponse.mensaje_ose` | `test_emision_factura_valida`, `test_consultar_factura_existente` |
+| `nro_documento` | **`serie_numero`** | `/Invoice/cbc:ID` (`<cbc:ID>`) | Serie F + 3 dígitos, guion y correlativo de hasta 8 dígitos (`^F\d{3}-\d{1,8}$`) | `F001-000001` |
+| `nro_documento` (vale/guía interna, trazabilidad) | `nro_documento_legado_origen` | `/Invoice/cac:DespatchDocumentReference/cbc:ID` | Referencia documentaria de guía/vale origen (Anexo 1 RS 097-2012) | `VALE-SALIDA-0042` |
+| `fecha` | `fecha_emision` | `/Invoice/cbc:IssueDate` (`<cbc:IssueDate>`) | Fecha de emisión formato `YYYY-MM-DD` | `2026-10-22` |
+| Tipo de comprobante (no existe en legado; fijo "Factura") | `tipo_documento_codigo` | `/Invoice/cbc:InvoiceTypeCode` (`<cbc:InvoiceTypeCode>`) | **Catálogo 01**: `01` = Factura | `01` |
+| Moneda (no existe en legado; por defecto soles) | `codigo_moneda` | `/Invoice/cbc:DocumentCurrencyCode` | **Catálogo 02**: `PEN`, `USD` | `PEN` |
+| Vendedor / Emisor (dato maestro ABC Software Corp) | `vendedor.ruc` / `vendedor.razon_social` | `/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID='6']` y `/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` | **Catálogo 06**: `6` = RUC (11 dígitos, prefijo 10 o 20) | `20556677889` / `ABC SOFTWARE CORP S.A.C.` |
+| Comprador / Cliente (no existe en legado) | `comprador.ruc` / `comprador.razon_social` | `/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID='6']` y `/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` | **Catálogo 06**: `6` = RUC (11 dígitos, prefijo 10 o 20) | `20123456789` / `DISTRIBUIDORA NORTE S.A.C.` |
+| `producto` | `items[].descripcion` | `/Invoice/cac:InvoiceLine/cac:Item/cbc:Description` | Descripción del bien transferido (Anexo 1 RS 097-2012) | `Saco de Arroz Extra 50kg` |
+| `salida` (o `ingreso` en reposición) | `items[].cantidad` | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` | Cantidad de unidades > 0 | `2` |
+| (Derivado del costo; no existe en legado) | `items[].valor_unitario` | `/Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` | Valor unitario sin IGV en operaciones gravadas | `100.00` |
+| Afectación IGV (no existe en legado) | `items[].codigo_afectacion_igv` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` | **Catálogo 07**: `10` = Gravado - Operación Onerosa (IGV 18%) | `10` |
+| Sistema de Cálculo ISC (no existe en legado) | `items[].codigo_sistema_isc` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TierRange` | **Catálogo 08 SUNAT**: `01` Sistema al valor, `02` Aplicación del Monto Fijo, `03` Sistema de Precios de Venta al Público | `01` |
+| (Calculado) | `items[].isc_item` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (esquema ISC `2000`) | Monto de ISC según Catálogo 08 | `0.00` |
+| (Calculado) | `items[].igv_item` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (esquema IGV `1000`) | IGV 18% sobre base gravada | `36.00` |
+| (Calculado) | `totales.total_igv` | `/Invoice/cac:TaxTotal/cbc:TaxAmount` | Total IGV del comprobante | `36.00` |
+| Totales (calculado) | `totales.importe_total` | `/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount` | Importe total a pagar | `236.00` |
+| (Respuesta OSE/SUNAT) | `hash_cpe` | `/Invoice/ext:UBLExtensions/.../ds:DigestValue` | Resumen SHA-256 de la firma digital | `sha256-4a8b9c1d2e3f` |
+| (Respuesta OSE/SUNAT) | `estado_sunat` / `mensaje_ose` | `ApplicationResponse` (CDR) UBL | Constancia de Recepción ACEPTADO/RECHAZADO | `ACEPTADO` |
+
