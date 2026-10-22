@@ -1,0 +1,56 @@
+graph TD
+    subgraph P1["ADAPTADORES PRIMARIOS - Entrada"]
+        WebAPI["FastAPI REST API"]
+        WinUI["Windows Desktop UI"]
+        MobileUI["Android App"]
+        CLI["CLI / Migracion Masiva"]
+    end
+
+    subgraph IP["PUERTOS DE ENTRADA"]
+        PortEmitir["IEmitirFacturaUseCase"]
+        PortConsultar["IConsultarComprobanteUseCase"]
+        PortMigrar["IMigrarFichaLegadoUseCase"]
+    end
+
+    subgraph CORE["NUCLEO HEXAGONAL - DOMINIO"]
+        UC1["FacturacionService"]
+        UC2["MigracionLegadoService"]
+        UC3["TributacionService ISC / IGV"]
+        EntFactura["Entidad: FacturaUBL"]
+        EntParty["Entidad: ActorParty RUC"]
+        ValISC["ValueObject: SistemaISC Cat. 08"]
+    end
+
+    subgraph OP["PUERTOS DE SALIDA"]
+        PortRepo["IFacturaRepository"]
+        PortOSE["IOSEClientPort"]
+        PortFirma["IDigitalSignaturePort"]
+        PortKardex["IKardexLegadoPort"]
+    end
+
+    subgraph P2["ADAPTADORES SECUNDARIOS - Salida"]
+        SQLRepo["PostgreSQL / SQLite"]
+        SOAP_OSE["SOAP SUNAT / REST OSE"]
+        Signer["XMLDSig X.509"]
+        LegadoAdapter["CSV / DBF Legado"]
+    end
+
+    WebAPI --> PortEmitir
+    WinUI --> PortEmitir
+    MobileUI --> PortEmitir
+    CLI --> PortMigrar
+    PortEmitir --> UC1
+    PortConsultar --> UC1
+    PortMigrar --> UC2
+    UC1 --> EntFactura
+    UC1 --> UC3
+    UC3 --> ValISC
+    UC1 --> EntParty
+    UC1 --> PortRepo
+    UC1 --> PortOSE
+    UC1 --> PortFirma
+    UC2 --> PortKardex
+    PortRepo --> SQLRepo
+    PortOSE --> SOAP_OSE
+    PortFirma --> Signer
+    PortKardex --> LegadoAdapter
