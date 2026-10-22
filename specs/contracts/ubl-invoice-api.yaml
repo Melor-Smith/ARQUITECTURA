@@ -29,14 +29,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/v1/facturas/{id_comprobante}:
+  /api/v1/facturas/{serie_numero}:
     get:
       summary: Consulta trazabilidad y XML UBL de un comprobante emitido
       operationId: consultarFactura
       parameters:
-        - name: id_comprobante
+        - name: serie_numero
           in: path
           required: true
+          description: Serie y número del comprobante. Mapea a cbc:ID de UBL-Invoice-2.1.xsd (Formato SUNAT F001-000001).
           schema:
             type: string
             example: "F001-000001"
@@ -163,7 +164,7 @@ components:
           example: 236.00
     FacturaRequest:
       type: object
-      required: [serie_correlativo, fecha_emision, codigo_moneda, vendedor, comprador, items, totales]
+      required: [serie_numero, fecha_emision, codigo_moneda, vendedor, comprador, items, totales]
       properties:
         ubl_version:
           type: string
@@ -174,9 +175,10 @@ components:
           description: Catálogo 01 SUNAT (01 = Factura)
           enum: ["01"]
           example: "01"
-        serie_correlativo:
+        serie_numero:
           type: string
-          pattern: '^F\d{3}-\d{6}$'
+          description: Serie y número del comprobante. Mapea directamente a cbc:ID de UBL-Invoice-2.1.xsd (Formato SUNAT - Serie F + 3 dígitos, guion y correlativo de hasta 8 dígitos).
+          pattern: '^F\d{3}-\d{1,8}$'
           example: "F001-000001"
         fecha_emision:
           type: string
@@ -205,10 +207,11 @@ components:
           $ref: '#/components/schemas/ImpuestosTotales'
     FacturaResponse:
       type: object
-      required: [id_comprobante, estado_sunat, hash_cpe, xml_ubl_generado, mensaje_ose]
+      required: [serie_numero, estado_sunat, hash_cpe, xml_ubl_generado, mensaje_ose]
       properties:
-        id_comprobante:
+        serie_numero:
           type: string
+          description: Serie y número del comprobante. Mapea directamente a cbc:ID de UBL-Invoice-2.1.xsd (Formato SUNAT F001-000001).
           example: "F001-000001"
         estado_sunat:
           type: string
