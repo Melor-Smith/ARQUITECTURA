@@ -1,0 +1,276 @@
+openapi: 3.0.3
+info:
+  title: ABC Software Corp - API Facturación UBL 2.1 y Migración Legado (SUNAT)
+  version: 1.0.0
+  description: >
+    Especificación Spec-First bajo arquitectura MVC desacoplada (preparada para Arquitectura Hexagonal),
+    cumpliendo RS N° 097-2012, Catálogo 8 de SUNAT (ISC) y esquema OASIS UBL-Invoice-2.1.xsd.
+paths:
+  /api/v1/facturas:
+    post:
+      summary: Emite una Factura Electrónica validada contra UBL-Invoice-2.1.xsd y Catálogo 8 SUNAT
+      operationId: emitirFacturaUBL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacturaRequest'
+      responses:
+        '201':
+          description: Comprobante UBL 2.1 emitido y aceptado por OSE/SUNAT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacturaResponse'
+        '400':
+          description: Error de validación normativa SUNAT o esquema UBL-Invoice-2.1.xsd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/facturas/{id_comprobante}:
+    get:
+      summary: Consulta trazabilidad y XML UBL de un comprobante emitido
+      operationId: consultarFactura
+      parameters:
+        - name: id_comprobante
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "F001-000001"
+      responses:
+        '200':
+          description: Comprobante encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacturaResponse'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/migracion/fichas-legado:
+    post:
+      summary: Migra fichas informales del software legado de almacén hacia entidades trazables UBL
+      operationId: migrarFichaLegado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FichaLegadoRequest'
+      responses:
+        '201':
+          description: Ficha histórica migrada con trazabilidad garantizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaMigradaResponse'
+        '400':
+          description: Error en datos legados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ActorParty:
+      type: object
+      description: Mapea cac:AccountingSupplierParty (Vendedor) y cac:AccountingCustomerParty (Comprador) en UBL 2.1
+      required: [ruc, razon_social, codigo_tipo_documento, ubigeo, direccion]
+      properties:
+        codigo_tipo_documento:
+          type: string
+          description: Catálogo 06 SUNAT (6 = RUC)
+          enum: ["6"]
+          example: "6"
+        ruc:
+          type: string
+          pattern: '^(10|20)\d{9}$'
+          example: "20556677889"
+        razon_social:
+          type: string
+          example: "ABC SOFTWARE CORP S.A.C."
+        ubigeo:
+          type: string
+          example: "150101"
+        direccion:
+          type: string
+          example: "AV. INDUSTRIAL 450 - LIMA"
+    ItemFactura:
+      type: object
+      description: Mapea cac:InvoiceLine en UBL-Invoice-2.1.xsd
+      required: [codigo_producto, descripcion, cantidad, valor_unitario, codigo_afectacion_igv, igv_item]
+      properties:
+        codigo_producto:
+          type: string
+          example: "AB-001"
+        descripcion:
+          type: string
+          example: "Saco de Arroz Extra 50kg"
+        cantidad:
+          type: number
+          example: 2
+        valor_unitario:
+          type: number
+          example: 100.00
+        codigo_afectacion_igv:
+          type: string
+          description: Catálogo 07 SUNAT (10 = Gravado - Operación Onerosa)
+          example: "10"
+        codigo_sistema_isc:
+          type: string
+          description: Catálogo 08 SUNAT - Tipos de Sistema de Cálculo del ISC (01 Al valor, 02 Monto fijo, 03 Precios venta público)
+          enum: ["01", "02", "03"]
+          nullable: true
+          example: "01"
+        isc_item:
+          type: number
+          default: 0.00
+          example: 0.00
+        igv_item:
+          type: number
+          example: 36.00
+        icbper_item:
+          type: number
+          default: 0.00
+          example: 0.00
+    ImpuestosTotales:
+      type: object
+      description: Mapea cac:TaxTotal y cac:LegalMonetaryTotal en UBL 2.1
+      required: [total_gravadas, total_igv, importe_total]
+      properties:
+        total_gravadas:
+          type: number
+          example: 200.00
+        total_igv:
+          type: number
+          example: 36.00
+        total_isc:
+          type: number
+          default: 0.00
+          example: 0.00
+        total_icbper:
+          type: number
+          default: 0.00
+          example: 0.00
+        importe_total:
+          type: number
+          example: 236.00
+    FacturaRequest:
+      type: object
+      required: [serie_correlativo, fecha_emision, codigo_moneda, vendedor, comprador, items, totales]
+      properties:
+        ubl_version:
+          type: string
+          default: "2.1"
+          example: "2.1"
+        tipo_documento_codigo:
+          type: string
+          description: Catálogo 01 SUNAT (01 = Factura)
+          enum: ["01"]
+          example: "01"
+        serie_correlativo:
+          type: string
+          pattern: '^F\d{3}-\d{6}$'
+          example: "F001-000001"
+        fecha_emision:
+          type: string
+          format: date
+          example: "2026-10-22"
+        codigo_moneda:
+          type: string
+          description: Catálogo 02 SUNAT (PEN, USD)
+          enum: [PEN, USD]
+          example: "PEN"
+        nro_documento_legado_origen:
+          type: string
+          nullable: true
+          description: Trazabilidad opcional hacia la ficha del software básico legado
+          example: "DOC-INT-9981"
+        vendedor:
+          $ref: '#/components/schemas/ActorParty'
+        comprador:
+          $ref: '#/components/schemas/ActorParty'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ItemFactura'
+        totales:
+          $ref: '#/components/schemas/ImpuestosTotales'
+    FacturaResponse:
+      type: object
+      required: [id_comprobante, estado_sunat, hash_cpe, xml_ubl_generado, mensaje_ose]
+      properties:
+        id_comprobante:
+          type: string
+          example: "F001-000001"
+        estado_sunat:
+          type: string
+          enum: [ACEPTADO, RECHAZADO]
+          example: "ACEPTADO"
+        hash_cpe:
+          type: string
+          example: "sha256-4a8b9c1d2e3f"
+        xml_ubl_generado:
+          type: string
+          example: "<Invoice xmlns='urn:oasis:names:specification:ubl:schema:xsd:Invoice-2'><cbc:UBLVersionID>2.1</cbc:UBLVersionID>...</Invoice>"
+        mensaje_ose:
+          type: string
+          example: "La Factura F001-000001 cumple con UBL-Invoice-2.1.xsd y ha sido ACEPTADA."
+    FichaLegadoRequest:
+      type: object
+      description: Estructura histórica del software básico de almacén
+      required: [fecha, ingreso, salida, producto, nro_documento]
+      properties:
+        fecha:
+          type: string
+          format: date
+          example: "2026-10-15"
+        ingreso:
+          type: number
+          example: 0
+        salida:
+          type: number
+          example: 5
+        producto:
+          type: string
+          example: "Saco de Azúcar Rubia 50kg"
+        nro_documento:
+          type: string
+          example: "VALE-SALIDA-0042"
+    FichaMigradaResponse:
+      type: object
+      required: [id_migracion, nro_documento_legado, tipo_movimiento, estado_trazabilidad, serie_ubl_sugerida]
+      properties:
+        id_migracion:
+          type: string
+          example: "MIG-2026-0001"
+        nro_documento_legado:
+          type: string
+          example: "VALE-SALIDA-0042"
+        tipo_movimiento:
+          type: string
+          enum: [INGRESO_ALMACEN, SALIDA_POR_FACTURAR]
+          example: "SALIDA_POR_FACTURAR"
+        estado_trazabilidad:
+          type: string
+          example: "MIGRADO_CON_TRAZABILIDAD"
+        serie_ubl_sugerida:
+          type: string
+          example: "F001-000002"
+    ErrorResponse:
+      type: object
+      required: [codigo, mensaje]
+      properties:
+        codigo:
+          type: string
+          example: "ERR-SUNAT-CAT08"
+        mensaje:
+          type: string
+          example: "Incumplimiento de regla normativa SUNAT o esquema UBL-Invoice-2.1.xsd"
