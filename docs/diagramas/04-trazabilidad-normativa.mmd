@@ -1,0 +1,32 @@
+graph LR
+    subgraph L["Datos Legado"]
+        L1["nro_documento"]
+        L2["fecha"]
+        L3["producto"]
+        L4["ingreso / salida"]
+    end
+    subgraph S["Normativa SUNAT"]
+        S1["Ref. documentaria RS 097-2012"]
+        S2["Fecha emision YYYY-MM-DD"]
+        S3["Descripcion del bien"]
+        S4["Cantidad de unidades"]
+        S5["Catalogo 06 - RUC 11 digitos"]
+        S6["Catalogo 07 - IGV 18%"]
+        S7["Catalogo 08 - ISC 01/02/03"]
+    end
+    subgraph U["OASIS UBL-Invoice-2.1.xsd"]
+        U1["cac:DespatchDocumentReference/cbc:ID"]
+        U2["cbc:IssueDate"]
+        U3["cac:Item/cbc:Description"]
+        U4["cbc:InvoicedQuantity"]
+        U5["cac:AccountingSupplier/CustomerParty"]
+        U6["cbc:TaxExemptionReasonCode"]
+        U7["cbc:TierRange"]
+    end
+    L1 --> S1 --> U1
+    L2 --> S2 --> U2
+    L3 --> S3 --> U3
+    L4 --> S4 --> U4
+    S5 --> U5
+    S6 --> U6
+    S7 --> U7

@@ -9,6 +9,10 @@ El sistema implementa el patrón **Modelo-Vista-Controlador (MVC) desacoplado**,
 
 ### Diagrama Mermaid: Arquitectura MVC Limpia Actual
 
+![Arquitectura MVC Desacoplada](diagramas/01-arquitectura-mvc.png)
+
+*Código fuente editable del diagrama: [`01-arquitectura-mvc.mmd`](diagramas/01-arquitectura-mvc.mmd)*
+
 ```mermaid
 graph TD
     Client["Cliente HTTP / Pruebas Automatizadas"]
@@ -56,6 +60,10 @@ graph TD
 La estructura actual permite una migración natural hacia **Arquitectura Hexagonal (Ports & Adapters)** sin romper los contratos del dominio. En esta evolución, el núcleo (Core) queda totalmente agnóstico de frameworks (FastAPI, CLI, Desktop) y de detalles de infraestructura (SUNAT SOAP, OSE REST, PostgreSQL, SQLite móvil).
 
 ### Diagrama Mermaid: Evolución a Arquitectura Hexagonal y Microservicios
+
+![Arquitectura Hexagonal](diagramas/02-arquitectura-hexagonal.png)
+
+*Código fuente editable del diagrama: [`02-arquitectura-hexagonal.mmd`](diagramas/02-arquitectura-hexagonal.mmd)*
 
 ```mermaid
 graph TD
@@ -128,7 +136,19 @@ graph TD
 
 ---
 
-## 3. Estrategia de Distribución Multiplataforma (Nativo)
+## 3. Modelo de Dominio y Trazabilidad Normativa (Diagramas)
+
+### 3.0.1. Modelo de Dominio y Contratos (DTOs / Schemas)
+
+![Modelo de Dominio](diagramas/03-modelo-dominio.png)
+
+### 3.0.2. Trazabilidad: Legado → SUNAT (Catálogos 06/07/08) → UBL 2.1
+
+![Trazabilidad Normativa](diagramas/04-trazabilidad-normativa.png)
+
+---
+
+## 3.1. Estrategia de Distribución Multiplataforma (Nativo)
 
 Para cumplir con los requerimientos operativos de **ABC Software Corp**, el sistema se distribuirá tanto para estaciones de trabajo fijas de escritorio (Windows) como para terminales móviles de punto de venta / almacén (Android).
 

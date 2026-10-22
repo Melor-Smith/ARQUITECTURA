@@ -1,0 +1,66 @@
+classDiagram
+    class FacturaRequest {
+        +str ubl_version = "2.1"
+        +str tipo_documento_codigo = "01"
+        +str serie_correlativo
+        +str fecha_emision
+        +str codigo_moneda
+        +str nro_documento_legado_origen
+    }
+    class ActorParty {
+        +str codigo_tipo_documento = "6"
+        +str ruc
+        +str razon_social
+        +str ubigeo
+        +str direccion
+    }
+    class ItemFactura {
+        +str codigo_producto
+        +str descripcion
+        +float cantidad
+        +float valor_unitario
+        +str codigo_afectacion_igv
+        +str codigo_sistema_isc
+        +float isc_item
+        +float igv_item
+        +float icbper_item
+    }
+    class ImpuestosTotales {
+        +float total_gravadas
+        +float total_igv
+        +float total_isc
+        +float total_icbper
+        +float importe_total
+    }
+    class FacturaResponse {
+        +str id_comprobante
+        +str estado_sunat
+        +str hash_cpe
+        +str xml_ubl_generado
+        +str mensaje_ose
+    }
+    class FichaLegadoRequest {
+        +str fecha
+        +float ingreso
+        +float salida
+        +str producto
+        +str nro_documento
+    }
+    class FichaMigradaResponse {
+        +str id_migracion
+        +str nro_documento_legado
+        +str tipo_movimiento
+        +str estado_trazabilidad
+        +str serie_ubl_sugerida
+    }
+    class ErrorResponse {
+        +str codigo
+        +str mensaje
+    }
+    FacturaRequest "1" *-- "1" ActorParty : vendedor
+    FacturaRequest "1" *-- "1" ActorParty : comprador
+    FacturaRequest "1" *-- "1..*" ItemFactura : items
+    FacturaRequest "1" *-- "1" ImpuestosTotales : totales
+    FacturaRequest ..> FacturaResponse : emite
+    FichaLegadoRequest ..> FichaMigradaResponse : migra
+    FichaMigradaResponse ..> FacturaRequest : serie sugerida / trazabilidad
