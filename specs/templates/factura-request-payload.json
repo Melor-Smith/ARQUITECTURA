@@ -1,0 +1,42 @@
+{
+  "ubl_version": "2.1",
+  "tipo_documento_codigo": "01",
+  "serie_numero": "F001-000001",
+  "fecha_emision": "2026-10-22",
+  "codigo_moneda": "PEN",
+  "nro_documento_legado_origen": "VALE-SALIDA-0042",
+  "vendedor": {
+    "tipo_documento": "6",
+    "ruc": "20556677889",
+    "razon_social": "ABC SOFTWARE CORP S.A.C.",
+    "ubigeo": "150101",
+    "direccion": "AV. INDUSTRIAL 450 - LIMA"
+  },
+  "comprador": {
+    "tipo_documento": "6",
+    "ruc": "20123456789",
+    "razon_social": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.",
+    "ubigeo": "150102",
+    "direccion": "JR. COMERCIO 123 - LIMA"
+  },
+  "items": [
+    {
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Saco de Arroz Extra 50kg",
+      "cantidad": 2.0,
+      "valor_unitario": 100.0,
+      "codigo_afectacion_igv": "10",
+      "codigo_sistema_isc": "01",
+      "isc_item": 0.0,
+      "igv_item": 36.0,
+      "icbper_item": 0.0
+    }
+  ],
+  "totales": {
+    "total_gravadas": 200.0,
+    "total_igv": 36.0,
+    "total_isc": 0.0,
+    "total_icbper": 0.0,
+    "importe_total": 236.0
+  }
+}
