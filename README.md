@@ -1,43 +1,78 @@
-# ABC Software Corp — Especificaciones: Facturación Electrónica UBL 2.1 y Migración Legado
+# ABC Software Corp — Sistema de Facturación Electrónica UBL 2.1 y Migración Legado
 
-Repositorio de **solo especificaciones técnicas** (Spec-First): sin interfaz y sin código de implementación.
-Normativa: **SUNAT RS N° 097-2012**, **Catálogo 08 (ISC)** y estándar **OASIS `UBL-Invoice-2.1.xsd`**.
-
----
-
-## Índice de especificaciones entregadas
-
-| # | Entregable | Archivo |
-| :-: | :--- | :--- |
-| 1 | Contrato OpenAPI 3.0 (Modelo de Dominio, DTOs y Endpoints) | [`specs/contracts/ubl-invoice-api.yaml`](specs/contracts/ubl-invoice-api.yaml) |
-| 2 | Casos de uso tipo Nubefact (Gherkin) y **TABLA DE MATCH Legado <-> SUNAT Perú <-> OASIS UBL** | [`specs/features/001-facturacion-ubl-y-migracion.md`](specs/features/001-facturacion-ubl-y-migracion.md) |
-| 3 | Decisiones arquitectónicas (MVC → Hexagonal, MSI/APK) | [`specs/adr/0001-mvc-a-hexagonal-y-multiplataforma.md`](specs/adr/0001-mvc-a-hexagonal-y-multiplataforma.md) |
-| 4 | Diagramas: MVC, Hexagonal, Modelo de Dominio y distribución | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) |
-
-Imágenes de los diagramas: [`docs/diagramas/`](docs/diagramas/) (PNG + código fuente `.mmd`).
+Proyecto integral desarrollado bajo la metodología **Spec-Driven Development (Spec-First)**, cumpliendo con la normativa de comprobantes de pago de la **SUNAT** (Resolución de Superintendencia N° 097-2012 y modificatorias), el **Catálogo 08 de SUNAT (Sistemas de ISC)** y el estándar internacional **OASIS UBL-Invoice-2.1.xsd**.
 
 ---
 
-## Endpoints especificados
+## 📌 Enlaces Directos a los Entregables Oficiales (Punto 4 del Examen)
 
-| Método | Endpoint | Caso de uso | Respuestas |
+| # | Entregable Oficial | Descripción Técnica | Enlace Directo |
+| :-: | :--- | :--- | :--- |
+| **1** | **Modelo de Dominio y Contratos** | DTOs tipados en Pydantic v2 y schemas OpenAPI sincronizados | [`src/models/schemas.py`](src/models/schemas.py)<br/>[`specs/contracts/ubl-invoice-api.yaml`](specs/contracts/ubl-invoice-api.yaml) |
+| **2** | **Diagramas de Arquitectura y Distribución** | Diagramas Mermaid MVC Limpio, Evolución a Arquitectura Hexagonal y Estrategia de distribución Windows MSI y Android APK | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md)<br/>[`specs/adr/0001-mvc-a-hexagonal-y-multiplataforma.md`](specs/adr/0001-mvc-a-hexagonal-y-multiplataforma.md) |
+| **3** | **Especificación OpenAPI 3.0 (YAML)** | Contrato canónico Spec-First (casos de uso tipo Nubefact y migración de legados) | [`specs/contracts/ubl-invoice-api.yaml`](specs/contracts/ubl-invoice-api.yaml) |
+| **4** | **Matriz de Trazabilidad Normativa** | Cruce exhaustivo: Datos Legado ➔ SUNAT (Catálogo 8 ISC) ➔ OASIS UBL-Invoice-2.1 ➔ DTO OpenAPI ➔ Test | [`specs/features/001-facturacion-ubl-y-migracion.md`](specs/features/001-facturacion-ubl-y-migracion.md) |
+| **5** | **Mocks y Pruebas Automatizadas** | Banco de datos en memoria y batería de 20 tests (Fase Roja ➔ Fase Verde) | [`tests/mocks/mock_db.py`](tests/mocks/mock_db.py)<br/>[`tests/acceptance/test_facturacion_sdd.py`](tests/acceptance/test_facturacion_sdd.py)<br/>[`tests/unit/test_reglas_sunat.py`](tests/unit/test_reglas_sunat.py) |
+
+---
+
+## 🏛️ Arquitectura de Software
+
+El sistema sigue un diseño **MVC Desacoplado** listo para evolucionar hacia **Arquitectura Hexagonal (Ports & Adapters)**:
+- **`src/models/`**: Entidades del dominio y contratos DTO (Pydantic v2).
+- **`src/views/`**: Presentadores de respuesta JSON/XML estandarizados.
+- **`src/controllers/`**: Enrutadores FastAPI y orquestación de casos de uso.
+- **`src/services/`**: Motor tributario SUNAT, validación de RUC (Catálogo 06), Catálogo 08 de ISC, IGV (18%), cálculo de Hash CPE SHA-256 y construcción de XML UBL 2.1.
+- **`src/repositories/`**: Puerto de persistencia desacoplado consumiendo en memoria `tests/mocks/mock_db.py`.
+
+---
+
+## 🌐 Catálogo de Endpoints API (OpenAPI 3.0)
+
+| Método | Endpoint | Caso de Uso | Respuestas |
 | :---: | :--- | :--- | :---: |
-| `POST` | `/api/v1/facturas` | Emite Factura Electrónica UBL 2.1 (valida RUC, IGV y Catálogo 08 ISC) | `201` / `400` |
-| `GET` | `/api/v1/facturas/{serie_numero}` | Consulta estado, Hash CPE y XML UBL | `200` / `404` |
-| `POST` | `/api/v1/migracion/fichas-legado` | Migra fichas del almacén legado a entidades trazables | `201` / `400` |
+| `POST` | `/api/v1/facturas` | Emite Factura Electrónica UBL 2.1 validando RUC y Catálogo 08 de ISC | `201 Created`<br/>`400 Bad Request` |
+| `GET` | `/api/v1/facturas/{id_comprobante}` | Consulta estado SUNAT, Hash CPE y XML UBL generado | `200 OK`<br/>`404 Not Found` |
+| `POST` | `/api/v1/migracion/fichas-legado` | Migra registros históricos del almacén legado a entidades UBL trazables | `201 Created`<br/>`400 Bad Request` |
+| `GET` | `/` | Health check del servicio y versión UBL activa | `200 OK` |
+| `GET` | `/docs` | Interfaz interactiva Swagger UI | `200 OK` |
 
 ---
 
-## Resumen de la TABLA DE MATCH (detalle completo en el archivo de features)
+## 🚀 Instrucciones de Instalación y Ejecución
 
-| Campo Sistema Legado | Modelo SUNAT Perú (DTO) | Nodo en `UBL-Invoice-2.1.xsd` | Catálogo / Regla SUNAT | Ejemplo |
-| :--- | :--- | :--- | :--- | :--- |
-| `nro_documento` | **`serie_numero`** | `<cbc:ID>` | Serie F + 3 dígitos, guion y correlativo de hasta 8 dígitos | `F001-000001` |
-| `fecha` | `fecha_emision` | `<cbc:IssueDate>` | Formato `YYYY-MM-DD` | `2026-10-22` |
-| Tipo de comprobante | `tipo_documento_codigo` | `<cbc:InvoiceTypeCode>` | Catálogo 01 | `01` |
-| Moneda | `codigo_moneda` | `<cbc:DocumentCurrencyCode>` | Catálogo 02 | `PEN` |
-| Vendedor / Comprador | `vendedor.*` / `comprador.*` | `cac:AccountingSupplierParty` / `cac:AccountingCustomerParty` | Catálogo 06 (RUC) | `20556677889` |
-| `producto` / `salida` | `items[].descripcion` / `items[].cantidad` | `cac:Item/cbc:Description` / `cbc:InvoicedQuantity` | Anexo 1 RS 097-2012 | `Saco de Arroz Extra 50kg` / `2` |
-| Afectación IGV | `items[].codigo_afectacion_igv` | `cbc:TaxExemptionReasonCode` | Catálogo 07 | `10` |
-| Sistema de cálculo ISC | `items[].codigo_sistema_isc` | `cbc:TierRange` | **Catálogo 08**: 01 Al valor, 02 Monto fijo, 03 Precios venta público | `01` |
-| Totales | `totales.importe_total` | `cac:LegalMonetaryTotal/cbc:PayableAmount` | Importe total | `236.00` |
+### 1. Clonar y preparar entorno virtual (Python 3.10+)
+```bash
+# Crear entorno virtual
+python -m venv .venv
+
+# Activar en Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# Instalar dependencias
+pip install -r requirements.txt
+```
+
+### 2. Ejecutar la Batería de Pruebas (20 tests en Verde)
+```bash
+python -m pytest -v
+```
+
+### 3. Iniciar el Servidor de Desarrollo
+```bash
+python -m uvicorn src.main:app --reload --port 8000
+```
+La documentación interactiva estará disponible en: `http://localhost:8000/docs`.
+
+---
+
+## 🧪 Demostración del Ciclo SDD (Spec-Driven Development)
+
+1. **Fase Roja (Red Phase)**:
+   - Los contratos OpenAPI se definieron en `specs/contracts/ubl-invoice-api.yaml`.
+   - Se crearon los tests de aceptación y unitarios antes de la implementación de código en `src/`.
+   - `pytest` falló con 2 errores de recolección (`ModuleNotFoundError`), demostrando la ausencia previa de implementación.
+
+2. **Fase Verde (Green Phase)**:
+   - Se implementaron los modelos, repositorios, servicios, presentadores y controladores.
+   - Resultado: **20 pruebas ejecutadas exitosamente (100% Passed)**.

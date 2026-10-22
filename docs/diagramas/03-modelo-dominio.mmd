@@ -2,7 +2,7 @@ classDiagram
     class FacturaRequest {
         +str ubl_version = "2.1"
         +str tipo_documento_codigo = "01"
-        +str serie_numero  «cbc:ID»
+        +str serie_correlativo
         +str fecha_emision
         +str codigo_moneda
         +str nro_documento_legado_origen
@@ -33,7 +33,7 @@ classDiagram
         +float importe_total
     }
     class FacturaResponse {
-        +str serie_numero  «cbc:ID»
+        +str id_comprobante
         +str estado_sunat
         +str hash_cpe
         +str xml_ubl_generado
