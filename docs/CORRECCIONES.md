@@ -1,6 +1,6 @@
 # Respuesta a la revisión (38/100): observación → corrección → evidencia
 
-Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (748 pruebas).
+Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (879 pruebas).
 
 Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorrelativo` significa la clase de pruebas `TestSerieYCorrelativo` dentro de ese archivo.
 
@@ -13,7 +13,7 @@ Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorr
 | 1.1 | La serie solo aceptaba `F` (boleta `B001` → 400). | La serie es un objeto de valor con el patrón `^[FB][A-Z0-9]{3}$`. Regla cruzada: 01 ⇒ serie F y cliente con RUC; 03 ⇒ serie B. | [`src/domain/valores.py`](../src/domain/valores.py) `Serie`; [`src/domain/comprobante.py`](../src/domain/comprobante.py) `_validar_venta`; `test_api_comprobantes.py::TestSerieYCorrelativo::test_boleta_b001_es_aceptada` |
 | 1.2 | Exigía exactamente 6 dígitos; el correlativo legal de 8 dígitos daba 400. | `Correlativo` es un `int` entre 1 y 99 999 999. Serie y correlativo solo se unen al serializar (`cbc:ID`). | `Correlativo`, `NumeroComprobante` en `valores.py`; `test_correlativo_legal_de_8_digitos` (emite `F001-12345678`) |
 | 1.3 | La serie solo podía ser numérica (`FA01` era imposible). | El patrón es alfanumérico. | `test_serie_alfanumerica_fa01`; `tests/unit/test_valores.py::TestSerie` |
-| 1.4 | El OpenAPI decía `\d{1,8}` y el código `\d{6}`. | El OpenAPI ya no se escribe a mano: se **genera desde el código**, y una prueba compara el YAML versionado con el generado. | [`specs/contracts/openapi.yaml`](../specs/contracts/openapi.yaml); `tests/acceptance/test_contrato.py::test_el_openapi_versionado_coincide_con_el_generado_por_el_codigo` |
+| 1.4 | El OpenAPI decía `\d{1,8}` y el código `\d{6}`. | Primero se generó el OpenAPI desde el código (ADR 0006) para que no pudieran divergir. En la **cuarta iteración** el contrato volvió a escribirse a mano y **primero**, y una prueba verifica que el código lo implementa exactamente ([ADR 0013](../specs/adr/0013-contrato-escrito-primero-y-verificado-contra-el-codigo.md)). | [`specs/contracts/`](../specs/contracts); `tests/acceptance/test_contrato.py::test_el_codigo_implementa_exactamente_el_contrato` |
 | 1.5 | El correlativo lo enviaba el cliente; la migración lo calculaba como `len(DB)+1`, que no es atómico. | El servidor lo **asigna** con una secuencia bajo bloqueo, por tipo y serie. Enviar `correlativo` → 400. Un rechazo de negocio no consume número. | [`memoria.py`](../src/adapters/outbound/persistencia/memoria.py) `SecuenciaCorrelativosEnMemoria`; `tests/integration/test_concurrencia.py` (200 hilos → 1..200 sin repetir); `test_rechazo_de_negocio_no_consume_correlativo` |
 | 2 | `ItemFactura` no tenía unidad de medida; el XML siempre decía `unitCode='NIU'`. | `unidad_medida` es obligatoria y sale del Catálogo 03 (UNECE Rec. 20: NIU, ZZ, KGM, LTR, BX…). Va en `unitCode` de cada línea. El producto tiene su unidad de inventario y se valida la coherencia. | `UnidadMedida` en [`catalogos.py`](../src/domain/catalogos.py); `TestUnidadesUnece::test_saco_de_50_kg_facturado_en_kgm` |
 | 3 | XML armado con plantilla y concatenación de f-strings. | Se eliminó la plantilla. El XML se construye con **clases generadas por `xsdata`** desde los XSD oficiales completos de UBL 2.1 (maindoc + `common/`). | [`src/adapters/outbound/ubl/generador.py`](../src/adapters/outbound/ubl/generador.py); [`generated/`](../src/adapters/outbound/ubl/generated); [`specs/contracts/ubl-2.1/xsd`](../specs/contracts/ubl-2.1/xsd) |
@@ -62,7 +62,7 @@ Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorr
 
 | Observación | Corrección |
 |---|---|
-| Dos ADR con número 0001. | Un número por decisión (hoy ADR 0001 a 0012), en [`specs/adr/`](../specs/adr). |
+| Dos ADR con número 0001. | Un número por decisión (hoy ADR 0001 a 0014), en [`specs/adr/`](../specs/adr). |
 | Dos especificaciones 001 con la matriz duplicada. | Una sola especificación BDD ([`specs/features/001-facturacion-e-inventario.md`](../specs/features/001-facturacion-e-inventario.md)) y una sola matriz ([`specs/traceability/matriz-trazabilidad.md`](../specs/traceability/matriz-trazabilidad.md)). |
 | Plantilla XML en `specs/templates`. | Eliminada. En su lugar, [`docs/ejemplos/`](ejemplos) contiene **salidas reales** generadas por el sistema (`python scripts/generar_ejemplos.py`). |
 
@@ -109,11 +109,29 @@ Por último, el 12.1 se validó con el **programa PLE 5.2.0.7 oficial de SUNAT**
 
 Las dos reglas de SUNAT se comprobaron por mutación: revertir cualquiera de las correcciones hace fallar la CI.
 
+## Cuarta iteración: metodología, presentación y seguridad (revisión del 05/11)
+
+La revisión comparativa del 05/11 calificó el trabajo con 17/20. El código no tenía que rehacerse; los puntos perdidos venían de la metodología, de la presentación y de un defecto de seguridad. Cada observación se atendió así:
+
+| # | Observación | Corrección | Evidencia |
+|---|---|---|---|
+| 4.1 | **Seguridad.** Sin `ABC_API_TOKENS`, producción arrancaba con los tokens públicos `dev-*`: `dev-facturador` podía emitir ante SUNAT real. | `Configuracion.__post_init__` impide arrancar en producción sin tokens propios o con cualquier token `dev-*`, también mezclado con tokens propios. El README marca `ABC_API_TOKENS` como obligatoria en producción. | [`src/config.py`](../src/config.py); [`tests/integration/test_configuracion.py`](../tests/integration/test_configuracion.py) |
+| 4.2 | **Spec-First.** El ADR 0006 hacía del código el autor del contrato: el YAML decía "GENERADO desde el código. No editar a mano". | JSON Schemas 2020-12 **escritos a mano** en [`specs/contracts/schemas/`](../specs/contracts/schemas), uno por DTO de entrada más el error RFC 9457. Cada propiedad cita su regla SUNAT y su fila de la matriz. El `openapi.yaml` los referencia con `$ref` y se edita primero. ADR 0006 → **reemplazado por el [ADR 0013](../specs/adr/0013-contrato-escrito-primero-y-verificado-contra-el-codigo.md)**. `exportar_openapi.py` ya no genera: compara. | `test_contrato.py`: `test_el_codigo_implementa_exactamente_el_contrato` (campos, obligatorios, catálogos, patrones, límites, rutas y códigos HTTP), `test_cada_dto_tiene_exactamente_los_campos_de_su_schema`, `test_cada_ejemplo_cumple_el_contrato_escrito` |
+| 4.3 | 400 y 422 los definía la implementación. | Ahora los define el contrato: un contraejemplo que espera 400 **no cumple** el schema, y uno que espera 422 **sí lo cumple**. | `test_el_contrato_separa_400_de_422` (16 casos) |
+| 4.4 | **Diagramas.** Solo había Mermaid embebido en Markdown, sin versión renderizada ni diagrama de clases separado. | 9 diagramas en [`docs/diagramas/`](diagramas) (`.mmd` + `.svg` + `.png`): contexto y contenedores C4, MVC, hexagonal, evolución, clases del dominio, secuencia, estados y despliegue. Están enlazados desde la arquitectura y el modelo de dominio. | `tests/integration/test_diagramas.py` (cada `.mmd` tiene su `.svg` y su `.png` y está enlazado); job `diagramas` de la CI (renderiza desde cero) |
+| 4.5 | **Presentación.** El README no tenía datos académicos ni guía para el evaluador; podía confundirse la versión evaluada. | Encabezado con universidad, curso, grupo y alumno; guía del evaluador en orden de lectura; cronología de entregas con sus commits. | [`README.md`](../README.md) |
+| 4.6 | **Informe consolidado.** No había un documento único para entregar. | `entregable/Informe-ABC-SpecFirst.pdf` y `.docx`, generados desde los `.md` del repositorio con `scripts/generar_informe.py`. | [`entregable/`](../entregable) |
+| 4.7 | **ADR 0008 sin decidir** ("Flutter **o** Kotlin"). | Tabla de alternativas con criterios. **Escritorio: PyInstaller + WiX 5. Android: Kotlin nativo**, con la justificación de cada descarte. Prototipo MSI en CI (`windows-latest`): empaqueta, prueba `/salud`, construye el MSI, lo instala en silencio y vuelve a probar. | [ADR 0008](../specs/adr/0008-distribucion-msi-y-apk.md); [`packaging/windows/`](../packaging/windows); workflow `instalador-msi` |
+| 4.8 | Comunicación de baja y resumen diario solo declarados como "no implementados". | Contrato escrito antes que el código: operaciones `x-estado: planificado`, schemas, ejemplos y errores ([ADR 0014](../specs/adr/0014-comunicacion-de-baja-y-resumen-diario.md)). El comparador exige implementarlos tal cual. | `test_las_operaciones_planificadas_estan_completas`; ejemplos en `specs/ejemplos/planificados/` |
+| 4.9 | Atributos de calidad sin escenarios. | Un escenario ATAM por atributo (fuente, estímulo, artefacto, entorno, respuesta y medida), con la prueba que lo mide. | [`04-atributos-de-calidad.md`](analisis/04-atributos-de-calidad.md) |
+| 4.10 | Casos de uso sin fuente que los justifique. | Columna **Fuente** (enunciado, norma, hipótesis H1-H5, benchmark), CU-10 (anulación) y plantilla de benchmark y de la DEMO. **El trabajo de campo (DEMO de Nubefact y datos del benchmark) lo hace el alumno.** | [`03-casos-de-uso.md`](analisis/03-casos-de-uso.md), [`05-benchmark.md`](analisis/05-benchmark.md) |
+| 4.11 | GitHub Actions fijadas por etiqueta (`@v4`), que puede moverse. | Cada Action se fija por SHA de commit, con la versión en un comentario. | `tests/integration/test_ci.py` |
+
 ## Aciertos que se conservaron
 
 - **Catálogo 08** con `cbc:TierRange`. Ahora además se **calcula** el ISC de los tres sistemas.
 - **TaxScheme** 1000/IGV/VAT, 2000/ISC/EXC y 7152/ICBPER/OTH, `CustomizationID` 2.0 y `TaxExemptionReasonCode`.
-- **Ciclo rojo → verde**: se pasó de 20 a 748 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
+- **Ciclo rojo → verde**: se pasó de 20 a 879 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
 - **Los puertos del diagrama hexagonal**, que ahora existen en el código.
 - **Diagnóstico RS 234-2006 y distribución MSI/APK**, conservados en el ADR 0008.
 
@@ -122,5 +140,5 @@ Las dos reglas de SUNAT se comprobaron por mutación: revertir cualquiera de las
 - **Envío a SUNAT.** El adaptador real `ClienteSunatSoap` se probó contra el **servicio beta** de SUNAT, que no tiene efecto tributario, no valida contra el padrón RUC y acepta certificados autofirmados. Producción usa el mismo adaptador con certificado y usuario SOL reales, y la configuración se niega a arrancar sin ellos. La OSE simulada se conserva para las pruebas deterministas ([ADR 0012](../specs/adr/0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md)).
 - **Firma.** En desarrollo se usa un certificado autofirmado generado en memoria. En producción se carga el `.pfx` del emisor (`ABC_CERTIFICADO_PFX`).
 - **Persistencia.** Hay dos adaptadores de los mismos puertos: memoria (desarrollo) y **SQLite** (`ABC_BASE_DATOS`). Este último tiene transacciones reales, `SAVEPOINT`, correlativo con `… RETURNING` y restricción `UNIQUE`, y toda la suite de API corre contra ambos ([ADR 0011](../specs/adr/0011-persistencia-sqlite-como-segundo-adaptador.md)). Para varios servidores, el mismo diseño sobre PostgreSQL.
-- **Fuera de alcance.** No se soportan las operaciones gratuitas (afectaciones 11-17, 21, 31-37), los anticipos, las detracciones, el resumen diario de boletas ni la comunicación de baja.
+- **Fuera de alcance.** No se soportan las operaciones gratuitas (afectaciones 11-17, 21, 31-37), los anticipos ni las detracciones. La comunicación de baja y el resumen diario tienen el **contrato escrito**, pero no la implementación ([ADR 0014](../specs/adr/0014-comunicacion-de-baja-y-resumen-diario.md)).
 - **PLE.** La estructura de los TXT 14.1 y 12.1 se verifica automáticamente contra el Excel oficial del Anexo 2 de la RS 286-2009/SUNAT (PLE 5.0). El 12.1 pasó además el programa PLE de SUNAT; el estado del 14.1 está en [`docs/evidencia-ple/`](evidencia-ple/README.md). La estructura está aislada en `ple_estructura.py`, así que una nueva versión del Anexo 2 se actualiza en un solo lugar.

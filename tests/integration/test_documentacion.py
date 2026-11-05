@@ -18,7 +18,8 @@ import pytest
 import yaml
 
 RAIZ = Path(__file__).resolve().parents[2]
-DOCUMENTOS = [RAIZ / "README.md", *sorted((RAIZ / "docs").rglob("*.md")), *sorted((RAIZ / "specs").rglob("*.md"))]
+DOCUMENTOS = [RAIZ / "README.md", *sorted((RAIZ / "docs").rglob("*.md")), *sorted((RAIZ / "specs").rglob("*.md")),
+              *sorted((RAIZ / "entregable").glob("*.md"))]
 
 
 @cache
