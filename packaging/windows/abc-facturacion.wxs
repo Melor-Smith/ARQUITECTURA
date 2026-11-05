@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Instalador MSI de la API local para las cajas Windows (ADR 0008). WiX Toolset 5.
+  Construir (después de PyInstaller):
+    wix build packaging/windows/abc-facturacion.wxs -arch x64 -d Origen=dist/abc-facturacion -d Version=2.0.0 -o dist/abc-facturacion.msi
+  UpgradeCode NO cambia entre versiones: así MajorUpgrade reemplaza la instalación anterior.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="ABC Facturacion - API local"
+           Manufacturer="ABC Software Corp"
+           Version="$(var.Version)"
+           UpgradeCode="6B3C1F0E-8E2A-4C1D-9A55-2F7B0D4E9C31"
+           Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="Ya está instalada una versión más reciente de ABC Facturacion." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="ABC Facturacion">
+        <!-- Todo lo que generó PyInstaller (modo carpeta): el .exe, Python embebido, los XSD y los ejemplos. -->
+        <Files Include="$(var.Origen)\**" />
+      </Directory>
+    </StandardDirectory>
+  </Package>
+</Wix>

@@ -1,0 +1,53 @@
+name: Instalador MSI (prototipo, ADR 0008)
+
+# Prototipo de distribución para las cajas Windows: PyInstaller empaqueta la MISMA API
+# (núcleo hexagonal + adaptador HTTP) con Python embebido y WiX la convierte en un MSI.
+# Va aparte de la CI principal: depende de herramientas de Windows y no bloquea un merge.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "packaging/windows/**"
+      - "src/**"
+      - "requirements.txt"
+      - ".github/workflows/instalador-msi.yml"
+
+jobs:
+  msi:
+    name: Construir y probar el MSI
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Dependencias
+        run: pip install -r requirements.txt pyinstaller==6.22.3
+      - name: Empaquetar con PyInstaller (modo carpeta)
+        run: >
+          pyinstaller packaging/windows/abc_local.py --name abc-facturacion --noconfirm --clean
+          --paths .
+          --collect-submodules src
+          --collect-submodules uvicorn
+          --collect-data signxml
+          --add-data "specs/contracts/ubl-2.1/xsd;specs/contracts/ubl-2.1/xsd"
+          --add-data "specs/ejemplos;specs/ejemplos"
+      - name: Prueba de humo del ejecutable (levanta la API y responde /salud)
+        run: dist/abc-facturacion/abc-facturacion.exe --salud
+      - name: Construir el MSI con WiX 5
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix build packaging/windows/abc-facturacion.wxs -arch x64 -d Origen=dist/abc-facturacion -d Version=2.0.0 -o dist/abc-facturacion.msi
+      - name: Instalar el MSI en silencio y verificar
+        shell: pwsh
+        run: |
+          $p = Start-Process msiexec.exe -ArgumentList '/i', 'dist\abc-facturacion.msi', '/qn', '/l*v', 'msi.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content msi.log -Tail 50; exit $p.ExitCode }
+          & "$env:ProgramFiles\ABC Facturacion\abc-facturacion.exe" --salud
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: abc-facturacion-msi
+          path: dist/abc-facturacion.msi
