@@ -15,8 +15,8 @@ from src.adapters.inbound.http.esquemas import (
     ResultadoFichaSalida,
     ResumenLoteSalida,
 )
-from src.application.casos_uso.inventario import EstadoFichaLote, LoteMigracion
 from src.domain.inventario import Kardex, MigracionLegado, MovimientoInventario
+from src.domain.lotes import EstadoFichaLote, LoteMigracion
 
 
 def _cd(enum) -> CodigoDescripcion:

@@ -26,6 +26,7 @@ from src.domain.inventario import (
     Producto,
     normalizar_texto,
 )
+from src.domain.lotes import LoteMigracion
 from src.domain.valores import CORRELATIVO_MAXIMO, Correlativo, Ruc, Serie
 
 
@@ -153,10 +154,10 @@ class RepositorioMigracionesEnMemoria:
 
 class RepositorioLotesEnMemoria:
     def __init__(self) -> None:
-        self._datos: dict = {}
+        self._datos: dict[str, LoteMigracion] = {}
 
-    def guardar(self, lote) -> None:
+    def guardar(self, lote: LoteMigracion) -> None:
         self._datos[lote.id] = lote
 
-    def obtener(self, id_lote: str):
+    def obtener(self, id_lote: str) -> LoteMigracion | None:
         return self._datos.get(id_lote)

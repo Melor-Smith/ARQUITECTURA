@@ -45,7 +45,6 @@ from src.application.casos_uso.inventario import (
     ConsultarKardex,
     ConsultarLote,
     ConsultarMigracion,
-    LoteMigracion,
     MigrarFichaLegado,
     MigrarLoteLegado,
 )
@@ -121,7 +120,7 @@ def _persistencia(configuracion: Configuracion, ultimos: dict[tuple[str, str, st
         idempotencia=RepositorioIdempotenciaSqlite(bd),
         productos=RepositorioProductosSqlite(bd, semillas.PRODUCTOS, semillas.HOMOLOGACIONES),
         kardex=RepositorioKardexSqlite(bd), migraciones=RepositorioMigracionesSqlite(bd),
-        lotes=RepositorioLotesSqlite(bd, LoteMigracion),
+        lotes=RepositorioLotesSqlite(bd),
         cerrar=bd.cerrar,
     )
 

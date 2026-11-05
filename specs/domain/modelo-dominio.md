@@ -80,3 +80,5 @@ La máquina de estados está en `arquitectura.md` §5.
 ## Libros ([`libros.py`](../../src/domain/libros.py))
 
 `FilaRegistroVentas141` y `FilaInventario121` están documentadas campo por campo en [`specs/ple/`](../ple). Su estructura en el TXT (número, tipo, longitud y obligatoriedad de cada campo, según el Anexo 2) es `ESTRUCTURA_141` y `ESTRUCTURA_121` en `src/domain/ple_estructura.py`, contrastada con el Excel oficial ([ADR 0010](../adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)).
+
+**Lote de migración** ([`src/domain/lotes.py`](../../src/domain/lotes.py)): `LoteMigracion` agrupa el `ResultadoFicha` de cada ficha (MIGRADA, OBSERVADA o DUPLICADA) y una `ConciliacionProducto` por producto. Su invariante, saldo inicial + entradas − salidas = saldo final del Kardex, es una regla de negocio; por eso el lote vive en el dominio y el puerto `RepositorioLotes` está tipado con él.

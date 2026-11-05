@@ -16,6 +16,7 @@ from typing import Protocol
 from src.domain.catalogos import TipoComprobante
 from src.domain.comprobante import Cdr, Comprobante
 from src.domain.inventario import Homologacion, Kardex, MigracionLegado, MovimientoInventario, Producto
+from src.domain.lotes import LoteMigracion
 from src.domain.valores import Correlativo, Ruc, Serie
 
 
@@ -91,9 +92,9 @@ class RepositorioMigraciones(Protocol):
 class RepositorioLotes(Protocol):
     """Guarda el resultado de cada lote de migración (auditoría del corte)."""
 
-    def guardar(self, lote) -> None: ...
+    def guardar(self, lote: LoteMigracion) -> None: ...
 
-    def obtener(self, id_lote: str): ...
+    def obtener(self, id_lote: str) -> LoteMigracion | None: ...
 
 
 class GeneradorUBL(Protocol):

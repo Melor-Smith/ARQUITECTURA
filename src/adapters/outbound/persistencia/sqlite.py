@@ -25,7 +25,7 @@ import itertools
 import sqlite3
 import threading
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +43,7 @@ from src.domain.inventario import (
     Producto,
     normalizar_texto,
 )
+from src.domain.lotes import LoteMigracion
 from src.domain.valores import CORRELATIVO_MAXIMO, Correlativo, Ruc, Serie
 
 _ESQUEMA = """
@@ -130,7 +131,7 @@ class UnidadDeTrabajoSqlite:
     def __init__(self, bd: BaseDatosSqlite) -> None:
         self._bd = bd
 
-    def transaccion(self) -> Any:
+    def transaccion(self) -> AbstractContextManager[None]:
         return self._bd.transaccion()
 
 
@@ -275,15 +276,12 @@ class RepositorioMigracionesSqlite:
 
 
 class RepositorioLotesSqlite:
-    """``tipo_lote`` lo inyecta la raíz de composición: el adaptador no importa casos de uso."""
-
-    def __init__(self, bd: BaseDatosSqlite, tipo_lote: type) -> None:
+    def __init__(self, bd: BaseDatosSqlite) -> None:
         self._bd = bd
-        self._tipo_lote = tipo_lote
 
-    def guardar(self, lote: Any) -> None:
+    def guardar(self, lote: LoteMigracion) -> None:
         self._bd.ejecutar("INSERT OR REPLACE INTO lote VALUES (?, ?)", (lote.id, a_json(lote)))
 
-    def obtener(self, id_lote: str) -> Any:
+    def obtener(self, id_lote: str) -> LoteMigracion | None:
         fila = self._bd.uno("SELECT documento FROM lote WHERE id = ?", (id_lote,))
-        return desde_json(self._tipo_lote, fila[0]) if fila else None
+        return desde_json(LoteMigracion, fila[0]) if fila else None

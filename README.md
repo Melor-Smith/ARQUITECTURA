@@ -27,7 +27,7 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 |---|---|---|
 | Pruebas automáticas | **606**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
 | Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
-| Tipado estático | **0 errores** en 60 archivos | `mypy` |
+| Tipado estático | **0 errores** en 61 archivos | `mypy` |
 | Estilo y errores comunes | **0 avisos** | `ruff check .` |
 | Vulnerabilidades en dependencias | **0 conocidas** | `pip-audit -r requirements.txt` |
 | Regla de dependencias hexagonal | Verificada por prueba | `tests/integration/test_arquitectura.py` |

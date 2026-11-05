@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
-from dataclasses import dataclass
 from decimal import Decimal
-from enum import Enum
 
 from src.application.comandos import MigrarFichaLegadoCmd
 from src.application.errores import Conflicto, RecursoNoEncontrado
@@ -31,6 +29,7 @@ from src.domain.inventario import (
     clasificar_documento_legado,
     parsear_fecha_legado,
 )
+from src.domain.lotes import ConciliacionProducto, EstadoFichaLote, LoteMigracion, ResultadoFicha
 from src.domain.tributos import CERO
 
 
@@ -134,53 +133,6 @@ class MigrarFichaLegado:
                 codigo="ERR-LEGADO-NO-HOMOLOGADO", campo="producto",
             )
         return homologacion
-
-
-class EstadoFichaLote(str, Enum):
-    MIGRADA = "MIGRADA"
-    OBSERVADA = "OBSERVADA"  # no se migró: una regla la detuvo; se corrige y se reenvía
-    DUPLICADA = "DUPLICADA"  # ya estaba migrada (reprocesar un lote es seguro)
-
-
-@dataclass(frozen=True, slots=True)
-class ResultadoFicha:
-    indice: int  # posición en el archivo original (desde 1)
-    nro_documento: str
-    estado: EstadoFichaLote
-    migracion: MigracionLegado | None = None
-    codigo: str | None = None
-    mensaje: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ConciliacionProducto:
-    """Comprueba que el Kardex refleje exactamente las fichas migradas del lote."""
-
-    establecimiento: str
-    codigo_producto: str
-    saldo_inicial: Decimal
-    entradas: Decimal
-    salidas: Decimal
-    saldo_final: Decimal
-
-    @property
-    def cuadra(self) -> bool:
-        return self.saldo_inicial + self.entradas - self.salidas == self.saldo_final
-
-
-@dataclass(frozen=True, slots=True)
-class LoteMigracion:
-    id: str
-    procesado_en: dt.datetime
-    resultados: tuple[ResultadoFicha, ...]
-    conciliacion: tuple[ConciliacionProducto, ...]
-
-    def contar(self, estado: EstadoFichaLote) -> int:
-        return sum(1 for r in self.resultados if r.estado is estado)
-
-    @property
-    def cuadra(self) -> bool:
-        return all(c.cuadra for c in self.conciliacion)
 
 
 class MigrarLoteLegado:
