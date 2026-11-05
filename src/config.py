@@ -33,6 +33,8 @@ class Configuracion:
     tokens: dict[str, frozenset[str]] = field(default_factory=lambda: dict(TOKENS_DESARROLLO))
     certificado_pfx: Path | None = None
     contrasena_certificado: str = ""
+    #: Ruta del archivo SQLite. Sin valor, la persistencia es en memoria (desarrollo y pruebas).
+    base_datos: Path | None = None
 
     @classmethod
     def desde_entorno(cls) -> Configuracion:
@@ -48,4 +50,5 @@ class Configuracion:
             tokens=tokens,
             certificado_pfx=Path(pfx) if pfx else None,
             contrasena_certificado=os.environ.get("ABC_CERTIFICADO_CONTRASENA", ""),
+            base_datos=Path(os.environ["ABC_BASE_DATOS"]) if os.environ.get("ABC_BASE_DATOS") else None,
         )

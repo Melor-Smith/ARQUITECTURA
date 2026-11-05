@@ -1,6 +1,6 @@
 # Respuesta a la revisión (38/100): observación → corrección → evidencia
 
-Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (490 pruebas).
+Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (599 pruebas).
 
 Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorrelativo` significa la clase de pruebas `TestSerieYCorrelativo` dentro de ese archivo.
 
@@ -101,7 +101,7 @@ Por último, el 12.1 se validó con el **programa PLE 5.2.0.7 oficial de SUNAT**
 
 - **Catálogo 08** con `cbc:TierRange`. Ahora además se **calcula** el ISC de los tres sistemas.
 - **TaxScheme** 1000/IGV/VAT, 2000/ISC/EXC y 7152/ICBPER/OTH, `CustomizationID` 2.0 y `TaxExemptionReasonCode`.
-- **Ciclo rojo → verde**: se pasó de 20 a 490 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
+- **Ciclo rojo → verde**: se pasó de 20 a 599 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
 - **Los puertos del diagrama hexagonal**, que ahora existen en el código.
 - **Diagnóstico RS 234-2006 y distribución MSI/APK**, conservados en el ADR 0008.
 
@@ -109,6 +109,6 @@ Por último, el 12.1 se validó con el **programa PLE 5.2.0.7 oficial de SUNAT**
 
 - **OSE.** La OSE es un adaptador **simulado**: verifica la firma y el XSD, pero no aplica las más de 1 500 reglas de validación de SUNAT. El adaptador real (SOAP `sendBill` o REST de una OSE) implementa el mismo puerto `ClienteOSE`.
 - **Firma.** En desarrollo se usa un certificado autofirmado generado en memoria. En producción se carga el `.pfx` del emisor (`ABC_CERTIFICADO_PFX`).
-- **Persistencia.** La persistencia es en memoria. El ADR 0004 describe el adaptador SQL: secuencia con `UPDATE … RETURNING` y restricción `UNIQUE`.
+- **Persistencia.** Hay dos adaptadores de los mismos puertos: memoria (desarrollo) y **SQLite** (`ABC_BASE_DATOS`). Este último tiene transacciones reales, `SAVEPOINT`, correlativo con `… RETURNING` y restricción `UNIQUE`, y toda la suite de API corre contra ambos ([ADR 0011](../specs/adr/0011-persistencia-sqlite-como-segundo-adaptador.md)). Para varios servidores, el mismo diseño sobre PostgreSQL.
 - **Fuera de alcance.** No se soportan las operaciones gratuitas (afectaciones 11-17, 21, 31-37), los anticipos, las detracciones, el resumen diario de boletas ni la comunicación de baja.
 - **PLE.** La estructura de los TXT 14.1 y 12.1 se verifica automáticamente contra el Excel oficial del Anexo 2 de la RS 286-2009/SUNAT (PLE 5.0). Falta cargarlos en el programa PLE de escritorio, que aplica además validaciones contra el padrón RUC; la estructura está aislada en `ple_estructura.py`, así que una nueva versión del Anexo 2 se actualiza en un solo lugar.

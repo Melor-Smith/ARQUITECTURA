@@ -37,9 +37,21 @@ def reloj() -> RelojFijo:
     return RelojFijo(AHORA)
 
 
+@pytest.fixture(params=["memoria", "sqlite"])
+def persistencia(request, tmp_path) -> Configuracion:
+    """Toda prueba que use el contenedor corre contra los dos adaptadores de persistencia.
+
+    Es la prueba de fuego del hexágono: los mismos casos de uso y la misma API, con datos
+    en memoria o en un archivo SQLite, deben comportarse exactamente igual.
+    """
+    return Configuracion(base_datos=tmp_path / "abc.db" if request.param == "sqlite" else None)
+
+
 @pytest.fixture
-def contenedor(reloj):
-    return construir_contenedor(Configuracion(), reloj=reloj)
+def contenedor(reloj, persistencia):
+    contenedor = construir_contenedor(persistencia, reloj=reloj)
+    yield contenedor
+    contenedor.cerrar()
 
 
 @pytest.fixture

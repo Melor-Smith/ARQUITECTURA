@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 
 from src.adapters.inbound.http.controladores import comprobantes, inventario, libros
@@ -35,7 +38,13 @@ ETIQUETAS = [
 
 
 def crear_app(contenedor: Contenedor | None = None) -> FastAPI:
+    @asynccontextmanager
+    async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
+        yield
+        app.state.contenedor.cerrar()  # cierra la base de datos al apagar el servicio
+
     app = FastAPI(
+        lifespan=ciclo_de_vida,
         title="ABC Software Corp - Facturación electrónica UBL 2.1 e inventario",
         version=VERSION,
         description=DESCRIPCION,

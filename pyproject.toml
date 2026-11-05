@@ -12,6 +12,33 @@ filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",
 ]
 
+[tool.mypy]
+python_version = "3.10"
+files = ["src", "scripts"]
+exclude = ["src/adapters/outbound/ubl/generated/"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+# Clases generadas por xsdata desde los XSD oficiales: no se editan a mano.
+module = ["src.adapters.outbound.ubl.generated.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["signxml.*", "xsdata.*", "lxml.*", "yaml.*", "xlrd.*"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/adapters/outbound/ubl/generated/*", "src/main.py"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"

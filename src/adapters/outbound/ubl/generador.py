@@ -15,6 +15,7 @@ El XML se genera sin ``ext:UBLExtensions``: la firma la agrega el adaptador de f
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any
 
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
@@ -44,13 +45,14 @@ class GeneradorUblXsdata:
 
     def generar(self, comprobante: Comprobante) -> bytes:
         documento, raiz = self._documento(comprobante)
-        ns_map = {None: NAMESPACES[raiz], **{k: v for k, v in NAMESPACES.items() if k in ("cac", "cbc")}}
+        ns_map: dict[str | None, str] = {None: NAMESPACES[raiz]}
+        ns_map.update({k: v for k, v in NAMESPACES.items() if k in ("cac", "cbc")})
         return self._serializador.render(documento, ns_map=ns_map).encode("utf-8")
 
     # --- documento ---------------------------------------------------------------------
     def _documento(self, c: Comprobante):
         moneda = c.moneda.value
-        comunes = dict(
+        comunes: dict[str, Any] = dict(
             ublversion_id=cbc.UblversionId(value="2.1"),
             customization_id=cbc.CustomizationId(value="2.0", scheme_agency_name=_SUNAT),
             id=cbc.Id(value=c.serie_numero),

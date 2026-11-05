@@ -15,4 +15,4 @@ Cada atributo tiene una meta verificable y la evidencia que hoy la respalda. Si 
 | AC-09 | **Trazabilidad** | Cada dato normativo tiene su XPath, campo de contrato, libro PLE y prueba | `tests/integration/test_matriz.py` (64 XPath evaluados contra XML reales) |
 | AC-10 | **Recuperabilidad de la migración** | Reprocesar un lote no duplica movimientos; cada lote se concilia | `test_reprocesar_el_mismo_lote_es_seguro`; conciliación por producto |
 | AC-11 | **Portabilidad** | Windows (MSI) y Android (APK) | Diseño en el [ADR 0008](../../specs/adr/0008-distribucion-msi-y-apk.md); **pendiente de implementar** |
-| AC-12 | **Conservación** | XML y CDR disponibles durante el plazo legal | **Pendiente**: hoy la persistencia es en memoria; requiere el adaptador SQL del ADR 0004 |
+| AC-12 | **Conservación** | XML y CDR disponibles durante el plazo legal | **Cumplido con SQLite** (`ABC_BASE_DATOS`; volumen `/datos` en Docker): el XML firmado y el CDR sobreviven a reinicios (`test_los_datos_sobreviven_a_un_reinicio_y_el_correlativo_continua`). Para el plazo legal completo hace falta además una política de respaldo |

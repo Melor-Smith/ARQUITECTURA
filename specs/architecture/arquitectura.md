@@ -50,7 +50,7 @@ flowchart LR
     end
 
     subgraph OUT["Adaptadores de salida"]
-        A1["persistencia/memoria.py<br/>repositorios, secuencia atómica, UoW"]
+        A1["persistencia: memoria.py y sqlite.py<br/>mismos puertos; transacciones, secuencia atómica"]
         A2["ubl/generador.py (xsdata)<br/>ubl/validador.py (lxml + XSD)"]
         A3["firma/xmldsig.py (signxml)"]
         A4["ose/simulada.py"]
@@ -81,9 +81,9 @@ La raíz de composición [`src/bootstrap.py`](../../src/bootstrap.py) es el úni
 
 | Puerto (`application/puertos.py`) | Adaptador actual | Adaptador de producción (mismo puerto) |
 |---|---|---|
-| `RepositorioComprobantes`, `RepositorioKardex`, `RepositorioMigraciones`, `RepositorioProductos`, `RepositorioIdempotencia`, `RepositorioLotes` | `persistencia/memoria.py` | PostgreSQL (restricción `UNIQUE` por número) o SQLite en Android |
-| `SecuenciaCorrelativos` | `SecuenciaCorrelativosEnMemoria` (con bloqueo) | `UPDATE serie SET ultimo = ultimo + 1 … RETURNING ultimo` |
-| `UnidadDeTrabajo` | `RLock` | Transacción SQL |
+| `RepositorioComprobantes`, `RepositorioKardex`, `RepositorioMigraciones`, `RepositorioProductos`, `RepositorioIdempotencia`, `RepositorioLotes` | `persistencia/memoria.py` **y** `persistencia/sqlite.py` (se elige con `ABC_BASE_DATOS`; [ADR 0011](../adr/0011-persistencia-sqlite-como-segundo-adaptador.md)) | PostgreSQL con los mismos puertos y el mismo SQL |
+| `SecuenciaCorrelativos` | En memoria con bloqueo **y** SQLite: `INSERT … ON CONFLICT DO UPDATE … RETURNING` | Igual en PostgreSQL |
+| `UnidadDeTrabajo` | `RLock` en memoria **y** transacción SQLite con `SAVEPOINT` anidados | Transacción SQL |
 | `GeneradorUBL` | `GeneradorUblXsdata` | — (es definitivo) |
 | `ValidadorEsquemaUBL` | `ValidadorXsdLxml` | — |
 | `FirmaDigital` | `FirmaXmlDsig` con certificado autofirmado | `FirmaXmlDsig` con el `.pfx` del emisor |

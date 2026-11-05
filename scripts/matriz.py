@@ -111,6 +111,8 @@ class EsquemaUBL:
                 obligatorio = obligatorio and requerido
                 ruta.append(f"{paso} {'1' if requerido else '0..1'}")
                 break
+            if tipo is None:
+                raise ValueError(f"'{paso}': el elemento anterior no tiene un tipo complejo en el XSD (ruta {xpath})")
             prefijo, _, local = paso.partition(":")
             nombre = (PREFIJOS[prefijo], local)
             hijo = next((h for h in self.hijos.get(tipo, []) if h[0] == nombre), None)

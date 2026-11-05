@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  pruebas:
+  calidad:
+    name: Pruebas, tipos y cobertura (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,11 +19,41 @@ jobs:
           cache: pip
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
-      - name: Lint
+      - name: Lint (ruff)
         run: ruff check .
+      - name: Tipos (mypy)
+        run: mypy
       - name: Clases UBL al día con los XSD
         run: |
           xsdata generate specs/contracts/ubl-2.1/xsd/maindoc --package src.adapters.outbound.ubl.generated
           git diff --exit-code -- src/adapters/outbound/ubl/generated
-      - name: Pruebas (incluye contrato OpenAPI vs código y reglas de arquitectura)
-        run: pytest -q
+      - name: Pruebas con cobertura mínima del 90 % (contrato, arquitectura, PLE vs Anexo 2)
+        run: pytest -q --cov
+
+  seguridad:
+    name: Dependencias sin vulnerabilidades conocidas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pip-audit==2.9.0
+      - run: pip-audit -r requirements.txt
+
+  contenedor:
+    name: Imagen Docker y prueba de humo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir
+        run: docker build -t abc-facturacion .
+      - name: Levantar y emitir una factura
+        run: |
+          docker run -d --name api -p 8000:8000 abc-facturacion
+          for i in $(seq 1 30); do curl -sf localhost:8000/salud && break; sleep 1; done
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST localhost:8000/api/v1/comprobantes \
+            -H 'Authorization: Bearer dev-facturador' -H 'Content-Type: application/json' \
+            --data @specs/ejemplos/factura.json)
+          test "$codigo" = "201"
+          test "$(docker exec api whoami)" = "abc"

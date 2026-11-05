@@ -1,5 +1,7 @@
 # ABC Software Corp: facturación electrónica UBL 2.1 e inventario permanente
 
+[![CI](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml/badge.svg)](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml)
+
 API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
 
 - **Comprobantes electrónicos SUNAT:** factura (01), boleta (03), nota de crédito (07) y nota de débito (08), al contado o al crédito con cuotas.
@@ -17,16 +19,34 @@ API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
 | **[`docs/TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md)** | **Taller 2 (segundo parcial):** generación del XML desde `UBL-Invoice-2.1.xsd` en el lenguaje del dominio y sus pruebas unitarias |
 | **[`docs/CORRECCIONES.md`](docs/CORRECCIONES.md)** | Revisión del primer entregable (38/100): cada observación, su corrección y la prueba que la demuestra |
 
+## Calidad verificable
+
+Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.yml) en cada cambio, no de una afirmación:
+
+| Verificación | Resultado | Cómo comprobarlo |
+|---|---|---|
+| Pruebas automáticas | **599**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
+| Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
+| Tipado estático | **0 errores** en 59 archivos | `mypy` |
+| Estilo y errores comunes | **0 avisos** | `ruff check .` |
+| Vulnerabilidades en dependencias | **0 conocidas** | `pip-audit -r requirements.txt` |
+| Regla de dependencias hexagonal | Verificada por prueba | `tests/integration/test_arquitectura.py` |
+| Intercambio de adaptadores | Las pruebas de API corren contra **memoria y SQLite** con el mismo resultado | `tests/conftest.py` (fixture `persistencia`) |
+| Contrato OpenAPI = código | Verificado por prueba | `tests/acceptance/test_contrato.py` |
+| XML contra los XSD oficiales OASIS | Cada XML generado se valida antes y después de firmar | `tests/unit/generacion_xml/` |
+| TXT del PLE contra la fuente oficial | Estructura comparada con el Excel del Anexo 2; **12.1 validado por el programa PLE de SUNAT** | [`docs/evidencia-ple/`](docs/evidencia-ple/README.md) |
+| Imagen Docker | Se construye, levanta, emite una factura (201) y no corre como root | job `contenedor` de la CI |
+
 ## Entregables
 
 | # | Entregable | Dónde |
 |:-:|---|---|
 | 1 | Análisis del caso, normativa y casos de uso | [`docs/analisis/`](docs/analisis): [brechas y riesgos](docs/analisis/01-caso-brechas-y-riesgos.md) · [marco normativo y estudio del XSD](docs/analisis/02-marco-normativo.md) · [casos de uso](docs/analisis/03-casos-de-uso.md) · [atributos de calidad](docs/analisis/04-atributos-de-calidad.md) |
 | 2 | Modelo de dominio y DTOs | [`src/domain/`](src/domain) (sin dependencias externas) · [`specs/domain/modelo-dominio.md`](specs/domain/modelo-dominio.md) · DTO en [`esquemas.py`](src/adapters/inbound/http/esquemas.py) |
-| 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0010) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
+| 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0011) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
 | 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) (generado desde el código y verificado) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
 | 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**, columnas PLE 14.1 / 12.1 · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
-| 6 | Pruebas y evidencia | [`tests/`](tests) (490 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (599 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
 ## Arquitectura en una imagen
 
@@ -38,7 +58,7 @@ flowchart LR
         UC["casos de uso"] --> PORTS["puertos (Protocol)"]
     end
     UC --> DOM["domain<br/>Comprobante · FormaPago · Kardex · tributos · PLE<br/>(solo stdlib)"]
-    MEM["persistencia en memoria"] -.-> PORTS
+    MEM["persistencia: memoria o SQLite"] -.-> PORTS
     UBL["UBL: xsdata + lxml"] -.-> PORTS
     SIG["firma: signxml"] -.-> PORTS
     OSE["OSE (simulada)"] -.-> PORTS
@@ -50,10 +70,17 @@ src/
 ├── application/     casos de uso + puertos (typing.Protocol) + comandos
 ├── adapters/
 │   ├── inbound/     http/ (FastAPI: controladores, vistas, DTO, problem+json, seguridad) · cli.py · traduccion.py
-│   └── outbound/    persistencia, ubl (generador xsdata + generated/ + validador), firma (signxml), ose, reloj
+│   └── outbound/    persistencia (memoria y SQLite), ubl (generador xsdata + generated/ + validador), firma (signxml), ose, reloj
 ├── bootstrap.py     raíz de composición (único lugar que conoce las clases concretas)
 ├── config.py        configuración por variables de entorno
 └── main.py          app ASGI
+```
+
+## Probarlo en un minuto (Docker)
+
+```bash
+docker build -t abc-facturacion .
+docker run --rm -p 8000:8000 -v abc-datos:/datos abc-facturacion   # http://localhost:8000/docs  (token: dev-facturador)
 ```
 
 ## Instalación y ejecución (Python 3.10 o superior)
@@ -63,9 +90,9 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest -q                           # 490 pruebas
+pytest -q --cov                     # 599 pruebas + cobertura
 pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
-ruff check .
+ruff check . && mypy                # estilo y tipos
 
 uvicorn src.main:app --reload       # http://localhost:8000/docs
 
@@ -89,6 +116,7 @@ Tokens de **desarrollo**; en producción se definen con `ABC_API_TOKENS`:
 | `ABC_PLAZO_ENVIO_DIAS` | `3` | Antigüedad máxima de la fecha de emisión |
 | `ABC_API_TOKENS` | tokens `dev-*` | JSON `{"token": ["alcance", ...]}` |
 | `ABC_CERTIFICADO_PFX` / `ABC_CERTIFICADO_CONTRASENA` | autofirmado en memoria | Certificado digital del emisor (nunca se versiona) |
+| `ABC_BASE_DATOS` | sin valor: memoria · Docker: `/datos/abc.db` | Archivo SQLite; los datos sobreviven a reinicios ([ADR 0011](specs/adr/0011-persistencia-sqlite-como-segundo-adaptador.md)) |
 
 ## Endpoints
 
@@ -122,7 +150,7 @@ Hay una prueba por cada artefacto generado que falla si quedó desactualizado.
 ## Límites conocidos
 
 - La OSE es **simulada**: verifica la firma y el XSD y devuelve un CDR, pero no aplica todas las reglas de validación de SUNAT.
-- La persistencia es en memoria.
+- La persistencia es en memoria o SQLite (un servidor). Para varios servidores, los mismos puertos sobre PostgreSQL.
 - La estructura de los TXT del PLE se verifica contra el Excel oficial del Anexo 2 ([ADR 0010](specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)). Falta cargarlos en el programa PLE de escritorio, que además valida contra el padrón RUC.
 
-Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009 y 0010.
+Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009, 0010 y 0011.

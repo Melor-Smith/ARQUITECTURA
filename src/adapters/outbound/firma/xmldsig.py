@@ -84,7 +84,7 @@ class FirmaXmlDsig:
         raiz.insert(0, extensiones)
 
         firmado = self._firmador.sign(raiz, key=self._certificado.clave_privada,
-                                      cert=self._certificado.certificado_pem)
+                                      cert=self._certificado.certificado_pem.decode("ascii"))
         firma = firmado.find(f".//{{{_DS}}}Signature")
         # El Id no forma parte de lo firmado (la transformación enveloped excluye ds:Signature).
         firma.set("Id", ID_FIRMA)

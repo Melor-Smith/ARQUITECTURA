@@ -8,6 +8,8 @@ La vista NO es el contrato OpenAPI: el contrato describe estas representaciones.
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 from fastapi.responses import Response
 
 from src.adapters.inbound.http.esquemas import (
@@ -76,7 +78,7 @@ def comprobante_json(c: Comprobante) -> ComprobanteSalida:
         ),
         monto_en_letras=c.monto_en_letras,
         forma_pago=FormaPagoSalida(
-            tipo=c.forma_pago.tipo.name,
+            tipo=cast(Literal["CONTADO", "CREDITO"], c.forma_pago.tipo.name),
             monto_pendiente=c.forma_pago.monto_pendiente,
             cuotas=[CuotaSalida(numero=n, monto=q.monto, fecha_vencimiento=q.fecha_vencimiento)
                     for n, q in enumerate(c.forma_pago.cuotas, start=1)],

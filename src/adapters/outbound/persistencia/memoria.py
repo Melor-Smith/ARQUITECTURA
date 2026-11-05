@@ -3,10 +3,8 @@
 Implementan los puertos de ``src/application/puertos.py``. Cada instancia tiene su
 propio estado: no hay variables globales, así que cada prueba arma un contenedor limpio.
 
-Para producción se reemplazan por adaptadores SQL sin tocar el dominio ni los casos de
-uso. Ver ADR 0004: el correlativo pasa a ser ``UPDATE serie SET ultimo = ultimo + 1
-... RETURNING ultimo`` y el agregado se guarda con una restricción UNIQUE
-(ruc, tipo, serie, correlativo).
+Implementan los mismos puertos que ``sqlite.py`` (ADR 0011), el adaptador con datos
+duraderos y transacciones reales; las pruebas de aceptación corren contra los dos.
 """
 
 from __future__ import annotations

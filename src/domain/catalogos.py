@@ -18,7 +18,10 @@ from enum import Enum
 class _EnumConDescripcion(str, Enum):
     """Enum cuyo valor es el código oficial y que además lleva una descripción."""
 
-    def __new__(cls, codigo: str, descripcion: str):
+    _value_: str
+    descripcion: str
+
+    def __new__(cls, codigo: str, descripcion: str = "") -> _EnumConDescripcion:
         obj = str.__new__(cls, codigo)
         obj._value_ = codigo
         obj.descripcion = descripcion
