@@ -62,7 +62,7 @@ Fuentes: RS 097-2012/SUNAT y anexos (catálogos), RS 193-2020/SUNAT (forma de pa
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | T30 | Número de línea | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:ID` | 1..1 |  | `(orden de lineas[])` | — | — | — | — | `test_una_invoice_line_por_cada_linea_del_dominio_numerada_desde_1` |
 | T31 | Cantidad | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` | 0..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].cantidad` | `ingreso / salida × factor` | — | 17 / 18 (salida en negativo) | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
-| T32 | Unidad de medida | Cat. 03 (UN/ECE Rec. 20); el 12.1 usa el mismo código | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode` | atributo opcional | ⚠ SUNAT exige; XSD opcional | `lineas[].unidad_medida` | — | — | 16 (tabla 6) | `ERR-SUNAT-CAT03` | `test_unidad_de_medida_catalogo_03_por_linea` |
+| T32 | Unidad de medida | Cat. 03 (UN/ECE Rec. 20); el 12.1 usa el mismo código | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode` | atributo opcional | ⚠ SUNAT exige; XSD opcional | `lineas[].unidad_medida` | — | — | 16 (UN/ECE) | `ERR-SUNAT-CAT03` | `test_unidad_de_medida_catalogo_03_por_linea` |
 | T33 | Valor de venta de la línea | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:LineExtensionAmount` | 1..1 |  | `lineas[].valor_venta (respuesta)` | — | — | — | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
 | T34 | Precio unitario con impuestos | Cat. 16 (tipo 01) | O | `/Invoice/cac:InvoiceLine/cac:PricingReference/cac:AlternativeConditionPrice/cbc:PriceAmount` | 1..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].precio_unitario (respuesta)` | — | — | — | — | `test_precio_unitario_con_impuestos_catalogo_16` |
 | T35 | Valor unitario sin impuestos | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` | 1..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].valor_unitario` | — | — | — | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
@@ -137,9 +137,11 @@ Fuentes: RS 097-2012/SUNAT y anexos (catálogos), RS 193-2020/SUNAT (forma de pa
 
 <!-- matriz:fin -->
 
-## Tabla de equivalencias: Catálogo 03 (UNECE) → Tabla 6 (PLE)
+## Unidades de medida: Catálogo 03 (UNECE) y tabla 6 numérica anterior
 
-El XML usa UNECE; los libros 12.1 y 13.1 usan la tabla 6. La equivalencia está en `UnidadMedida.unidad_ple` ([`catalogos.py`](../../src/domain/catalogos.py)).
+**El campo 16 del 12.1 lleva el código UN/ECE, el mismo del XML** (`KGM`, `NIU`…). Así lo exigió el programa PLE 5.2.0.7 de SUNAT: rechazó los códigos numéricos de la tabla 6 con *"El valor no se encontró en la tabla de parámetros"* y aceptó los UN/ECE ([evidencia y constancia](../../docs/evidencia-ple/README.md)).
+
+La equivalencia con la tabla 6 numérica se conserva **solo como referencia**, porque la pidió la revisión del primer entregable (observación 10c). Está en `UnidadMedida.unidad_ple` ([`catalogos.py`](../../src/domain/catalogos.py)):
 
 | Catálogo 03 (UNECE) | Descripción | Tabla 6 PLE | Descripción |
 |---|---|---|---|

@@ -62,7 +62,7 @@ Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorr
 
 | Observación | Corrección |
 |---|---|
-| Dos ADR con número 0001. | ADR 0001 a 0008, uno por decisión, en [`specs/adr/`](../specs/adr). |
+| Dos ADR con número 0001. | Un número por decisión (hoy ADR 0001 a 0011), en [`specs/adr/`](../specs/adr). |
 | Dos especificaciones 001 con la matriz duplicada. | Una sola especificación BDD ([`specs/features/001-facturacion-e-inventario.md`](../specs/features/001-facturacion-e-inventario.md)) y una sola matriz ([`specs/traceability/matriz-trazabilidad.md`](../specs/traceability/matriz-trazabilidad.md)). |
 | Plantilla XML en `specs/templates`. | Eliminada. En su lugar, [`docs/ejemplos/`](ejemplos) contiene **salidas reales** generadas por el sistema (`python scripts/generar_ejemplos.py`). |
 
