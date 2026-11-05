@@ -3,6 +3,9 @@ name = "abc-facturacion-ubl"
 version = "2.0.0"
 description = "Facturación electrónica UBL 2.1 (SUNAT), inventario permanente y PLE 14.1/12.1 para ABC Software Corp"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE.md"]
+authors = [{ name = "Melor Smith" }]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

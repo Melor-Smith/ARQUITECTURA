@@ -1,6 +1,6 @@
 # ABC Software Corp: facturación electrónica UBL 2.1 e inventario permanente
 
-[![CI](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml/badge.svg)](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml)
+[![CI](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml/badge.svg)](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml) [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 
 API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
 
@@ -155,3 +155,7 @@ Hay una prueba por cada artefacto generado que falla si quedó desactualizado.
 - La estructura de los TXT del PLE se verifica contra el Excel oficial del Anexo 2 ([ADR 0010](specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)). Falta cargarlos en el programa PLE de escritorio, que además valida contra el padrón RUC.
 
 Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009, 0010 y 0011.
+
+## Licencia
+
+Código bajo [licencia MIT](LICENSE) © 2026 Melor Smith. Los XSD de OASIS y los documentos de SUNAT incluidos conservan sus propias condiciones: ver [`NOTICE.md`](NOTICE.md).
