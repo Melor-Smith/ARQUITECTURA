@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/linea.schema.json",
+  "title": "Línea del comprobante (entrada)",
+  "description": "Una línea por bien o servicio (cac:InvoiceLine, cac:CreditNoteLine o cac:DebitNoteLine). El cliente NO envía IGV, ISC, ICBPER ni totales: los calcula el servidor con Decimal (ADR 0003). Un campo no declarado aquí (p. ej. igv_item) es HTTP 400 ERR-CONTRATO-CAMPO-NO-PERMITIDO.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["descripcion", "unidad_medida", "cantidad", "valor_unitario"],
+  "properties": {
+    "codigo_producto": {
+      "anyOf": [{ "$ref": "tipos.schema.json#/$defs/CodigoProducto" }, { "type": "null" }],
+      "description": "cac:Item/cac:SellersItemIdentification/cbc:ID. Si se envía, debe existir en el catálogo y la venta mueve el Kardex (campos 5 y 7 del PLE 12.1). Matriz T37."
+    },
+    "descripcion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "cac:Item/cbc:Description; campo 15 del PLE 12.1. Matriz T36."
+    },
+    "unidad_medida": {
+      "$ref": "catalogos.schema.json#/$defs/UnidadMedida",
+      "description": "Catálogo 03, atributo unitCode de la cantidad. Matriz T32. Fuera del catálogo: 400 ERR-SUNAT-CAT03."
+    },
+    "cantidad": {
+      "$ref": "tipos.schema.json#/$defs/Cantidad",
+      "description": "cbc:InvoicedQuantity (CreditedQuantity / DebitedQuantity en las notas). Matriz T31, T38 y T39."
+    },
+    "valor_unitario": {
+      "$ref": "tipos.schema.json#/$defs/Importe",
+      "description": "Valor unitario SIN impuestos: cac:Price/cbc:PriceAmount. Matriz T35."
+    },
+    "afectacion_igv": {
+      "$ref": "catalogos.schema.json#/$defs/AfectacionIGV",
+      "default": "10",
+      "description": "Catálogo 07. Define el tributo (1000, 9995, 9997 o 9998) y la categoría UN/ECE 5305. Matriz T40 a T42."
+    },
+    "isc": {
+      "anyOf": [{ "$ref": "#/$defs/Isc" }, { "type": "null" }],
+      "description": "Solo si el bien está afecto al ISC (bebidas alcohólicas, gaseosas...). Matriz T43 a T46."
+    },
+    "aplica_icbper": {
+      "type": "boolean",
+      "default": false,
+      "description": "True si la línea son bolsas plásticas: ICBPER por unidad según el año de emisión (Ley 30884). Matriz T48 y T49."
+    }
+  },
+  "$defs": {
+    "Isc": {
+      "title": "Configuración del ISC",
+      "description": "Sistema de cálculo según el Catálogo 08. El monto del ISC lo calcula el servidor (regla SUNAT 3108: base × tasa = monto). Que falte el dato que exige el sistema elegido (p. ej. monto_fijo en el 02) es regla de negocio: 422 ERR-SUNAT-CAT08.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sistema"],
+      "properties": {
+        "sistema": {
+          "$ref": "catalogos.schema.json#/$defs/SistemaISC",
+          "description": "Catálogo 08, cbc:TierRange. Matriz T43. Fuera del catálogo: 400 ERR-SUNAT-CAT08."
+        },
+        "tasa": {
+          "anyOf": [{ "$ref": "tipos.schema.json#/$defs/Tasa" }, { "type": "null" }],
+          "description": "Sistemas 01 y 03 (cbc:Percent). Ej.: 0.20. Matriz T44."
+        },
+        "monto_fijo": {
+          "anyOf": [{ "$ref": "tipos.schema.json#/$defs/DecimalPositivo4" }, { "type": "null" }],
+          "description": "Sistema 02, por unidad (cbc:PerUnitAmount). Matriz T45."
+        },
+        "precio_venta_publico": {
+          "anyOf": [{ "$ref": "tipos.schema.json#/$defs/DecimalPositivo4" }, { "type": "null" }],
+          "description": "Sistema 03, precio de venta sugerido al público por unidad."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/problema.schema.json",
+  "title": "Problema (RFC 9457, application/problem+json)",
+  "description": "Toda respuesta 4xx o 5xx usa este cuerpo (ADR 0005). 400: no cumple el contrato; 422: cumple el contrato pero viola una regla SUNAT o de negocio; 409: conflicto. El cliente decide por el campo codigo, que es estable; los textos pueden cambiar.",
+  "type": "object",
+  "required": ["type", "title", "status", "detail", "codigo"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "URI que identifica la clase de problema, p. ej. urn:abc:problema:regla-negocio (RFC 9457, sección 3.1.1)."
+    },
+    "title": { "type": "string", "description": "Resumen corto de la clase de problema." },
+    "status": { "type": "integer", "description": "Código HTTP, repetido en el cuerpo." },
+    "detail": { "type": "string", "description": "Explicación de esta ocurrencia concreta." },
+    "instance": { "type": ["string", "null"], "description": "Ruta de la solicitud que falló." },
+    "codigo": {
+      "type": "string",
+      "description": "Código estable para el cliente: ERR-CONTRATO-* (400), ERR-SUNAT-*, ERR-LEGADO-*, ERR-KARDEX-*, ERR-PLE-* (422). La columna error de la matriz de trazabilidad dice qué regla lo produce."
+    },
+    "errores": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ErrorCampo" },
+      "description": "Un elemento por campo que no cumple el contrato (solo en 400)."
+    }
+  },
+  "$defs": {
+    "ErrorCampo": {
+      "type": "object",
+      "required": ["campo", "mensaje"],
+      "properties": {
+        "campo": { "type": "string", "description": "Ruta del campo, p. ej. lineas.0.unidad_medida." },
+        "mensaje": { "type": "string", "description": "Qué regla del contrato no cumple." }
+      }
+    }
+  }
+}

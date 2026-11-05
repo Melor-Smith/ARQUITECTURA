@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/ficha-legado.schema.json",
+  "title": "Ficha del sistema antiguo (entrada de POST /api/v1/inventario/migraciones)",
+  "description": "Los cinco campos del sistema antiguo (fecha, ingreso, salida, producto, nro_documento) tal como existen, más datos opcionales de homologación. Se convierte en un movimiento del inventario permanente (RS 234-2006) y en una fila del PLE 12.1. El formato es contrato (400); la fecha imposible, la ficha sin movimiento o la glosa sin homologar son reglas de negocio (422).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fecha", "ingreso", "salida", "producto", "nro_documento"],
+  "properties": {
+    "fecha": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 20,
+      "description": "Tal como está en el sistema antiguo: AAAA-MM-DD, DD/MM/AAAA, DD-MM-AAAA, DD.MM.AAAA o DD/MM/AA. Campo 10 del PLE 12.1. Matriz T15. Fecha imposible: 422 ERR-LEGADO-FECHA."
+    },
+    "ingreso": {
+      "$ref": "tipos.schema.json#/$defs/CantidadLegado",
+      "description": "Unidades que entraron (campo 17 del PLE 12.1 tras aplicar el factor). Matriz T31. Ingreso y salida en cero: 422 ERR-LEGADO-SIN-MOVIMIENTO."
+    },
+    "salida": {
+      "$ref": "tipos.schema.json#/$defs/CantidadLegado",
+      "description": "Unidades que salieron (campo 18 del PLE 12.1, en negativo). Matriz T31."
+    },
+    "producto": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Glosa libre del sistema antiguo; se homologa al catálogo (campo 15 del PLE 12.1). Matriz T36. Sin homologación ni codigo_producto: 422 ERR-LEGADO-NO-HOMOLOGADO."
+    },
+    "nro_documento": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "Documento que sustenta el movimiento (tabla 10 del PLE; campos 11 a 13 del 12.1). Se clasifica como comprobante, guía, documento interno o sin documento (ADR 0009). Matriz T14."
+    },
+    "codigo_producto": {
+      "anyOf": [{ "$ref": "tipos.schema.json#/$defs/CodigoProducto" }, { "type": "null" }],
+      "description": "Solo si la glosa no está en la tabla de homologación. Matriz T37."
+    },
+    "factor_conversion": {
+      "anyOf": [{ "$ref": "tipos.schema.json#/$defs/DecimalPositivo4" }, { "type": "null" }],
+      "description": "Unidades del catálogo por cada unidad de la glosa (p. ej. 50 kg por saco)."
+    },
+    "tipo_operacion": {
+      "anyOf": [{ "$ref": "catalogos.schema.json#/$defs/TipoOperacionInventario" }, { "type": "null" }],
+      "description": "Tabla 12 del PLE (campo 14 del 12.1). Por defecto 01 (venta) para salidas y 02 (compra) para ingresos. Matriz T91."
+    },
+    "establecimiento": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}$",
+      "description": "Código de establecimiento anexo SUNAT (campo 4 del PLE 12.1). Matriz T24."
+    }
+  }
+}

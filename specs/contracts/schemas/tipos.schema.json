@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/tipos.schema.json",
+  "title": "Tipos básicos del contrato",
+  "description": "Importes y cantidades viajan como número o como cadena decimal: la cadena evita perder precisión con float. El servidor los trata como Decimal (ADR 0003). El patrón aplica a la cadena; los límites numéricos, al número.",
+  "$defs": {
+    "Importe": {
+      "type": ["number", "string"],
+      "exclusiveMinimum": 0,
+      "pattern": "^(?=.*[1-9])[0-9]{1,12}(\\.[0-9]{1,10})?$",
+      "description": "Importe mayor que cero, hasta 12 enteros y 10 decimales (el redondeo a 2 decimales lo hace el servidor al calcular)."
+    },
+    "Cantidad": {
+      "type": ["number", "string"],
+      "exclusiveMinimum": 0,
+      "pattern": "^(?=.*[1-9])[0-9]{1,12}(\\.[0-9]{1,10})?$",
+      "description": "Cantidad mayor que cero, hasta 10 decimales (cbc:InvoicedQuantity admite decimales). Matriz T31."
+    },
+    "DecimalPositivo4": {
+      "type": ["number", "string"],
+      "exclusiveMinimum": 0,
+      "pattern": "^(?=.*[1-9])[0-9]{1,14}(\\.[0-9]{1,4})?$",
+      "description": "Decimal mayor que cero con hasta 4 decimales."
+    },
+    "Tasa": {
+      "type": ["number", "string"],
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "pattern": "^(0?\\.(?=[0-9]*[1-9])[0-9]{1,4}|1(\\.0{1,4})?)$",
+      "description": "Fracción entre 0 (excluido) y 1, con hasta 4 decimales. Ej.: 0.20 es 20 %."
+    },
+    "TipoCambio": {
+      "type": ["number", "string"],
+      "exclusiveMinimum": 0,
+      "pattern": "^(?=.*[1-9])[0-9]{1,5}(\\.[0-9]{1,3})?$",
+      "description": "Tipo de cambio con hasta 3 decimales (campo 27 del formato 14.1). Matriz T11."
+    },
+    "CantidadLegado": {
+      "type": ["number", "string"],
+      "minimum": 0,
+      "pattern": "^[0-9]{1,18}(\\.[0-9]{1,4})?$",
+      "description": "Cantidad del sistema antiguo: cero o positiva, hasta 4 decimales."
+    },
+    "CodigoProducto": {
+      "type": "string",
+      "maxLength": 30,
+      "pattern": "^[A-Z0-9-]+$",
+      "description": "Código del catálogo propio de productos (tabla 13 del PLE). Matriz T37. Error ERR-PRODUCTO-NO-EXISTE si no existe."
+    }
+  }
+}

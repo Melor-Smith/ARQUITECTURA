@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/comprobante-emision.schema.json",
+  "title": "Emisión de comprobante (entrada de POST /api/v1/comprobantes)",
+  "description": "Unión de factura (01), boleta (03), nota de crédito (07) y nota de débito (08); tipo_comprobante (Catálogo 01) es el discriminador. El cliente NO envía correlativo, impuestos ni totales: el servidor asigna el correlativo de forma atómica (ADR 0004) y calcula los tributos (ADR 0003). No cumplir este esquema es HTTP 400; cumplirlo y violar una regla SUNAT (serie de otro tipo, RUC inválido, boleta anónima > S/ 700...) es HTTP 422.",
+  "oneOf": [
+    { "$ref": "#/$defs/Factura" },
+    { "$ref": "#/$defs/Boleta" },
+    { "$ref": "#/$defs/NotaCredito" },
+    { "$ref": "#/$defs/NotaDebito" }
+  ],
+  "$defs": {
+    "Serie": {
+      "type": "string",
+      "pattern": "^[FB][A-Z0-9]{3}$",
+      "description": "Serie de 4 caracteres (F... factura y sus notas, B... boleta y sus notas). Con el correlativo forma cbc:ID; campos 7 y 8 del PLE 14.1. Matriz T03. Una serie de otro tipo es 422 ERR-SUNAT-SERIE."
+    },
+    "FechaEmision": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "cbc:IssueDate y campo 4 del PLE 14.1. Por defecto, la fecha del servidor (UTC-5). Fuera del plazo de envío: 422 ERR-SUNAT-FECHA. Matriz T04."
+    },
+    "TipoCambio": {
+      "anyOf": [{ "$ref": "tipos.schema.json#/$defs/TipoCambio" }, { "type": "null" }],
+      "description": "Obligatorio si la moneda es USD (si falta: 422 ERR-SUNAT-COMPROBANTE). Campo 27 del PLE 14.1. Matriz T11."
+    },
+    "Lineas": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": { "$ref": "linea.schema.json" },
+      "description": "Al menos una línea; se numeran desde 1 en el orden recibido (cbc:ID de cada línea). Matriz T30."
+    },
+    "DocumentosLegado": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "type": "string", "minLength": 1, "maxLength": 40 },
+      "description": "Vales del sistema antiguo ya migrados que esta venta factura: cac:AdditionalDocumentReference con Catálogo 12 tipo 99. Un vale no migrado es 422 ERR-LEGADO-NO-MIGRADO. Matriz T12 y T13."
+    },
+    "Sustento": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 250,
+      "description": "cac:DiscrepancyResponse/cbc:Description. Matriz T73."
+    },
+    "Cliente": {
+      "title": "Adquiriente o usuario",
+      "description": "cac:AccountingCustomerParty. La factura exige RUC con dígito verificador módulo 11 (si no: 422 ERR-SUNAT-RUC); la boleta admite DNI o 'varios' hasta S/ 700.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_documento", "numero_documento", "nombre"],
+      "properties": {
+        "tipo_documento": {
+          "$ref": "catalogos.schema.json#/$defs/TipoDocumentoIdentidad",
+          "description": "Catálogo 06, atributo schemeID; campo 10 del PLE 14.1. Matriz T26."
+        },
+        "numero_documento": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 15,
+          "description": "RUC (11 dígitos, módulo 11), DNI (8 dígitos) u otro documento; campo 11 del PLE 14.1. Matriz T27."
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "cbc:RegistrationName; campo 12 del PLE 14.1. Matriz T28."
+        },
+        "direccion": {
+          "type": ["string", "null"],
+          "maxLength": 200,
+          "description": "Dirección del adquiriente (opcional)."
+        }
+      }
+    },
+    "Referencia": {
+      "title": "Comprobante que la nota modifica",
+      "description": "cac:BillingReference/cac:InvoiceDocumentReference; campos 29 a 31 del PLE 14.1. Si no existe: 422 ERR-REFERENCIA-NO-EXISTE.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_comprobante", "serie_numero"],
+      "properties": {
+        "tipo_comprobante": {
+          "type": "string",
+          "enum": ["01", "03"],
+          "description": "Catálogo 01 del comprobante modificado (cbc:DocumentTypeCode). Matriz T71."
+        },
+        "serie_numero": {
+          "type": "string",
+          "pattern": "^[FB][A-Z0-9]{3}-[0-9]{1,8}$",
+          "description": "cbc:ID del comprobante modificado, p. ej. F001-1. Matriz T70."
+        }
+      }
+    },
+    "Factura": {
+      "title": "Factura (Catálogo 01: 01)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_comprobante", "serie", "cliente", "lineas"],
+      "properties": {
+        "tipo_comprobante": { "type": "string", "const": "01", "description": "Catálogo 01: factura (cbc:InvoiceTypeCode; campo 6 del PLE 14.1). Matriz T06." },
+        "serie": { "$ref": "#/$defs/Serie" },
+        "fecha_emision": { "$ref": "#/$defs/FechaEmision" },
+        "moneda": { "$ref": "catalogos.schema.json#/$defs/Moneda", "default": "PEN", "description": "cbc:DocumentCurrencyCode y currencyID de cada importe. Matriz T09." },
+        "tipo_cambio": { "$ref": "#/$defs/TipoCambio" },
+        "cliente": { "$ref": "#/$defs/Cliente" },
+        "lineas": { "$ref": "#/$defs/Lineas" },
+        "forma_pago": { "$ref": "forma-pago.schema.json", "description": "Contado por defecto. Solo las facturas la informan (RS 193-2020). Matriz T64." },
+        "documentos_legado": { "$ref": "#/$defs/DocumentosLegado" }
+      }
+    },
+    "Boleta": {
+      "title": "Boleta de venta (Catálogo 01: 03)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_comprobante", "serie", "cliente", "lineas"],
+      "properties": {
+        "tipo_comprobante": { "type": "string", "const": "03", "description": "Catálogo 01: boleta de venta. Matriz T06." },
+        "serie": { "$ref": "#/$defs/Serie" },
+        "fecha_emision": { "$ref": "#/$defs/FechaEmision" },
+        "moneda": { "$ref": "catalogos.schema.json#/$defs/Moneda", "default": "PEN", "description": "Matriz T09." },
+        "tipo_cambio": { "$ref": "#/$defs/TipoCambio" },
+        "cliente": { "$ref": "#/$defs/Cliente" },
+        "lineas": { "$ref": "#/$defs/Lineas" },
+        "documentos_legado": { "$ref": "#/$defs/DocumentosLegado" }
+      }
+    },
+    "NotaCredito": {
+      "title": "Nota de crédito (Catálogo 01: 07)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_comprobante", "serie", "cliente", "lineas", "referencia", "motivo", "sustento"],
+      "properties": {
+        "tipo_comprobante": { "type": "string", "const": "07", "description": "Catálogo 01: nota de crédito (raíz UBL CreditNote). Matriz T06." },
+        "serie": { "$ref": "#/$defs/Serie" },
+        "fecha_emision": { "$ref": "#/$defs/FechaEmision" },
+        "moneda": { "$ref": "catalogos.schema.json#/$defs/Moneda", "default": "PEN", "description": "Matriz T09." },
+        "tipo_cambio": { "$ref": "#/$defs/TipoCambio" },
+        "cliente": { "$ref": "#/$defs/Cliente" },
+        "lineas": { "$ref": "#/$defs/Lineas" },
+        "referencia": { "$ref": "#/$defs/Referencia" },
+        "motivo": { "$ref": "catalogos.schema.json#/$defs/MotivoNotaCredito" },
+        "sustento": { "$ref": "#/$defs/Sustento" }
+      }
+    },
+    "NotaDebito": {
+      "title": "Nota de débito (Catálogo 01: 08)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tipo_comprobante", "serie", "cliente", "lineas", "referencia", "motivo", "sustento"],
+      "properties": {
+        "tipo_comprobante": { "type": "string", "const": "08", "description": "Catálogo 01: nota de débito (raíz UBL DebitNote). Matriz T06." },
+        "serie": { "$ref": "#/$defs/Serie" },
+        "fecha_emision": { "$ref": "#/$defs/FechaEmision" },
+        "moneda": { "$ref": "catalogos.schema.json#/$defs/Moneda", "default": "PEN", "description": "Matriz T09." },
+        "tipo_cambio": { "$ref": "#/$defs/TipoCambio" },
+        "cliente": { "$ref": "#/$defs/Cliente" },
+        "lineas": { "$ref": "#/$defs/Lineas" },
+        "referencia": { "$ref": "#/$defs/Referencia" },
+        "motivo": { "$ref": "catalogos.schema.json#/$defs/MotivoNotaDebito" },
+        "sustento": { "$ref": "#/$defs/Sustento" }
+      }
+    }
+  }
+}

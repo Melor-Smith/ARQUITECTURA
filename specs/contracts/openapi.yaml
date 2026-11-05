@@ -1,14 +1,24 @@
-# GENERADO desde el código con scripts/exportar_openapi.py. No editar a mano.
+# CONTRATO DE LA API DE ABC SOFTWARE CORP. Spec-first: ADR 0013.
+#
+# Este archivo y los JSON Schemas de schemas/ SE ESCRIBEN A MANO y SE CAMBIAN PRIMERO.
+# El código (src/adapters/inbound/http) los implementa, no al revés:
+#   * tests/acceptance/test_contrato.py falla si el código no implementa exactamente este contrato
+#     (rutas, códigos HTTP, campos, obligatorios, catálogos, patrones y límites);
+#   * python scripts/exportar_openapi.py muestra las diferencias entre este contrato y el código.
+# Las operaciones y esquemas con x-estado: planificado están especificados y aún no implementados.
 openapi: 3.1.0
 info:
   title: ABC Software Corp - Facturación electrónica UBL 2.1 e inventario
-  description: "\nAPI de facturación electrónica UBL 2.1 (SUNAT) e inventario de **ABC Software Corp**.\n\n* Comprobantes:\
-    \ factura (01), boleta (03), nota de crédito (07) y nota de débito (08).\n* El servidor calcula IGV, ISC (Catálogo 08)\
-    \ e ICBPER y asigna el correlativo; el cliente no envía montos de\n  impuestos.\n* XML generado desde clases del XSD OASIS\
-    \ UBL 2.1, validado y firmado con XMLDSig.\n* Migración de fichas del sistema antiguo al inventario permanente y libros\
-    \ electrónicos PLE 14.1 y 12.1.\n* Errores en `application/problem+json` (RFC 9457): 400 contrato, 422 regla de negocio,\
-    \ 409 conflicto.\n\nEste documento se genera desde el código; `specs/contracts/openapi.yaml` es su copia versionada y\
-    \ una prueba\nfalla si ambos divergen.\n"
+  description: |
+    API de facturación electrónica UBL 2.1 (SUNAT) e inventario de **ABC Software Corp**.
+
+    * Comprobantes: factura (01), boleta (03), nota de crédito (07) y nota de débito (08).
+    * El servidor calcula IGV, ISC (Catálogo 08) e ICBPER y asigna el correlativo; el cliente no envía montos de impuestos.
+    * XML generado desde clases del XSD OASIS UBL 2.1, validado, firmado con XMLDSig y enviado a SUNAT.
+    * Migración de fichas del sistema antiguo al inventario permanente y libros electrónicos PLE 14.1 y 12.1.
+    * Errores en `application/problem+json` (RFC 9457): 400 contrato, 422 regla de negocio, 409 conflicto.
+
+    **Contrato escrito primero (spec-first, ADR 0013).** Los cuerpos de entrada y el error están en `specs/contracts/schemas/*.schema.json` (JSON Schema 2020-12). Las operaciones con `x-estado: planificado` (baja y resumen diario, ADR 0014) están especificadas y aún no implementadas.
   version: 2.0.0
 paths:
   /api/v1/comprobantes:
@@ -16,16 +26,12 @@ paths:
       tags:
       - Comprobantes
       summary: Emite una factura, boleta, nota de crédito o nota de débito
-      description: 'Valida las reglas SUNAT, calcula IGV, ISC (Catálogo 08) e ICBPER con Decimal, asigna el correlativo de
-        forma atómica, genera el XML UBL 2.1 desde clases del XSD, lo valida, lo firma (XMLDSig) y lo envía a la OSE. El cliente
-        NO envía impuestos, totales ni correlativo.
-
+      description: |-
+        Valida las reglas SUNAT, calcula IGV, ISC (Catálogo 08) e ICBPER con Decimal, asigna el correlativo de forma atómica, genera el XML UBL 2.1 desde clases del XSD, lo valida, lo firma (XMLDSig) y lo envía a la OSE. El cliente NO envía impuestos, totales ni correlativo.
 
         * **201**: la OSE devolvió CDR; el estado (`ACEPTADO`, `ACEPTADO_CON_OBSERVACIONES` o `RECHAZADO`) sale de ese CDR.
-
         * **202**: comprobante firmado y registrado, pero la OSE no respondió (`PENDIENTE_ENVIO`). Reintente con `POST .../envios`.
-
-        * **200**: repetición idempotente (misma `Idempotency-Key` y mismo contenido).'
+        * **200**: repetición idempotente (misma `Idempotency-Key` y mismo contenido).
       operationId: emitir_comprobante_api_v1_comprobantes_post
       security:
       - HTTPBearer: []
@@ -910,75 +916,268 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Salud'
+  /api/v1/comprobantes/{tipo_comprobante}/{serie_numero}/bajas:
+    post:
+      x-estado: planificado
+      tags:
+      - Comprobantes
+      summary: Comunica a SUNAT la baja de una factura aceptada (PLANIFICADO, ADR 0014)
+      description: |-
+        Arma el VoidedDocuments (RA-AAAAMMDD-n), lo firma y lo envía con `sendSummary`. SUNAT responde con un ticket: el CDR se obtiene después con `getStatus`, por eso la respuesta es **202**.
+
+        * **409**: el comprobante no está ACEPTADO o ya tiene una baja en curso.
+        * **422** `ERR-SUNAT-BAJA-PLAZO`: venció el plazo de la comunicación de baja.
+        * **422** `ERR-SUNAT-BAJA-BOLETA`: las boletas se anulan en el resumen diario.
+
+        Alcance requerido: `comprobantes:emitir`.
+      operationId: comunicar_baja
+      security: &id001
+      - HTTPBearer: []
+      parameters:
+      - name: tipo_comprobante
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - '01'
+          - '07'
+          - 08
+        description: 'Catálogo 01: factura o nota que la modifica (las boletas se anulan en el resumen diario).'
+      - name: serie_numero
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^F[A-Z0-9]{3}-[0-9]{1,8}$
+          examples:
+          - F001-2
+        description: cbc:ID del comprobante que se da de baja.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BajaEntrada'
+            examples:
+              error_en_el_ruc:
+                summary: Error en el RUC del adquiriente
+                value:
+                  motivo: Error en el RUC del adquiriente
+      responses:
+        '202':
+          description: 'Baja registrada y enviada; SUNAT devolvió un ticket (o quedó PENDIENTE_ENVIO). Header Location: /api/v1/bajas/{id}.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TramiteSunatSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: El comprobante no está ACEPTADO o ya tiene una baja en curso.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: Fuera de plazo o comprobante que no admite baja (boleta).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '503':
+          description: SUNAT no está disponible; reintente después del tiempo indicado en Retry-After.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/bajas/{id}:
+    get:
+      x-estado: planificado
+      tags:
+      - Comprobantes
+      summary: Consulta el estado de una comunicación de baja (PLANIFICADO, ADR 0014)
+      description: 'Si el trámite sigue EN_PROCESO, el servidor consulta `getStatus` con el ticket. Alcance: `comprobantes:leer`.'
+      operationId: consultar_baja
+      security: *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^RA-[0-9]{8}-[0-9]{1,5}$
+          examples:
+          - RA-20261105-1
+        description: Identificador que devolvió el POST.
+      responses:
+        '200':
+          description: Estado del trámite y, si terminó, su CDR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TramiteSunatSalida'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/resumenes-diarios:
+    post:
+      x-estado: planificado
+      tags:
+      - Comprobantes
+      summary: Envía el resumen diario de boletas y anula las indicadas (PLANIFICADO, ADR 0014)
+      description: |-
+        Reúne las boletas y sus notas de `fecha_referencia`, arma el SummaryDocuments (RC-AAAAMMDD-n), lo firma y lo envía con `sendSummary`. Respuesta **202** con el ticket.
+
+        * **422** `ERR-SUNAT-RESUMEN-VACIO`: no hay boletas en esa fecha.
+        * **422** `ERR-REFERENCIA-NO-EXISTE`: una boleta de `anular` no existe o es de otra fecha.
+
+        Alcance requerido: `comprobantes:emitir`.
+      operationId: enviar_resumen_diario
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumenDiarioEntrada'
+            examples:
+              anula_una_boleta:
+                summary: Informa las boletas del día y anula B001-1
+                value:
+                  fecha_referencia: '2026-10-22'
+                  anular:
+                  - B001-1
+      responses:
+        '202':
+          description: 'Resumen enviado; SUNAT devolvió un ticket. Header Location: /api/v1/resumenes-diarios/{id}.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TramiteSunatSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: Ya hay un resumen en curso para esa fecha.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: No hay boletas que resumir o una boleta a anular no corresponde.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '503':
+          description: SUNAT no está disponible; reintente después del tiempo indicado en Retry-After.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/resumenes-diarios/{id}:
+    get:
+      x-estado: planificado
+      tags:
+      - Comprobantes
+      summary: Consulta el estado de un resumen diario (PLANIFICADO, ADR 0014)
+      description: 'Si sigue EN_PROCESO, el servidor consulta `getStatus` con el ticket. Alcance: `comprobantes:leer`.'
+      operationId: consultar_resumen_diario
+      security: *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^RC-[0-9]{8}-[0-9]{1,5}$
+          examples:
+          - RC-20261105-1
+        description: Identificador que devolvió el POST.
+      responses:
+        '200':
+          description: Estado del trámite y, si terminó, su CDR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TramiteSunatSalida'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
 components:
   schemas:
     AfectacionIGV:
-      type: string
-      enum:
-      - '10'
-      - '20'
-      - '30'
-      - '40'
-      title: AfectacionIGV
-      description: Catálogo 07. Se serializa en ``cac:TaxCategory/cbc:TaxExemptionReasonCode``.
+      $ref: schemas/catalogos.schema.json#/$defs/AfectacionIGV
     BoletaEntrada:
-      properties:
-        serie:
-          type: string
-          pattern: ^[FB][A-Z0-9]{3}$
-          title: Serie
-          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
-          examples:
-          - F001
-        fecha_emision:
-          anyOf:
-          - type: string
-            format: date
-          - type: 'null'
-          title: Fecha Emision
-          description: Por defecto, la fecha actual del servidor (UTC-5).
-        moneda:
-          $ref: '#/components/schemas/Moneda'
-          description: Catálogo 02.
-          default: PEN
-        tipo_cambio:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Tipo Cambio
-          description: Obligatorio si la moneda es USD.
-        cliente:
-          $ref: '#/components/schemas/ClienteEntrada'
-        lineas:
-          items:
-            $ref: '#/components/schemas/LineaEntrada'
-          type: array
-          maxItems: 500
-          minItems: 1
-          title: Lineas
-        tipo_comprobante:
-          type: string
-          const: '03'
-          title: Tipo Comprobante
-          description: 'Catálogo 01: boleta de venta.'
-        documentos_legado:
-          items:
-            type: string
-            maxLength: 40
-            minLength: 1
-          type: array
-          maxItems: 50
-          title: Documentos Legado
-      additionalProperties: false
-      type: object
-      required:
-      - serie
-      - cliente
-      - lineas
-      - tipo_comprobante
-      title: BoletaEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/Boleta
     CdrSalida:
       properties:
         codigo:
@@ -1004,37 +1203,7 @@ components:
       - fecha_recepcion
       title: CdrSalida
     ClienteEntrada:
-      properties:
-        tipo_documento:
-          $ref: '#/components/schemas/TipoDocumentoIdentidad'
-          description: Catálogo 06.
-        numero_documento:
-          type: string
-          maxLength: 15
-          minLength: 1
-          title: Numero Documento
-          examples:
-          - '20123456786'
-        nombre:
-          type: string
-          maxLength: 500
-          minLength: 1
-          title: Nombre
-          examples:
-          - DISTRIBUIDORA EL SOL S.A.C.
-        direccion:
-          anyOf:
-          - type: string
-            maxLength: 200
-          - type: 'null'
-          title: Direccion
-      additionalProperties: false
-      type: object
-      required:
-      - tipo_documento
-      - numero_documento
-      - nombre
-      title: ClienteEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/Cliente
     CodigoDescripcion:
       properties:
         codigo:
@@ -1194,25 +1363,7 @@ components:
       - cuadra
       title: ConciliacionSalida
     CuotaEntrada:
-      properties:
-        monto:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          title: Monto
-          examples:
-          - '179.95'
-        fecha_vencimiento:
-          type: string
-          format: date
-          title: Fecha Vencimiento
-      additionalProperties: false
-      type: object
-      required:
-      - monto
-      - fecha_vencimiento
-      title: CuotaEntrada
+      $ref: schemas/forma-pago.schema.json#/$defs/Cuota
     CuotaSalida:
       properties:
         numero:
@@ -1271,18 +1422,7 @@ components:
       - envios
       title: EnlacesComprobante
     ErrorCampo:
-      properties:
-        campo:
-          type: string
-          title: Campo
-        mensaje:
-          type: string
-          title: Mensaje
-      type: object
-      required:
-      - campo
-      - mensaje
-      title: ErrorCampo
+      $ref: schemas/problema.schema.json#/$defs/ErrorCampo
     EstadoComprobante:
       type: string
       enum:
@@ -1301,161 +1441,11 @@ components:
       - NO_REQUIERE_FACTURA
       title: EstadoMigracion
     FacturaEntrada:
-      properties:
-        serie:
-          type: string
-          pattern: ^[FB][A-Z0-9]{3}$
-          title: Serie
-          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
-          examples:
-          - F001
-        fecha_emision:
-          anyOf:
-          - type: string
-            format: date
-          - type: 'null'
-          title: Fecha Emision
-          description: Por defecto, la fecha actual del servidor (UTC-5).
-        moneda:
-          $ref: '#/components/schemas/Moneda'
-          description: Catálogo 02.
-          default: PEN
-        tipo_cambio:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Tipo Cambio
-          description: Obligatorio si la moneda es USD.
-        cliente:
-          $ref: '#/components/schemas/ClienteEntrada'
-        lineas:
-          items:
-            $ref: '#/components/schemas/LineaEntrada'
-          type: array
-          maxItems: 500
-          minItems: 1
-          title: Lineas
-        tipo_comprobante:
-          type: string
-          const: '01'
-          title: Tipo Comprobante
-          description: 'Catálogo 01: factura.'
-        forma_pago:
-          $ref: '#/components/schemas/FormaPagoEntrada'
-          description: Contado por defecto. Solo las facturas la informan.
-        documentos_legado:
-          items:
-            type: string
-            maxLength: 40
-            minLength: 1
-          type: array
-          maxItems: 50
-          title: Documentos Legado
-          description: Vales del sistema antiguo ya migrados que esta venta factura (cac:AdditionalDocumentReference, Catálogo
-            12 tipo 99).
-      additionalProperties: false
-      type: object
-      required:
-      - serie
-      - cliente
-      - lineas
-      - tipo_comprobante
-      title: FacturaEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/Factura
     FichaLegadoEntrada:
-      properties:
-        fecha:
-          type: string
-          maxLength: 20
-          minLength: 6
-          title: Fecha
-          description: 'Tal como está en el sistema antiguo. Formatos: AAAA-MM-DD, DD/MM/AAAA, DD-MM-AAAA, DD.MM.AAAA y DD/MM/AA.'
-          examples:
-          - '2026-10-15'
-          - 15/10/2026
-        ingreso:
-          anyOf:
-          - type: number
-            minimum: 0.0
-          - type: string
-          title: Ingreso
-        salida:
-          anyOf:
-          - type: number
-            minimum: 0.0
-          - type: string
-          title: Salida
-        producto:
-          type: string
-          maxLength: 200
-          minLength: 1
-          title: Producto
-          examples:
-          - Saco de Azúcar Rubia 50kg
-        nro_documento:
-          type: string
-          maxLength: 40
-          minLength: 1
-          title: Nro Documento
-          examples:
-          - VALE-SALIDA-0042
-        codigo_producto:
-          anyOf:
-          - type: string
-            maxLength: 30
-            pattern: ^[A-Z0-9-]+$
-          - type: 'null'
-          title: Codigo Producto
-          description: Solo si la glosa no está en la tabla de homologación.
-        factor_conversion:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Factor Conversion
-        tipo_operacion:
-          anyOf:
-          - $ref: '#/components/schemas/TipoOperacionInventario'
-          - type: 'null'
-          description: Tabla 12. Por defecto 01 (venta) para salidas y 02 (compra) para ingresos.
-        establecimiento:
-          anyOf:
-          - type: string
-            pattern: ^\d{4}$
-          - type: 'null'
-          title: Establecimiento
-          description: Código de establecimiento anexo SUNAT.
-      additionalProperties: false
-      type: object
-      required:
-      - fecha
-      - ingreso
-      - salida
-      - producto
-      - nro_documento
-      title: FichaLegadoEntrada
-      description: Ficha tal como existe en el sistema antiguo, más datos opcionales de homologación.
+      $ref: schemas/ficha-legado.schema.json
     FormaPagoEntrada:
-      properties:
-        tipo:
-          type: string
-          enum:
-          - CONTADO
-          - CREDITO
-          title: Tipo
-          default: CONTADO
-        cuotas:
-          items:
-            $ref: '#/components/schemas/CuotaEntrada'
-          type: array
-          maxItems: 60
-          title: Cuotas
-      additionalProperties: false
-      type: object
-      title: FormaPagoEntrada
-      description: RS 193-2020. Al crédito, la suma de las cuotas debe igualar el importe total que calcula el servidor.
+      $ref: schemas/forma-pago.schema.json
     FormaPagoSalida:
       properties:
         tipo:
@@ -1496,41 +1486,7 @@ components:
       - factor_conversion
       title: HomologacionSalida
     IscEntrada:
-      properties:
-        sistema:
-          $ref: '#/components/schemas/SistemaISC'
-          description: 'Catálogo 08: 01 al valor, 02 monto fijo, 03 precio de venta al público.'
-        tasa:
-          anyOf:
-          - type: number
-            maximum: 1.0
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Tasa
-          description: 'Sistemas 01 y 03. Ej.: 0.20'
-        monto_fijo:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Monto Fijo
-          description: Sistema 02, por unidad.
-        precio_venta_publico:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Precio Venta Publico
-          description: Sistema 03, por unidad.
-      additionalProperties: false
-      type: object
-      required:
-      - sistema
-      title: IscEntrada
-      description: Configuración del ISC según el Catálogo 08. El monto lo calcula el servidor.
+      $ref: schemas/linea.schema.json#/$defs/Isc
     IscLinea:
       properties:
         base:
@@ -1596,65 +1552,7 @@ components:
       - filas
       title: LibroElectronicoSalida
     LineaEntrada:
-      properties:
-        codigo_producto:
-          anyOf:
-          - type: string
-            maxLength: 30
-            pattern: ^[A-Z0-9-]+$
-          - type: 'null'
-          title: Codigo Producto
-          description: Si se envía, debe existir en el catálogo y mueve el Kardex.
-          examples:
-          - AB-ARR-001
-        descripcion:
-          type: string
-          maxLength: 500
-          minLength: 1
-          title: Descripcion
-          examples:
-          - Arroz extra a granel
-        unidad_medida:
-          $ref: '#/components/schemas/UnidadMedida'
-          description: Catálogo 03 (UN/ECE Rec. 20). Va en el atributo unitCode.
-        cantidad:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          title: Cantidad
-          examples:
-          - '50'
-        valor_unitario:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          title: Valor Unitario
-          description: Valor unitario SIN impuestos.
-          examples:
-          - '4.20'
-        afectacion_igv:
-          $ref: '#/components/schemas/AfectacionIGV'
-          description: Catálogo 07.
-          default: '10'
-        isc:
-          anyOf:
-          - $ref: '#/components/schemas/IscEntrada'
-          - type: 'null'
-        aplica_icbper:
-          type: boolean
-          title: Aplica Icbper
-          description: True si la línea son bolsas plásticas (Ley 30884).
-          default: false
-      additionalProperties: false
-      type: object
-      required:
-      - descripcion
-      - unidad_medida
-      - cantidad
-      - valor_unitario
-      title: LineaEntrada
+      $ref: schemas/linea.schema.json
     LineaSalida:
       properties:
         numero:
@@ -1711,19 +1609,7 @@ components:
       - icbper
       title: LineaSalida
     LoteEntrada:
-      properties:
-        fichas:
-          items:
-            $ref: '#/components/schemas/FichaLegadoEntrada'
-          type: array
-          maxItems: 5000
-          minItems: 1
-          title: Fichas
-      additionalProperties: false
-      type: object
-      required:
-      - fichas
-      title: LoteEntrada
+      $ref: schemas/lote-fichas.schema.json
     LoteSalida:
       properties:
         id_lote:
@@ -1801,35 +1687,11 @@ components:
       - movimiento
       title: MigracionSalida
     Moneda:
-      type: string
-      enum:
-      - PEN
-      - USD
-      title: Moneda
-      description: Catálogo 02 / tabla 4 del PLE (ISO 4217).
+      $ref: schemas/catalogos.schema.json#/$defs/Moneda
     MotivoNotaCredito:
-      type: string
-      enum:
-      - '01'
-      - '02'
-      - '03'
-      - '04'
-      - '05'
-      - '06'
-      - '07'
-      - 08
-      - 09
-      - '10'
-      title: MotivoNotaCredito
-      description: Catálogo 09.
+      $ref: schemas/catalogos.schema.json#/$defs/MotivoNotaCredito
     MotivoNotaDebito:
-      type: string
-      enum:
-      - '01'
-      - '02'
-      - '03'
-      title: MotivoNotaDebito
-      description: Catálogo 10.
+      $ref: schemas/catalogos.schema.json#/$defs/MotivoNotaDebito
     MovimientoSalida:
       properties:
         id:
@@ -1876,129 +1738,9 @@ components:
       - glosa
       title: MovimientoSalida
     NotaCreditoEntrada:
-      properties:
-        serie:
-          type: string
-          pattern: ^[FB][A-Z0-9]{3}$
-          title: Serie
-          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
-          examples:
-          - F001
-        fecha_emision:
-          anyOf:
-          - type: string
-            format: date
-          - type: 'null'
-          title: Fecha Emision
-          description: Por defecto, la fecha actual del servidor (UTC-5).
-        moneda:
-          $ref: '#/components/schemas/Moneda'
-          description: Catálogo 02.
-          default: PEN
-        tipo_cambio:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Tipo Cambio
-          description: Obligatorio si la moneda es USD.
-        cliente:
-          $ref: '#/components/schemas/ClienteEntrada'
-        lineas:
-          items:
-            $ref: '#/components/schemas/LineaEntrada'
-          type: array
-          maxItems: 500
-          minItems: 1
-          title: Lineas
-        tipo_comprobante:
-          type: string
-          const: '07'
-          title: Tipo Comprobante
-          description: 'Catálogo 01: nota de crédito.'
-        referencia:
-          $ref: '#/components/schemas/ReferenciaEntrada'
-        motivo:
-          $ref: '#/components/schemas/MotivoNotaCredito'
-        sustento:
-          type: string
-          maxLength: 250
-          minLength: 1
-          title: Sustento
-      additionalProperties: false
-      type: object
-      required:
-      - serie
-      - cliente
-      - lineas
-      - tipo_comprobante
-      - referencia
-      - motivo
-      - sustento
-      title: NotaCreditoEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/NotaCredito
     NotaDebitoEntrada:
-      properties:
-        serie:
-          type: string
-          pattern: ^[FB][A-Z0-9]{3}$
-          title: Serie
-          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
-          examples:
-          - F001
-        fecha_emision:
-          anyOf:
-          - type: string
-            format: date
-          - type: 'null'
-          title: Fecha Emision
-          description: Por defecto, la fecha actual del servidor (UTC-5).
-        moneda:
-          $ref: '#/components/schemas/Moneda'
-          description: Catálogo 02.
-          default: PEN
-        tipo_cambio:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-          - type: 'null'
-          title: Tipo Cambio
-          description: Obligatorio si la moneda es USD.
-        cliente:
-          $ref: '#/components/schemas/ClienteEntrada'
-        lineas:
-          items:
-            $ref: '#/components/schemas/LineaEntrada'
-          type: array
-          maxItems: 500
-          minItems: 1
-          title: Lineas
-        tipo_comprobante:
-          type: string
-          const: 08
-          title: Tipo Comprobante
-          description: 'Catálogo 01: nota de débito.'
-        referencia:
-          $ref: '#/components/schemas/ReferenciaEntrada'
-        motivo:
-          $ref: '#/components/schemas/MotivoNotaDebito'
-        sustento:
-          type: string
-          maxLength: 250
-          minLength: 1
-          title: Sustento
-      additionalProperties: false
-      type: object
-      required:
-      - serie
-      - cliente
-      - lineas
-      - tipo_comprobante
-      - referencia
-      - motivo
-      - sustento
-      title: NotaDebitoEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/NotaDebito
     ParteSalida:
       properties:
         tipo_documento:
@@ -2017,45 +1759,7 @@ components:
       - nombre
       title: ParteSalida
     Problema:
-      properties:
-        type:
-          type: string
-          title: Type
-          examples:
-          - urn:abc:problema:regla-negocio
-        title:
-          type: string
-          title: Title
-        status:
-          type: integer
-          title: Status
-        detail:
-          type: string
-          title: Detail
-        instance:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Instance
-        codigo:
-          type: string
-          title: Codigo
-          description: Código estable para el cliente.
-          examples:
-          - ERR-SUNAT-RUC
-        errores:
-          items:
-            $ref: '#/components/schemas/ErrorCampo'
-          type: array
-          title: Errores
-      type: object
-      required:
-      - type
-      - title
-      - status
-      - detail
-      - codigo
-      title: Problema
+      $ref: schemas/problema.schema.json
     ProductoSalida:
       properties:
         codigo:
@@ -2083,25 +1787,7 @@ components:
       - tipo_existencia
       title: ProductoSalida
     ReferenciaEntrada:
-      properties:
-        tipo_comprobante:
-          type: string
-          enum:
-          - '01'
-          - '03'
-          title: Tipo Comprobante
-        serie_numero:
-          type: string
-          pattern: ^[FB][A-Z0-9]{3}-[0-9]{1,8}$
-          title: Serie Numero
-          examples:
-          - F001-1
-      additionalProperties: false
-      type: object
-      required:
-      - tipo_comprobante
-      - serie_numero
-      title: ReferenciaEntrada
+      $ref: schemas/comprobante-emision.schema.json#/$defs/Referencia
     ReferenciaSalida:
       properties:
         tipo_comprobante:
@@ -2200,13 +1886,7 @@ components:
       - modo_ose
       title: Salud
     SistemaISC:
-      type: string
-      enum:
-      - '01'
-      - '02'
-      - '03'
-      title: SistemaISC
-      description: Catálogo 08. Se serializa en ``cac:TaxCategory/cbc:TierRange``.
+      $ref: schemas/catalogos.schema.json#/$defs/SistemaISC
     TipoComprobante:
       type: string
       enum:
@@ -2217,30 +1897,9 @@ components:
       title: TipoComprobante
       description: Catálogo 01 (y tabla 10 del PLE para estos mismos códigos).
     TipoDocumentoIdentidad:
-      type: string
-      enum:
-      - '0'
-      - '1'
-      - '4'
-      - '6'
-      - '7'
-      - A
-      title: TipoDocumentoIdentidad
-      description: Catálogo 06 (equivale a la tabla 2 del PLE).
+      $ref: schemas/catalogos.schema.json#/$defs/TipoDocumentoIdentidad
     TipoOperacionInventario:
-      type: string
-      enum:
-      - '01'
-      - '02'
-      - '06'
-      - '11'
-      - '13'
-      - '16'
-      - '21'
-      - '24'
-      - '99'
-      title: TipoOperacionInventario
-      description: Tabla 12 del PLE (subconjunto usado por ABC Software Corp).
+      $ref: schemas/catalogos.schema.json#/$defs/TipoOperacionInventario
     TotalesSalida:
       properties:
         gravadas:
@@ -2300,30 +1959,91 @@ components:
       - monto
       title: TributoLinea
     UnidadMedida:
-      type: string
-      enum:
-      - NIU
-      - ZZ
-      - KGM
-      - GRM
-      - TNE
-      - LBR
-      - LTR
-      - MLT
-      - GLL
-      - MTR
-      - MTQ
-      - BX
-      - BG
-      - BO
-      - CA
-      - PK
-      - SA
-      - DZN
-      - MIL
-      - BLL
-      title: UnidadMedida
-      description: Catálogo 03 (UN/ECE Recomendación 20). Va en el atributo ``unitCode`` de la cantidad.
+      $ref: schemas/catalogos.schema.json#/$defs/UnidadMedida
+    BajaEntrada:
+      $ref: schemas/baja.schema.json
+      x-estado: planificado
+    ResumenDiarioEntrada:
+      $ref: schemas/resumen-diario.schema.json
+      x-estado: planificado
+    TramiteSunatSalida:
+      x-estado: planificado
+      title: TramiteSunatSalida
+      type: object
+      description: 'Comunicación de baja o resumen diario: trámites asíncronos de SUNAT (sendSummary + getStatus).'
+      required:
+      - id
+      - tipo
+      - ticket
+      - estado
+      - fecha_generacion
+      - fecha_referencia
+      - documentos
+      - cdr
+      - enlaces
+      properties:
+        id:
+          type: string
+          pattern: ^R[AC]-[0-9]{8}-[0-9]{1,5}$
+          description: cbc:ID del VoidedDocuments (RA) o del SummaryDocuments (RC).
+        tipo:
+          type: string
+          enum:
+          - COMUNICACION_BAJA
+          - RESUMEN_DIARIO
+        ticket:
+          type:
+          - string
+          - 'null'
+          description: Ticket que devolvió sendSummary; null si SUNAT no respondió (PENDIENTE_ENVIO).
+        estado:
+          type: string
+          enum:
+          - PENDIENTE_ENVIO
+          - EN_PROCESO
+          - ACEPTADO
+          - RECHAZADO
+          description: 'Sale del CDR que devuelve getStatus (código 0: ACEPTADO).'
+        fecha_generacion:
+          type: string
+          format: date
+          description: cbc:IssueDate del documento resumen.
+        fecha_referencia:
+          type: string
+          format: date
+          description: 'cbc:ReferenceDate: fecha de emisión de los comprobantes incluidos.'
+        documentos:
+          type: array
+          items:
+            type: object
+            required:
+            - tipo_comprobante
+            - serie_numero
+            - condicion
+            properties:
+              tipo_comprobante:
+                type: string
+                description: Catálogo 01.
+              serie_numero:
+                type: string
+              condicion:
+                type: string
+                enum:
+                - ADICIONAR
+                - ANULAR
+                - BAJA
+                description: ADICIONAR (1) y ANULAR (3) en el resumen diario; BAJA en la comunicación de baja.
+        cdr:
+          anyOf:
+          - $ref: '#/components/schemas/CdrSalida'
+          - type: 'null'
+        enlaces:
+          type: object
+          required:
+          - detalle
+          properties:
+            detalle:
+              type: string
   securitySchemes:
     HTTPBearer:
       type: http

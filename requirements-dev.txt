@@ -9,3 +9,7 @@ xlrd==2.0.1
 pytest-cov==7.0.0
 mypy==1.18.2
 pip-audit==2.9.0
+jsonschema==4.26.0
+# Informe consolidado (scripts/generar_informe.py)
+markdown-it-py==4.2.0
+python-docx==1.2.0

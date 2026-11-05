@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/resumen-diario.schema.json",
+  "title": "Resumen diario de boletas (entrada de POST /api/v1/resumenes-diarios)",
+  "description": "PLANIFICADO (ADR 0014): contrato escrito antes que el código. El servidor reúne las boletas (y sus notas) emitidas en fecha_referencia, arma el documento UBL SummaryDocuments (RC-AAAAMMDD-n), lo firma y lo envía con sendSummary; SUNAT devuelve un ticket y el CDR se consulta con getStatus. Cada boleta viaja con estado 1 (adicionar) o, si está en anular, 3 (anulado).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fecha_referencia"],
+  "properties": {
+    "fecha_referencia": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de emisión de las boletas que se resumen (cbc:ReferenceDate)."
+    },
+    "anular": {
+      "type": "array",
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^B[A-Z0-9]{3}-[0-9]{1,8}$",
+        "description": "Serie y número de una boleta ya informada que se anula (sac:ConditionCode = 3)."
+      },
+      "description": "Boletas de esa fecha que se anulan. Vacío si solo se informan."
+    }
+  }
+}

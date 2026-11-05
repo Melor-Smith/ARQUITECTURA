@@ -8,6 +8,7 @@ import yaml
 from lxml import etree
 
 from scripts import matriz
+from scripts.contrato import Contrato
 from src.adapters.outbound.firma.xmldsig import CertificadoDigital, FirmaXmlDsig
 from tests.conftest import RAIZ
 from tests.unit.generacion_xml import fabrica as f
@@ -91,7 +92,8 @@ def test_un_xpath_inexistente_en_el_xsd_se_detecta():
 COLUMNAS_FUENTE = {"id", "dato", "norma", "sunat", "xpath", "contrato", "legado", "ple_141", "ple_121", "error",
                    "prueba"}
 PAQUETE_PLE = RAIZ / "docs" / "evidencia-ple" / "paquete"
-OPENAPI = yaml.safe_load((RAIZ / "specs" / "contracts" / "openapi.yaml").read_text(encoding="utf-8"))
+#: El contrato escrito a mano (OpenAPI + JSON Schemas), con sus $ref externos resueltos.
+OPENAPI = Contrato().empaquetado()
 
 
 def test_cada_fila_usa_solo_columnas_conocidas():

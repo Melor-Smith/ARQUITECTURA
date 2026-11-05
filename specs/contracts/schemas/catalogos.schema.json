@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/catalogos.schema.json",
+  "title": "Catálogos SUNAT y tablas PLE del contrato",
+  "description": "Solo los códigos que ABC Software Corp soporta. Un código fuera de la lista no cumple el contrato (HTTP 400). Fuentes: Anexo 8 de la RS 097-2012/SUNAT y Anexo 3 de la RS 286-2009/SUNAT.",
+  "$defs": {
+    "Moneda": {
+      "type": "string",
+      "enum": ["PEN", "USD"],
+      "description": "Catálogo 02 / tabla 4 del PLE (ISO 4217). Matriz T09 y T10. Error ERR-SUNAT-CAT02."
+    },
+    "UnidadMedida": {
+      "type": "string",
+      "enum": ["NIU", "ZZ", "KGM", "GRM", "TNE", "LBR", "LTR", "MLT", "GLL", "MTR", "MTQ", "BX", "BG", "BO", "CA", "PK", "SA", "DZN", "MIL", "BLL"],
+      "description": "Catálogo 03 (UN/ECE Rec. 20): atributo unitCode de la cantidad; el campo 16 del PLE 12.1 usa el mismo código. Matriz T32. Error ERR-SUNAT-CAT03."
+    },
+    "TipoDocumentoIdentidad": {
+      "type": "string",
+      "enum": ["0", "1", "4", "6", "7", "A"],
+      "description": "Catálogo 06 / tabla 2 del PLE: 0 varios, 1 DNI, 4 carné de extranjería, 6 RUC, 7 pasaporte, A cédula diplomática. Matriz T26. Error ERR-SUNAT-CAT06."
+    },
+    "AfectacionIGV": {
+      "type": "string",
+      "enum": ["10", "20", "30", "40"],
+      "description": "Catálogo 07: 10 gravado, 20 exonerado, 30 inafecto, 40 exportación (cbc:TaxExemptionReasonCode). Matriz T40. Error ERR-SUNAT-CAT07."
+    },
+    "SistemaISC": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "description": "Catálogo 08: 01 al valor, 02 monto fijo, 03 precio de venta al público (cbc:TierRange). Matriz T43. Error ERR-SUNAT-CAT08."
+    },
+    "MotivoNotaCredito": {
+      "type": "string",
+      "enum": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"],
+      "description": "Catálogo 09 (cac:DiscrepancyResponse/cbc:ResponseCode de la nota de crédito). Matriz T72. Error ERR-SUNAT-MOTIVO-NOTA."
+    },
+    "MotivoNotaDebito": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "description": "Catálogo 10 (cac:DiscrepancyResponse/cbc:ResponseCode de la nota de débito). Matriz T74. Error ERR-SUNAT-MOTIVO-NOTA."
+    },
+    "TipoOperacionInventario": {
+      "type": "string",
+      "enum": ["01", "02", "06", "11", "13", "16", "21", "24", "99"],
+      "description": "Tabla 12 del PLE (subconjunto de ABC): campo 14 del formato 12.1. Las operaciones 01 a 06 exigen comprobante o guía como sustento. Matriz T91. Error ERR-KARDEX-DOCUMENTO-OPERACION."
+    }
+  }
+}

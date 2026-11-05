@@ -1,6 +1,6 @@
 # ADR 0006: Contrato OpenAPI generado desde el código y verificado en CI
 
-- **Estado:** aceptado.
+- **Estado:** **reemplazado por el [ADR 0013](0013-contrato-escrito-primero-y-verificado-contra-el-codigo.md)** (2026-11-05). Se conserva como registro: explica por qué el contrato pasó un tiempo generándose desde el código.
 - **Observaciones que atiende:** 1.4 y 4. El YAML decía `\d{1,8}` y el código `\d{6}`, y el payload de ejemplo era rechazado.
 
 ## Contexto
@@ -20,3 +20,7 @@ Mantener a mano un YAML y unos DTO en paralelo hizo que divergieran: el README a
 ## Consecuencias
 
 El contrato y el código ya no pueden divergir sin que falle CI.
+
+## Por qué se reemplazó
+
+Esta decisión resolvió la divergencia, pero invirtió la autoría: el código definía el contrato y el YAML era una copia con el aviso "GENERADO". Eso es *code-first*, aunque el punto 4 dijera lo contrario. El ADR 0013 conserva la garantía (contrato y código no pueden divergir sin que falle la CI) y devuelve la autoría al contrato.

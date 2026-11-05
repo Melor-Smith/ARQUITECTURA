@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/lote-fichas.schema.json",
+  "title": "Lote de fichas del sistema antiguo (entrada de POST /api/v1/inventario/migraciones/lotes)",
+  "description": "Migración por lotes (ADR 0009). Una ficha observada o duplicada no detiene el lote: se informa en su resultado y la conciliación por producto dice si los saldos cuadran.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fichas"],
+  "properties": {
+    "fichas": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5000,
+      "items": { "$ref": "ficha-legado.schema.json" },
+      "description": "Entre 1 y 5000 fichas, en cualquier orden: el servidor las ordena por fecha antes de mover el Kardex."
+    }
+  }
+}

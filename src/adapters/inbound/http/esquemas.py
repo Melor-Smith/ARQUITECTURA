@@ -1,4 +1,8 @@
-"""DTO del contrato HTTP (Pydantic v2). De aquí se genera ``specs/contracts/openapi.yaml``.
+"""DTO del contrato HTTP (Pydantic v2): implementan el contrato escrito a mano (ADR 0013).
+
+El contrato es ``specs/contracts/openapi.yaml`` y los JSON Schemas de ``specs/contracts/schemas/``.
+Un cambio de campo, catálogo o límite se hace **primero allí**; luego aquí. La prueba
+``tests/acceptance/test_contrato.py`` falla si estos DTO no tienen exactamente lo que dice el contrato.
 
 Reglas del contrato:
 

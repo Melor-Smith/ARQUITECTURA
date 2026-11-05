@@ -25,8 +25,8 @@ API de facturación electrónica UBL 2.1 (SUNAT) e inventario de **ABC Software 
 * Migración de fichas del sistema antiguo al inventario permanente y libros electrónicos PLE 14.1 y 12.1.
 * Errores en `application/problem+json` (RFC 9457): 400 contrato, 422 regla de negocio, 409 conflicto.
 
-Este documento se genera desde el código; `specs/contracts/openapi.yaml` es su copia versionada y una prueba
-falla si ambos divergen.
+El contrato se escribe primero (spec-first, ADR 0013): `specs/contracts/openapi.yaml` y los JSON Schemas de
+`specs/contracts/schemas/`. Este documento lo publica el código que lo implementa y una prueba falla si se apartan.
 """
 
 ETIQUETAS = [

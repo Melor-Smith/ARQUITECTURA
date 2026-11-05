@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/forma-pago.schema.json",
+  "title": "Forma de pago de la factura (entrada)",
+  "description": "RS 193-2020/SUNAT: toda factura informa si es al contado o al crédito (cac:PaymentTerms con cbc:ID = FormaPago). Al crédito, la suma de las cuotas debe igualar el importe total que calcula el servidor; si no, 422 ERR-SUNAT-FORMA-PAGO. Matriz T64 a T66.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": ["CONTADO", "CREDITO"],
+      "default": "CONTADO",
+      "description": "cbc:PaymentMeansID = Contado o Credito. Matriz T64."
+    },
+    "cuotas": {
+      "type": "array",
+      "maxItems": 60,
+      "items": { "$ref": "#/$defs/Cuota" },
+      "description": "Solo al crédito. Cada cuota es un cac:PaymentTerms con cbc:PaymentMeansID = Cuota001, Cuota002... La última, si vence hasta el mes siguiente, va al campo 5 del PLE 14.1. Matriz T66."
+    }
+  },
+  "$defs": {
+    "Cuota": {
+      "title": "Cuota del crédito",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["monto", "fecha_vencimiento"],
+      "properties": {
+        "monto": {
+          "$ref": "tipos.schema.json#/$defs/Importe",
+          "description": "cbc:Amount de la cuota. Matriz T66."
+        },
+        "fecha_vencimiento": {
+          "type": "string",
+          "format": "date",
+          "description": "cbc:PaymentDueDate (AAAA-MM-DD). Matriz T66."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://abc-software.example/contratos/v1/baja.schema.json",
+  "title": "Comunicación de baja (entrada de POST /api/v1/comprobantes/{tipo_comprobante}/{serie_numero}/bajas)",
+  "description": "PLANIFICADO (ADR 0014): contrato escrito antes que el código. Anula ante SUNAT una factura, o una nota que la modifica, que SUNAT ya aceptó: el servidor arma el documento UBL VoidedDocuments (RA-AAAAMMDD-n), lo firma y lo envía con sendSummary; SUNAT devuelve un ticket y el CDR se consulta después con getStatus. Las boletas no se dan de baja por aquí: se anulan en el resumen diario (estado 3).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["motivo"],
+  "properties": {
+    "motivo": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Motivo de la baja: sac:VoidReasonDescription de la línea del VoidedDocuments. Ej.: 'Error en el RUC del adquiriente'."
+    }
+  }
+}
