@@ -117,4 +117,4 @@ La plantilla que se usó como enunciado lista **36** columnas. El Anexo 2 oficia
 
 Las reglas generales de la plantilla (pipe final, sin cabecera, `DD/MM/AAAA`, punto decimal, `||` para vacíos, CRLF) sí coinciden con el Anexo 2 y están implementadas.
 
-> **Pendiente fuera del código:** cargar un TXT generado en el programa PLE de SUNAT (validador de escritorio). La estructura ya se verifica contra el Excel oficial, pero el programa aplica además validaciones contra el padrón RUC y sus propias tablas.
+> **Validación con el programa PLE.** El 12.1 pasó el PLE 5.2.0.7 de SUNAT sin inconsistencias. El 14.1 no se puede validar en modo de prueba: el PLE se detiene antes de leer los archivos de compras y ventas, y desde 04/2022 el Registro de Ventas va por RVIE/SIRE. El detalle de los intentos está en [`docs/evidencia-ple/`](../../docs/evidencia-ple/README.md).
