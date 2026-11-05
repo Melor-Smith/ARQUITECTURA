@@ -28,29 +28,40 @@ flowchart LR
         CU7(CU-07 Consultar Kardex)
         CU8(CU-08 Generar Registro de Ventas 14.1)
         CU9(CU-09 Generar Inventario 12.1)
+        CU10(CU-10 Anular comprobante<br/>planificado)
     end
-    F --> CU1 & CU2 & CU3 & CU4
+    F --> CU1 & CU2 & CU3 & CU4 & CU10
     A --> CU5 & CU6 & CU7
     C --> CU4 & CU7 & CU8 & CU9
-    CU1 & CU2 & CU3 --> O
+    CU1 & CU2 & CU3 & CU10 --> O
 ```
 
 ## 3.3 Catálogo
 
-| CU | Caso de uso | Caso de uso en código | Endpoint | Pruebas |
-|---|---|---|---|---|
-| CU-01 | Emitir factura o boleta (contado o crédito) | `EmitirComprobante` | `POST /api/v1/comprobantes` | `TestEmisionFeliz`, `TestSerieYCorrelativo` |
-| CU-02 | Emitir nota de crédito o débito | `EmitirComprobante` | `POST /api/v1/comprobantes` | `TestNotas` |
-| CU-03 | Reenviar a la OSE un comprobante pendiente | `ReenviarComprobante` | `POST …/{tipo}/{serie_numero}/envios` | `TestOse` |
-| CU-04 | Consultar un comprobante y descargar su XML | `ConsultarComprobante` | `GET …/{tipo}/{serie_numero}` y `/xml` | `TestConsulta` |
-| CU-05 | Migrar una ficha del sistema antiguo | `MigrarFichaLegado` | `POST /api/v1/inventario/migraciones` | `TestMigracion` |
-| CU-06 | Migrar un lote con observaciones y conciliación | `MigrarLoteLegado` | `POST /api/v1/inventario/migraciones/lotes` | `TestLoteDeMigracion` |
-| CU-07 | Consultar el Kardex de un producto | `ConsultarKardex` | `GET /api/v1/inventario/kardex/{codigo}` | `TestKardex` |
-| CU-08 | Generar el Registro de Ventas 14.1 | `GenerarRegistroVentas141` | `GET /api/v1/libros-electronicos/registro-ventas/{AAAAMM}` | `TestRegistroVentas141` |
-| CU-09 | Generar el Inventario 12.1 | `GenerarInventario121` | `GET /api/v1/libros-electronicos/inventario-unidades-fisicas/{AAAAMM}` | `TestInventario121` |
+La columna **Fuente** dice qué justifica cada caso de uso:
+
+- **E:** enunciado del caso ABC;
+- **N:** norma SUNAT;
+- **Hx:** hipótesis de la §3.5, que la cuenta DEMO y los usuarios deben confirmar o refutar;
+- **B:** [benchmark](05-benchmark.md).
+
+Mientras una hipótesis no se confirme, el caso de uso se justifica solo por E y N.
+
+| CU | Caso de uso | Caso de uso en código | Endpoint | Pruebas | Fuente |
+|---|---|---|---|---|---|
+| CU-01 | Emitir factura o boleta (contado o crédito) | `EmitirComprobante` | `POST /api/v1/comprobantes` | `TestEmisionFeliz`, `TestSerieYCorrelativo` | E · N (RS 097-2012, RS 193-2020) · H1 · B |
+| CU-02 | Emitir nota de crédito o débito | `EmitirComprobante` | `POST /api/v1/comprobantes` | `TestNotas` | N (Catálogos 09 y 10) · H2 · B |
+| CU-03 | Reenviar a la OSE un comprobante pendiente | `ReenviarComprobante` | `POST …/{tipo}/{serie_numero}/envios` | `TestOse` | E (sucursales con conexión inestable) · H4 · B |
+| CU-04 | Consultar un comprobante y descargar su XML | `ConsultarComprobante` | `GET …/{tipo}/{serie_numero}` y `/xml` | `TestConsulta` | N (conservación del XML y del CDR) |
+| CU-05 | Migrar una ficha del sistema antiguo | `MigrarFichaLegado` | `POST /api/v1/inventario/migraciones` | `TestMigracion` | E (fichas `fecha`, `ingreso`, `salida`, `producto`, `nro_documento`) · N (RS 234-2006) |
+| CU-06 | Migrar un lote con observaciones y conciliación | `MigrarLoteLegado` | `POST /api/v1/inventario/migraciones/lotes` | `TestLoteDeMigracion` | E · H3 |
+| CU-07 | Consultar el Kardex de un producto | `ConsultarKardex` | `GET /api/v1/inventario/kardex/{codigo}` | `TestKardex` | N (RS 234-2006, inventario permanente) |
+| CU-08 | Generar el Registro de Ventas 14.1 | `GenerarRegistroVentas141` | `GET /api/v1/libros-electronicos/registro-ventas/{AAAAMM}` | `TestRegistroVentas141` | N (RS 286-2009, Anexo 2) · B |
+| CU-09 | Generar el Inventario 12.1 | `GenerarInventario121` | `GET /api/v1/libros-electronicos/inventario-unidades-fisicas/{AAAAMM}` | `TestInventario121` | N (RS 286-2009, Anexo 2) · B |
+| CU-10 | Anular un comprobante (comunicación de baja o resumen diario) | **Planificado** ([ADR 0014](../../specs/adr/0014-comunicacion-de-baja-y-resumen-diario.md)) | `POST …/{tipo}/{serie_numero}/bajas` · `POST /api/v1/resumenes-diarios` | Contrato: `test_las_operaciones_planificadas_estan_completas` | N (comunicación de baja y resumen diario) · H5 · B |
 
 **Fuera de alcance de esta versión:**
-- comunicación de baja y resumen diario de boletas;
+- implementar CU-10 (su contrato ya está escrito: ADR 0014);
 - operaciones gratuitas, anticipos y detracciones;
 - representación impresa en PDF;
 - formato 13.1 valorizado.
@@ -97,8 +108,12 @@ El enunciado pide descubrir casos de uso a partir de la opinión de usuarios y d
 
 **Hipótesis que deben confirmarse con cajeros y contador:**
 
-| Hipótesis | Si se confirma |
-|---|---|
-| Los cajeros reintentan el envío cuando "no pasa" y generan duplicados | `Idempotency-Key` es imprescindible en el cliente POS |
-| El contador corrige las ventas con notas de crédito por devolución parcial | El motivo 07 y el reingreso al Kardex son prioridad |
-| El almacén anota facturas físicas de proveedores en `nro_documento` | La clasificación `FACTURA_FISICA` evita convertirlas en vales internos |
+| ID | Hipótesis | Si se confirma | Estado |
+|---|---|---|---|
+| H1 | Los cajeros reintentan el envío cuando "no pasa" y generan duplicados | `Idempotency-Key` es imprescindible en el cliente POS | Por verificar |
+| H2 | El contador corrige las ventas con notas de crédito por devolución parcial | El motivo 07 y el reingreso al Kardex son prioridad | Por verificar |
+| H3 | El almacén anota facturas físicas de proveedores en `nro_documento` | La clasificación `FACTURA_FISICA` evita convertirlas en vales internos | Por verificar |
+| H4 | Una sucursal pierde internet varias veces al mes y la caja no puede detener la venta | El 202 `PENDIENTE_ENVIO` y el MSI con API local (ADR 0008) son necesarios | Por verificar |
+| H5 | El error más frecuente que obliga a anular una factura es el RUC del adquiriente | La comunicación de baja (CU-10) es prioridad sobre otras funciones pendientes | Por verificar |
+
+**Cómo se registra el trabajo de campo.** Las capturas de la cuenta DEMO van en [`nubefact-demo/`](nubefact-demo/README.md). Cada hallazgo se anota como "confirma Hx" o "refuta Hx" y se actualiza la columna **Estado** de la tabla. La comparación con otras soluciones está en el [benchmark](05-benchmark.md).
