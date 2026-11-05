@@ -27,6 +27,11 @@ TOKENS_DESARROLLO: dict[str, frozenset[str]] = {
 }
 
 
+def es_token_de_desarrollo(token: str) -> bool:
+    """Un token ``dev-*`` es público (está en el README y en este archivo): nunca vale en producción."""
+    return token in TOKENS_DESARROLLO or token.startswith("dev-")
+
+
 @dataclass(frozen=True)
 class Configuracion:
     modo_ose: ModoOse = ModoOse.NORMAL
@@ -43,10 +48,16 @@ class Configuracion:
     sunat_clave_sol: str = CLAVE_BETA
 
     def __post_init__(self) -> None:
-        if self.sunat_endpoint == ENDPOINT_PRODUCCION and (
-                self.certificado_pfx is None or self.sunat_usuario_sol == USUARIO_BETA):
+        if self.sunat_endpoint != ENDPOINT_PRODUCCION:
+            return
+        if self.certificado_pfx is None or self.sunat_usuario_sol == USUARIO_BETA:
             raise ValueError("Producción SUNAT exige ABC_CERTIFICADO_PFX y un usuario SOL secundario real: "
                              "el certificado autofirmado y MODDATOS solo valen en beta.")
+        if not self.tokens:
+            raise ValueError("Producción exige al menos un token propio en ABC_API_TOKENS.")
+        if any(es_token_de_desarrollo(token) for token in self.tokens):
+            raise ValueError("Producción no admite los tokens de desarrollo dev-*: defina ABC_API_TOKENS "
+                             "con tokens propios (ver ADR 0005).")
 
     @classmethod
     def desde_entorno(cls) -> Configuracion:

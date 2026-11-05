@@ -235,4 +235,5 @@ class TestConfiguracion:
         with pytest.raises(ValueError, match="Producción SUNAT exige"):
             Configuracion.desde_entorno()
         assert Configuracion(sunat_endpoint=ENDPOINT_PRODUCCION, certificado_pfx=Path("c.pfx"),
-                             sunat_usuario_sol="FACTURA1").sunat_endpoint == ENDPOINT_PRODUCCION
+                             sunat_usuario_sol="FACTURA1", tokens={"token-propio": frozenset({"libros:leer"})},
+                             ).sunat_endpoint == ENDPOINT_PRODUCCION
