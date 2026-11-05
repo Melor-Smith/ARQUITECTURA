@@ -27,6 +27,8 @@
 | 05/11/2026 | Corrección completa de las observaciones, **Taller 2** (generación del XML), PLE y envío a SUNAT beta | commits `0ded039` a `46b375e` · detalle en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md) |
 | 05/11/2026 | **Cuarta iteración:** contrato escrito primero, diagramas renderizados, informe PDF, ADR 0008 decidido, seguridad de tokens | commits posteriores a `46b375e` · [`CORRECCIONES.md`, cuarta iteración](docs/CORRECCIONES.md#cuarta-iteración-metodología-presentación-y-seguridad-revisión-del-0511) |
 
+**La versión válida es la rama `main`.** La rama `codigo-completo` conserva la entrega del 22/10 tal como se presentó; no tiene cambios posteriores.
+
 ## Qué hace el sistema
 
 API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
