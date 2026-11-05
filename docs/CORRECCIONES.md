@@ -1,6 +1,6 @@
 # Respuesta a la revisión (38/100): observación → corrección → evidencia
 
-Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (747 pruebas).
+Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (748 pruebas).
 
 Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorrelativo` significa la clase de pruebas `TestSerieYCorrelativo` dentro de ese archivo.
 
@@ -113,7 +113,7 @@ Las dos reglas de SUNAT se comprobaron por mutación: revertir cualquiera de las
 
 - **Catálogo 08** con `cbc:TierRange`. Ahora además se **calcula** el ISC de los tres sistemas.
 - **TaxScheme** 1000/IGV/VAT, 2000/ISC/EXC y 7152/ICBPER/OTH, `CustomizationID` 2.0 y `TaxExemptionReasonCode`.
-- **Ciclo rojo → verde**: se pasó de 20 a 747 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
+- **Ciclo rojo → verde**: se pasó de 20 a 748 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
 - **Los puertos del diagrama hexagonal**, que ahora existen en el código.
 - **Diagnóstico RS 234-2006 y distribución MSI/APK**, conservados en el ADR 0008.
 

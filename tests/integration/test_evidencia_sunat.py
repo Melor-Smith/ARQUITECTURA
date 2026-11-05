@@ -19,6 +19,7 @@ import io
 import json
 import re
 import zipfile
+from decimal import Decimal as D
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,8 @@ CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 EXT = "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
 RESULTADO = json.loads((DESTINO / "resultado.json").read_text(encoding="utf-8"))
 NOMBRES = [r["comprobante"] for r in RESULTADO]
+RUC_EMISOR = NOMBRES[0].split("-")[0]
+NS = {"cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2", "cbc": CBC}
 
 
 def _cdr(nombre: str) -> etree._Element:
@@ -113,3 +116,39 @@ def test_la_evidencia_no_incluye_claves_privadas():
     for archivo in Path(DESTINO).rglob("*"):
         if archivo.is_file():
             assert b"PRIVATE KEY" not in archivo.read_bytes(), archivo
+
+
+def test_cada_fila_del_14_1_cuadra_con_el_comprobante_que_sunat_acepto():
+    """El programa PLE no valida el 14.1 en modo de prueba (docs/evidencia-ple/README.md).
+
+    Esta prueba lo amarra a lo que SUNAT sí aceptó: cada fila del Registro de Ventas generado
+    por el sistema debe coincidir, campo por campo, con el XML que recibió CDR código 0.
+    """
+    [txt] = (Path(DESTINO).parent / "evidencia-ple" / "paquete" / "14.1-octubre-2026").glob("LE*140100*.TXT")
+    filas = [ln.split("|") for ln in txt.read_bytes().decode("utf-8").split("\r\n") if ln]
+    assert len(filas) == len(NOMBRES)
+
+    def monto(xml: etree._Element, xpath: str) -> D:
+        return sum((D(x.text) for x in xml.xpath(xpath, namespaces=NS)), D("0.00"))
+
+    tributo = "/*/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='{}']/cbc:{}"
+    for v in filas:
+        nombre = f"{RUC_EMISOR}-{v[5]}-{v[6]}-{v[7]}"
+        xml = etree.parse(str(ENVIADOS / f"{nombre}.xml")).getroot()
+        signo = -1 if v[5] == "07" else 1  # la nota de crédito va en negativo en el 14.1
+        cliente = xml.find(".//{*}AccountingCustomerParty//{*}PartyIdentification/{*}ID")
+        esperado = {
+            "10 tipo doc. cliente": cliente.get("schemeID"),
+            "11 nro. doc. cliente": cliente.text,
+            "14 base gravada": signo * monto(xml, tributo.format("1000", "TaxableAmount")),
+            "16 IGV": signo * monto(xml, tributo.format("1000", "TaxAmount")),
+            "20 ISC": signo * monto(xml, tributo.format("2000", "TaxAmount")),
+            "23 ICBPER": signo * monto(xml, tributo.format("7152", "TaxAmount")),
+            "25 importe total": signo * monto(xml, "/*/cac:*[self::cac:LegalMonetaryTotal or "
+                                                   "self::cac:RequestedMonetaryTotal]/cbc:PayableAmount"),
+        }
+        obtenido = {
+            "10 tipo doc. cliente": v[9], "11 nro. doc. cliente": v[10], "14 base gravada": D(v[13]),
+            "16 IGV": D(v[15]), "20 ISC": D(v[19]), "23 ICBPER": D(v[22]), "25 importe total": D(v[24]),
+        }
+        assert obtenido == esperado, nombre

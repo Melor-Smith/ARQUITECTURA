@@ -55,7 +55,7 @@ Desde entonces, el validador propio (`src/domain/ple_estructura.py`) aplica tamb
 
 ## Registro de Ventas 14.1: no se puede validar en modo de prueba
 
-Se intentó cuatro veces con el mismo PLE 5.2.0.7:
+Se intentó cinco veces con el mismo PLE 5.2.0.7:
 
 | Intento | Archivos | Resultado |
 |:-:|---|---|
@@ -63,10 +63,18 @@ Se intentó cuatro veces con el mismo PLE 5.2.0.7:
 | 2 | Lo mismo, con periodo marzo de 2022, antes del corte del RVIE | El PLE no hace nada |
 | 3 | Solo el 14.1 de marzo de 2022 | Aviso: *"…se deben presentar ambos según la combinación (080100, 080200 y 140100)…"*. Esto confirma que el programa procesa la solicitud |
 | 4 | 14.1 + **8.1 con una compra real** (factura 0001-4587, 42 campos) + 8.2 vacío, de marzo de 2022 | El PLE no hace nada |
+| 5 | Lo mismo que en el intento 4, generado por el sistema, con "Detallada" y el componente `PLEAccelerator` activo; se monitorearon procesos, red y archivos | El PLE no hace nada (ver abajo) |
 
 En los intentos 2 a 4 se usó una copia del 14.1 con el periodo y las fechas cambiados a mano. Hoy el sistema genera ese 14.1 directamente (`paquete/14.1-marzo-2022/`), con seis comprobantes, porque la factura del vale necesita fichas de 2026.
 
 En los intentos 1, 2 y 4 el PLE **no creó su carpeta de trabajo ni dejó registro en su bitácora** (`plelog.db3`). Con el 12.1, en cambio, sí lo hizo. Es decir, se detiene **antes de leer los archivos**, así que el resultado no depende del contenido de los TXT.
+
+**Qué se midió en el intento 5.** El código fuente de la pantalla *Validar*, que viene en la instalación (`componentes/sunat/ple/ValidarPanel.mxml.bak`), muestra que los registros de compras y ventas no se validan en la ventana. Se envían por TCP a `PLEAccelerator.exe` (`127.0.0.1:1977`), que tiene las funciones `f140100d` y `f140100g`. Durante 4 minutos se registró la actividad de ambos procesos:
+
+- el PLE y el acelerador se comunican sin errores: hubo más de 160 conexiones, una cada 2 segundos, todas cerradas con normalidad;
+- al pulsar *Validar* no aparece ningún trabajo nuevo, no se crea la carpeta de trabajo y no se escribe ningún archivo.
+
+El bloqueo ocurre en el PLE, antes de leer los TXT, y no en el contenido del 14.1.
 
 La explicación más probable es la siguiente. El registro de compras y el de ventas se validan juntos en un flujo propio: genera las casillas para el PDT y usa datos que el PLE obtiene de SUNAT al ingresar con clave SOL (`LIST_PADRON154`, `gIndOkSoloRVIE`, corte `PER_CORTE_RVIE_TODOS = 20220400`). En modo de prueba, con un RUC ficticio, esos datos no existen. Además, desde abril de 2022 el Registro de Ventas se presenta por el **RVIE / SIRE**, no por el PLE.
 
@@ -74,7 +82,8 @@ La explicación más probable es la siguiente. El registro de compras y el de ve
 
 - contra el Excel oficial del Anexo 2, campo por campo (`tests/unit/ple/test_anexo2_oficial.py`);
 - con las reglas entre campos del Anexo 2 (`tests/unit/ple/test_txt_registro_ventas.py`);
-- de extremo a extremo con todos los comprobantes de ejemplo (`test_registro_de_ventas_141_cumple_el_anexo_2`).
+- de extremo a extremo con todos los comprobantes de ejemplo (`test_registro_de_ventas_141_cumple_el_anexo_2`);
+- **contra lo que SUNAT aceptó:** cada una de las siete filas del 14.1 coincide campo por campo con el XML que el servicio beta de SUNAT aceptó con CDR código 0 ([evidencia](../evidencia-sunat/README.md)). Los campos comparados son el tipo y número de documento del cliente, la base gravada, el IGV, el ISC, el ICBPER y el importe total, con signo negativo en la nota de crédito (`test_cada_fila_del_14_1_cuadra_con_el_comprobante_que_sunat_acepto`).
 
 Para validarlo también en el PLE hace falta un RUC real con clave SOL. Ese paso queda pendiente, fuera del alcance del caso académico.
 

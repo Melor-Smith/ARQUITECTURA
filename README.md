@@ -26,7 +26,7 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 
 | Verificación | Resultado | Cómo comprobarlo |
 |---|---|---|
-| Pruebas automáticas | **747**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
+| Pruebas automáticas | **748**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
 | Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
 | Tipado estático | **0 errores** en 63 archivos | `mypy` |
 | Estilo y errores comunes | **0 avisos** | `ruff check .` |
@@ -36,7 +36,7 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 | Contrato OpenAPI = código | Verificado por prueba | `tests/acceptance/test_contrato.py` |
 | XML contra los XSD oficiales OASIS | Cada XML generado se valida antes y después de firmar | `tests/unit/generacion_xml/` |
 | XML aceptado por SUNAT | **7 de 7 con CDR código 0** en el servicio beta; la evidencia se re-verifica sin red en cada CI y en vivo cada semana | [`docs/evidencia-sunat/`](docs/evidencia-sunat/README.md) · workflow `sunat-beta` |
-| TXT del PLE contra la fuente oficial | Estructura comparada con el Excel del Anexo 2; **12.1 validado por el programa PLE de SUNAT** | [`docs/evidencia-ple/`](docs/evidencia-ple/README.md) |
+| TXT del PLE contra la fuente oficial | Estructura comparada con el Excel del Anexo 2; **12.1 validado por el programa PLE de SUNAT**; cada fila del 14.1 cuadra con el XML que SUNAT aceptó | [`docs/evidencia-ple/`](docs/evidencia-ple/README.md) |
 | Imagen Docker | Se construye, levanta, emite una factura (201) y no corre como root | job `contenedor` de la CI |
 
 ## Entregables
@@ -48,7 +48,7 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 | 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0012) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
 | 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) (generado desde el código y verificado) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
 | 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**; las columnas PLE 14.1 / 12.1 y de contrato también se verifican (Anexo 2, TXT generado y OpenAPI), así que ninguna fila queda sin ubicación comprobada · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
-| 6 | Pruebas y evidencia | [`tests/`](tests) (747 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (748 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
 ## Arquitectura en una imagen
 
@@ -92,7 +92,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest -q --cov                     # 747 pruebas + cobertura
+pytest -q --cov                     # 748 pruebas + cobertura
 pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
 ruff check . && mypy                # estilo y tipos
 
