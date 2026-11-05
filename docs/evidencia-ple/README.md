@@ -5,7 +5,8 @@
 | Fecha | 05/11/2026 |
 | Programa | **PLE 5.2.0.7** (Programa de Libros Electrónicos de SUNAT), opción *Validar Libros Electrónicos*, en modo de prueba (sin clave SOL) |
 | RUC | `20556677884`, el de ABC Software Corp en el caso |
-| Archivo validado | [`docs/ejemplos/ple-12.1-LE2055667788420261000120100001111.txt`](../ejemplos/ple-12.1-LE2055667788420261000120100001111.txt), generado por `python scripts/generar_ejemplos.py` y validado **sin editarlo a mano** |
+| Archivo validado | [`paquete/12.1-octubre-2026/LE2055667788420261000120100001111.TXT`](paquete/12.1-octubre-2026/LE2055667788420261000120100001111.TXT), generado por el sistema y validado **sin editarlo a mano** |
+| Huella SHA-256 | `589d39b5490cecb15c88c77f1a19b62fa4235bdc9f004cf579355f5e1c3edb6b`. Una prueba exige que el sistema siga generando exactamente este archivo (`test_el_12_1_es_el_mismo_que_valido_sunat`) |
 
 ## Resultado
 
@@ -19,6 +20,26 @@ Los totales de control que calculó el PLE coinciden con el archivo:
 | Salidas de unidades físicas | -674.00 | -674.00 |
 | Filas con estado 1 | 23 | 23 |
 | Filas validadas | 23 | 23 |
+
+## Paquete reproducible
+
+Todo lo que se cargó en el PLE está en [`paquete/`](paquete) y se regenera con:
+
+```bash
+python scripts/preparar_validacion_ple.py
+```
+
+| Carpeta | Archivos | Origen |
+|---|---|---|
+| [`12.1-octubre-2026/`](paquete/12.1-octubre-2026) | 12.1 | Sistema. Es el archivo validado **sin inconsistencias** |
+| [`14.1-octubre-2026/`](paquete/14.1-octubre-2026) | 14.1 + 8.1 y 8.2 sin información (archivos vacíos) | Sistema |
+| [`14.1-marzo-2022/`](paquete/14.1-marzo-2022) | 14.1 + 8.1 con una compra + 8.2 vacío | 14.1: sistema, con reloj e inventario inicial en marzo de 2022. 8.1: **insumo de prueba** (el sistema no lleva compras, pero el PLE exige presentarlas junto al 14.1) |
+
+`tests/integration/test_paquete_validacion_ple.py` comprueba:
+
+- que el paquete versionado es exactamente lo que genera el script;
+- que cada TXT cumple el Anexo 2;
+- que ventas y compras van juntas, como exige el PLE.
 
 ## Cómo se llegó: tres rondas
 
@@ -39,9 +60,11 @@ Se intentó cuatro veces con el mismo PLE 5.2.0.7:
 | Intento | Archivos | Resultado |
 |:-:|---|---|
 | 1 | 14.1 + 8.1 + 8.2 de octubre de 2026 (compras sin información) | El PLE no hace nada y no muestra ningún mensaje |
-| 2 | Lo mismo, con el periodo movido a marzo de 2022, antes del corte del RVIE | El PLE no hace nada |
+| 2 | Lo mismo, con periodo marzo de 2022, antes del corte del RVIE | El PLE no hace nada |
 | 3 | Solo el 14.1 de marzo de 2022 | Aviso: *"…se deben presentar ambos según la combinación (080100, 080200 y 140100)…"*. Esto confirma que el programa procesa la solicitud |
 | 4 | 14.1 + **8.1 con una compra real** (factura 0001-4587, 42 campos) + 8.2 vacío, de marzo de 2022 | El PLE no hace nada |
+
+En los intentos 2 a 4 se usó una copia del 14.1 con el periodo y las fechas cambiados a mano. Hoy el sistema genera ese 14.1 directamente (`paquete/14.1-marzo-2022/`), con seis comprobantes, porque la factura del vale necesita fichas de 2026.
 
 En los intentos 1, 2 y 4 el PLE **no creó su carpeta de trabajo ni dejó registro en su bitácora** (`plelog.db3`). Con el 12.1, en cambio, sí lo hizo. Es decir, se detiene **antes de leer los archivos**, así que el resultado no depende del contenido de los TXT.
 
@@ -59,5 +82,5 @@ Para validarlo también en el PLE hace falta un RUC real con clave SOL. Ese paso
 
 1. Instale el PLE desde el [portal de SUNAT](https://emprender.sunat.gob.pe/comprobantes-libros/registros-libros-electronicos/programa-libros-electronicos-ple).
 2. Ingrese con **"Sin clave SOL (modo de prueba)"** y el RUC `20556677884`.
-3. Entre a **Validar**, use **Añadir archivo** para cargar el TXT de `docs/ejemplos/` y pulse **Validar**.
-4. Abra **Ver constancia**.
+3. Entre a **Validar** y use **Añadir archivo** para cargar **todos los archivos de una carpeta** de [`paquete/`](paquete).
+4. Pulse **Validar** y abra **Ver constancia**.

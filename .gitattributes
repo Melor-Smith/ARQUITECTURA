@@ -6,3 +6,5 @@ specs/contracts/ubl-2.1/xsd/**/*.xsd -text
 *.xls binary
 # TXT del PLE: el CRLF es parte del formato; se guardan byte a byte.
 docs/ejemplos/*.txt -text
+# Paquete de validación PLE: se guarda byte a byte (CRLF y archivos vacíos son parte del formato).
+docs/evidencia-ple/paquete/** -text

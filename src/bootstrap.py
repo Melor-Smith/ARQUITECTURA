@@ -7,6 +7,7 @@ uso cambia, y las pruebas de aceptación corren contra los dos adaptadores.
 
 from __future__ import annotations
 
+import datetime as dt
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -133,8 +134,13 @@ def construir_contenedor(
     emisor: Emisor = semillas.EMISOR_ABC,
     cargar_semillas: bool = True,
     ultimos_correlativos: dict[tuple[str, str], int] | None = None,
+    fecha_inventario_inicial: dt.date = semillas.FECHA_SALDO_INICIAL,
 ) -> Contenedor:
-    """``ultimos_correlativos``: {(tipo, serie): último número ya emitido} para continuar series existentes."""
+    """``ultimos_correlativos``: {(tipo, serie): último número ya emitido} para continuar series existentes.
+
+    ``fecha_inventario_inicial``: fecha del corte en que se carga el inventario inicial (tabla 12,
+    operación 16). El Kardex no acepta movimientos anteriores a esa fecha.
+    """
     configuracion = configuracion or Configuracion.desde_entorno()
     reloj = reloj or RelojSistema()
     establecimiento = emisor.codigo_establecimiento
@@ -146,7 +152,7 @@ def construir_contenedor(
     # Las semillas solo se cargan en una base vacía: reiniciar el servidor no duplica el inventario.
     if cargar_semillas and next(iter(kardex.movimientos()), None) is None:
         with uow.transaccion():
-            semillas.cargar_saldos_iniciales(kardex, ids, establecimiento)
+            semillas.cargar_saldos_iniciales(kardex, ids, establecimiento, fecha_inventario_inicial)
 
     if configuracion.certificado_pfx:
         certificado = CertificadoDigital.desde_pfx(configuracion.certificado_pfx,

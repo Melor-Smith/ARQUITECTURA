@@ -25,9 +25,9 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 
 | Verificación | Resultado | Cómo comprobarlo |
 |---|---|---|
-| Pruebas automáticas | **599**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
+| Pruebas automáticas | **606**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
 | Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
-| Tipado estático | **0 errores** en 59 archivos | `mypy` |
+| Tipado estático | **0 errores** en 60 archivos | `mypy` |
 | Estilo y errores comunes | **0 avisos** | `ruff check .` |
 | Vulnerabilidades en dependencias | **0 conocidas** | `pip-audit -r requirements.txt` |
 | Regla de dependencias hexagonal | Verificada por prueba | `tests/integration/test_arquitectura.py` |
@@ -46,7 +46,7 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 | 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0011) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
 | 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) (generado desde el código y verificado) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
 | 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**, columnas PLE 14.1 / 12.1 · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
-| 6 | Pruebas y evidencia | [`tests/`](tests) (599 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (606 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
 ## Arquitectura en una imagen
 
@@ -90,7 +90,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest -q --cov                     # 599 pruebas + cobertura
+pytest -q --cov                     # 606 pruebas + cobertura
 pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
 ruff check . && mypy                # estilo y tipos
 
@@ -143,6 +143,7 @@ Todos los errores usan `application/problem+json` (RFC 9457) con un `codigo` est
 | `python scripts/exportar_openapi.py` | Regenera `specs/contracts/openapi.yaml` desde el código |
 | `python scripts/matriz.py` | Regenera la matriz (MD + CSV) desde `matriz.yaml`, calculando la cardinalidad desde los XSD |
 | `python scripts/generar_ejemplos.py` | Regenera `docs/ejemplos/` con salidas reales (XML firmado, JSON, TXT del PLE) |
+| `python scripts/preparar_validacion_ple.py` | Regenera `docs/evidencia-ple/paquete/`, los archivos para validar con el programa PLE de SUNAT |
 | `scripts/generar_clases_ubl.ps1` / `.sh` | Regenera las clases xsdata desde los XSD oficiales |
 
 Hay una prueba por cada artefacto generado que falla si quedó desactualizado.
