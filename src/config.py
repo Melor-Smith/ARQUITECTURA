@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from src.adapters.outbound.ose.simulada import ModoOse
+from src.adapters.outbound.ose.sunat_soap import CLAVE_BETA, ENDPOINT_BETA, ENDPOINT_PRODUCCION, USUARIO_BETA
 
 ALCANCES = (
     "comprobantes:emitir",
@@ -35,6 +36,17 @@ class Configuracion:
     contrasena_certificado: str = ""
     #: Ruta del archivo SQLite. Sin valor, la persistencia es en memoria (desarrollo y pruebas).
     base_datos: Path | None = None
+    #: URL del servicio ``billService`` de SUNAT. Sin valor se usa la OSE simulada.
+    #: ``ABC_SUNAT_ENDPOINT=beta`` es atajo del entorno de pruebas de SUNAT (ver ADR 0012).
+    sunat_endpoint: str | None = None
+    sunat_usuario_sol: str = USUARIO_BETA
+    sunat_clave_sol: str = CLAVE_BETA
+
+    def __post_init__(self) -> None:
+        if self.sunat_endpoint == ENDPOINT_PRODUCCION and (
+                self.certificado_pfx is None or self.sunat_usuario_sol == USUARIO_BETA):
+            raise ValueError("Producción SUNAT exige ABC_CERTIFICADO_PFX y un usuario SOL secundario real: "
+                             "el certificado autofirmado y MODDATOS solo valen en beta.")
 
     @classmethod
     def desde_entorno(cls) -> Configuracion:
@@ -44,6 +56,7 @@ class Configuracion:
             if tokens_json else dict(TOKENS_DESARROLLO)
         )
         pfx = os.environ.get("ABC_CERTIFICADO_PFX")
+        endpoint = os.environ.get("ABC_SUNAT_ENDPOINT")
         return cls(
             modo_ose=ModoOse(os.environ.get("ABC_MODO_OSE", ModoOse.NORMAL.value)),
             plazo_envio_dias=int(os.environ.get("ABC_PLAZO_ENVIO_DIAS", "3")),
@@ -51,4 +64,10 @@ class Configuracion:
             certificado_pfx=Path(pfx) if pfx else None,
             contrasena_certificado=os.environ.get("ABC_CERTIFICADO_CONTRASENA", ""),
             base_datos=Path(os.environ["ABC_BASE_DATOS"]) if os.environ.get("ABC_BASE_DATOS") else None,
+            sunat_endpoint=_ATAJOS_ENDPOINT.get(endpoint, endpoint) if endpoint else None,
+            sunat_usuario_sol=os.environ.get("ABC_SUNAT_USUARIO_SOL", USUARIO_BETA),
+            sunat_clave_sol=os.environ.get("ABC_SUNAT_CLAVE_SOL", CLAVE_BETA),
         )
+
+
+_ATAJOS_ENDPOINT = {"beta": ENDPOINT_BETA, "produccion": ENDPOINT_PRODUCCION}

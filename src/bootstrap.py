@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from src.adapters.outbound.firma.xmldsig import CertificadoDigital, FirmaXmlDsig
 from src.adapters.outbound.ose.simulada import OseSimulada
+from src.adapters.outbound.ose.sunat_soap import ClienteSunatSoap
 from src.adapters.outbound.persistencia import semillas
 from src.adapters.outbound.persistencia.memoria import (
     GeneradorIdentificadoresEnMemoria,
@@ -159,6 +160,9 @@ def construir_contenedor(
     else:
         certificado = CertificadoDigital.autofirmado_para_desarrollo(str(emisor.ruc), emisor.razon_social)
 
+    if ose is None and configuracion.sunat_endpoint:
+        ose = ClienteSunatSoap(ruc=str(emisor.ruc), reloj=reloj, endpoint=configuracion.sunat_endpoint,
+                               usuario_sol=configuracion.sunat_usuario_sol, clave_sol=configuracion.sunat_clave_sol)
     ose = ose or OseSimulada(validador=_VALIDADOR, reloj=reloj, modo=configuracion.modo_ose)
     emitir = EmitirComprobante(
         emisor=emisor,

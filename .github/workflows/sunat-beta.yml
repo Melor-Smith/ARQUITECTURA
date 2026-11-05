@@ -1,0 +1,29 @@
+name: SUNAT beta (en vivo)
+
+# Prueba de contrato contra el servicio real de SUNAT. Va aparte de la CI principal porque
+# depende de la red y de la disponibilidad de SUNAT: un fallo aquí no bloquea un merge,
+# pero avisa si SUNAT cambió una regla o si el XML dejó de cumplirla.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * 1"  # lunes 08:00 en Lima
+
+jobs:
+  sunat-beta:
+    name: Emitir los 7 comprobantes del caso en e-beta.sunat.gob.pe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Enviar y exigir CDR código 0
+        run: python scripts/validar_en_sunat_beta.py
+      - name: Guardar los CDR como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-sunat-beta
+          path: docs/evidencia-sunat/

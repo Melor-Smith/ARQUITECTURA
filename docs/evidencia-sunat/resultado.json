@@ -1,0 +1,86 @@
+[
+  {
+    "ejemplo": "factura.json",
+    "comprobante": "20556677884-01-F001-1",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Factura numero F001-1, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:49:43.235354-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "factura-isc-icbper.json",
+    "comprobante": "20556677884-01-FA01-1",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Factura numero FA01-1, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:49:47.346000-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "factura-credito.json",
+    "comprobante": "20556677884-01-F001-2",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Factura numero F001-2, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:49:51.563925-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "factura-de-vale-legado.json",
+    "comprobante": "20556677884-01-F001-3",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Factura numero F001-3, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:49:55.654466-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "boleta.json",
+    "comprobante": "20556677884-03-B001-1",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Boleta numero B001-1, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:49:59.767564-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "nota-credito.json",
+    "comprobante": "20556677884-07-FC01-1",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Nota de Credito numero FC01-1, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:50:04.088781-05:00"
+    },
+    "intentos": 1
+  },
+  {
+    "ejemplo": "nota-debito.json",
+    "comprobante": "20556677884-08-FD01-1",
+    "estado": "ACEPTADO",
+    "cdr": {
+      "codigo": "0",
+      "descripcion": "La Nota de Debito numero FD01-1, ha sido aceptada",
+      "observaciones": [],
+      "fecha_recepcion": "2026-11-05T10:50:08.275299-05:00"
+    },
+    "intentos": 1
+  }
+]
