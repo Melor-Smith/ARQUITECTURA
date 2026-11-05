@@ -153,6 +153,20 @@ class Linea:
         return self.monto_isc + self.monto_igv + self.monto_icbper
 
     @property
+    def tasa_isc_porcentual(self) -> Decimal | None:
+        """``cbc:Percent`` del ISC de la línea.
+
+        SUNAT (regla 3108) exige base x tasa = monto del ISC en los tres sistemas. En el 02
+        (monto fijo por unidad) no hay tasa legal, así que se informa la tasa equivalente
+        monto / base con 5 decimales (formato n(3,5)). Lo detectó el servicio beta de SUNAT.
+        """
+        if self.isc is None:
+            return None
+        if self.isc.tasa_porcentual is not None:
+            return self.isc.tasa_porcentual
+        return (self.monto_isc * 100 / self.base_isc).quantize(Decimal("0.00001"))
+
+    @property
     def precio_unitario(self) -> Decimal:
         """Precio unitario con IGV e ISC (``cac:PricingReference``, tipo de precio 01)."""
         return redondear((self.valor_venta + self.monto_isc + self.monto_igv) / self.cantidad)

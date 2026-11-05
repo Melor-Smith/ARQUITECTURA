@@ -251,7 +251,9 @@ class GeneradorUblXsdata:
         t, moneda = c.totales, c.moneda.value
         subtotales = []
         if t.gravadas or t.igv:
-            subtotales.append(self._subtotal(Tributo.IGV, moneda, t.gravadas + t.isc, t.igv))
+            # Regla 3277 de SUNAT: la base global del IGV es la suma de los valores de venta
+            # gravados SIN el ISC (en la línea, en cambio, la base sí incluye el ISC).
+            subtotales.append(self._subtotal(Tributo.IGV, moneda, t.gravadas, t.igv))
         if t.isc:
             subtotales.append(self._subtotal(Tributo.ISC, moneda, t.base_isc, t.isc))
         for monto, tributo in ((t.exoneradas, Tributo.EXONERADO), (t.inafectas, Tributo.INAFECTO),
@@ -288,7 +290,7 @@ class GeneradorUblXsdata:
                 tax_amount=cbc.TaxAmount(value=ln.monto_isc, currency_id=moneda),
                 tax_category=cac.TaxCategory(
                     id=self._categoria_id(Tributo.ISC),
-                    percent=cbc.Percent(value=ln.isc.tasa_porcentual) if ln.isc.tasa_porcentual is not None else None,
+                    percent=cbc.Percent(value=tasa) if (tasa := ln.tasa_isc_porcentual) is not None else None,
                     per_unit_amount=(cbc.PerUnitAmount(value=ln.isc.monto_fijo, currency_id=moneda)
                                      if ln.isc.monto_fijo is not None else None),
                     tier_range=cbc.TierRange(value=ln.isc.sistema.value),  # Catálogo 08

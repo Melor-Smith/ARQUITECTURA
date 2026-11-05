@@ -13,30 +13,30 @@
                 <ds:Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
               </ds:Transforms>
               <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-              <ds:DigestValue>zULCk2+DFDo/NZbRh3kpJwED/oQttoh2ocZxCSjZ0hw=</ds:DigestValue>
+              <ds:DigestValue>NAX78XRNPd8j8iNw2G/yy93uK7+d5/JZs9x7hfBvDwU=</ds:DigestValue>
             </ds:Reference>
           </ds:SignedInfo>
-          <ds:SignatureValue>YH9bu+L6XnryV54pYAxiNACwPlHuVmrCtXk0nLg/+8wZBOdsZbBaUuirz/2S05/ZNySNCRJNI7Y+0jDtAstBF1+9vvyn808WvY+yuPd3RSAYdzfiiojFRBZLJMkvkhDugmXpxpvxK33eJsG+lj4EAaEJuvowW01Ll1YpKQPkh20ZR1r9LLDQTLoZVO0MWgwvWFaWDMyk5QqBaNzeNkO3QPYJK75UbwBNX3JiVLGOcJslRyEzLsiRq+8AUzYqEvXThqYfPr26lyJfzwVaSrGJ/I/BMwO1i55tnVnrEszENZ1pOgy4cuFdhIBX9tcSK0MRzyd8qlUXfOpig2oCf5DHbQ==</ds:SignatureValue>
+          <ds:SignatureValue>KBPSiIgDmcYKksmzMI5b+8xcIFqHyxZgnTjtOkvwdIv0BAKv54DApgxt0kolZYEbAhWKPqRRqun9ho+WzQaGYrUpVUx87a1FP58P7Nvniiym/giEiTp4m+1Ka9bcNiZQawpMiv1yEcHpfTRjMDSbpcoRNFnHEpsZtB4KTeBOG7TI/1HUAh8Cf39FOuJW2s20Vu2DWb8mvO9bGpTvYl1lgiaQ2MhOsO5P3P2hf+pcQs7phaT5TyvaspaC7jxL6nLCyAzYohwNqdX8Jq4Ubq04X4e5CjjbDNIAOgoQE+jdv+Dsa2KAopd27rGZJBISEdmHRj5uEQAQ3qJFbTCzBel9GA==</ds:SignatureValue>
           <ds:KeyInfo>
             <ds:X509Data>
-              <ds:X509Certificate>MIIDMjCCAhqgAwIBAgIUeurWssNE1pGvh/Xj6CANiE8JNTcwDQYJKoZIhvcNAQEL
+              <ds:X509Certificate>MIIDMjCCAhqgAwIBAgIUX1h/4Gv4ixZMmPscKTw+yYAGGZkwDQYJKoZIhvcNAQEL
 BQAwUzEuMCwGA1UEAwwlQUJDIFNPRlRXQVJFIENPUlAgUy5BLkMuIChERVNBUlJP
 TExPKTEUMBIGA1UEBRMLMjA1NTY2Nzc4ODQxCzAJBgNVBAYTAlBFMB4XDTI2MTEw
-NDA3MjQ1N1oXDTI3MTEwNTA3MjQ1N1owUzEuMCwGA1UEAwwlQUJDIFNPRlRXQVJF
+NDE1NDY0N1oXDTI3MTEwNTE1NDY0N1owUzEuMCwGA1UEAwwlQUJDIFNPRlRXQVJF
 IENPUlAgUy5BLkMuIChERVNBUlJPTExPKTEUMBIGA1UEBRMLMjA1NTY2Nzc4ODQx
-CzAJBgNVBAYTAlBFMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwa+J
-fPa1KROyUgNo7gKhoAJbwBaHHdiNBgGF+9D49t8Jn6Dg1FHYi8f+XnqoD8Iqlleq
-DRbW9X/+Y6AU5pAhrFq0NtbBSr5+bSimuIQlSHwHD6lI/S17GWAyf7ZKCQmLICDS
-TdtAz1d67qFqyv7DgAfGWXw2oHslUZznjiz9vFg7RlW/ZWhTtd8NwZVRRa2PXsYt
-dRkE7ClGcjeaHHJ8q4No2Meikp3cfn4/CMII+Seg5i+OPfupVUwyFddos7/XJ9Ix
-KhgxH7xyIezCxDLAkL6IuZuVcM95eA7H/VAVxmnOy7pG+peDr4NYvRpUXh4F+EYI
-M/ufZKRDccvSy+8mMwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQB4I8b04IYzhakj
-5fqvufUlgBKGcoaKcxKXkbUquVCBWvJDQJOl3n4oZR51fqRg2kLrAz3H00/G8LPC
-jQRgteL4xWWXDA4ZZFn+HsarVbdXmjSYh6tY80Lk9NMCwRI9NIWExNnZ63jYAKJg
-vwiNZWWM7mUlKddpacF6oloUR+OXOK9boMyguZCUupPC3QJCi7FhX1oewAHJWIuM
-XcnxyOgTNsYnVZ7Szz+Pere9lgb7E1+qa/4ZYdYEdOVFjENTX2srUlaNDiykNUyN
-mi05DIXKqUL4+joIzSYXeOlfl5/t57t2dcfCaKypO10JtEF6Ln8GAo5xPrfvxxy5
-1tylppCF
+CzAJBgNVBAYTAlBFMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyH/W
+ynb7l/dB/FK4CItiYVX6CSUOpJ2IsHQrNAFqXW4SsFpYiz+Ctft3FFWShx4RpqI0
+723WMpBf9nOCYVhkEztUK2JtwtMXdafhO6RvQ9LUf/KoiaPJ1NBGjxgL8G9G9QGw
+bApcelXc22GsOYhoWvXjDdExZktGKr+nj/d910Osx5//YVBtoCzVmLMVnSp950Zy
+3ELDjl0JDaOnm2FlOkoKscugg9cjvMKxNeQlqnY5k73THWbBtWSEtyXXZtRvm/fA
+mlClXLmTTxlGTXGVwORZKSKwZMdUjul+ogrizSMznekVbM4kvMCZhAWZjX1s4x6u
+HanNPU3XkQOXK1SHOQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQBON06S1r69ZWEI
+vQn4FTC1eABroSjv6S7vDg8t54PvxZDZ+tyx7TAp0EfM+D68XNRLIUWKzMWof1GI
+uRt/76qDQalfIezwd99BoZjfEbcRDesDyX3nX9zGdthn08zDDyBENNBYGwy6JTua
+88bajfWbeTSLtzdEHQ0P0s5ZNli4IiF8tPTx9xMHkWqrRMzk2/o8HrxV2dhA4Bsl
+C/MgWUywFEUPAEIJZhNQx/4vHpDoNFcN0Qxxl8I6DxBzaFHmT5JuK9uG+W9lLPeb
+//uSB/208zFuJIuDifSGrGzSG5oQKKxe06JdtT8RVA+SMG4UQNWuUQyvyYDnNVRv
+g131Qeok
 </ds:X509Certificate>
             </ds:X509Data>
           </ds:KeyInfo>
@@ -108,7 +108,7 @@ mi05DIXKqUL4+joIzSYXeOlfl5/t57t2dcfCaKypO10JtEF6Ln8GAo5xPrfvxxy5
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="PEN">159.85</cbc:TaxAmount>
     <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="PEN">449.70</cbc:TaxableAmount>
+      <cbc:TaxableAmount currencyID="PEN">372.30</cbc:TaxableAmount>
       <cbc:TaxAmount currencyID="PEN">80.95</cbc:TaxAmount>
       <cac:TaxCategory>
         <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">S</cbc:ID>
@@ -216,6 +216,7 @@ mi05DIXKqUL4+joIzSYXeOlfl5/t57t2dcfCaKypO10JtEF6Ln8GAo5xPrfvxxy5
         <cbc:TaxAmount currencyID="PEN">16.20</cbc:TaxAmount>
         <cac:TaxCategory>
           <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier" schemeAgencyName="United Nations Economic Commission for Europe">S</cbc:ID>
+          <cbc:Percent>24.54545</cbc:Percent>
           <cbc:PerUnitAmount currencyID="PEN">1.35</cbc:PerUnitAmount>
           <cbc:TierRange>02</cbc:TierRange>
           <cac:TaxScheme>
