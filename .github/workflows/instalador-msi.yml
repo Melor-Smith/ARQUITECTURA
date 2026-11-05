@@ -37,15 +37,33 @@ jobs:
       - name: Prueba de humo del ejecutable (levanta la API y responde /salud)
         run: dist/abc-facturacion/abc-facturacion.exe --salud
       - name: Construir el MSI con WiX 5
+        shell: pwsh
         run: |
           dotnet tool install --global wix --version 5.0.2
-          wix build packaging/windows/abc-facturacion.wxs -arch x64 -d Origen=dist/abc-facturacion -d Version=2.0.0 -o dist/abc-facturacion.msi
+          # Ruta ABSOLUTA: <Files Include> resuelve las rutas relativas desde la carpeta del .wxs,
+          # no desde la raíz del repositorio; con una ruta relativa el MSI salía sin archivos.
+          $origen = Join-Path $PWD 'dist\abc-facturacion'
+          wix build packaging/windows/abc-facturacion.wxs -arch x64 -d "Origen=$origen" -d Version=2.0.0 -o dist/abc-facturacion.msi
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $mb = (Get-Item dist/abc-facturacion.msi).Length / 1MB
+          Write-Host ("MSI: {0:N1} MB" -f $mb)
+          if ($mb -lt 10) { Write-Error "El MSI pesa $mb MB: no incluyó el ejecutable empaquetado"; exit 1 }
       - name: Instalar el MSI en silencio y verificar
         shell: pwsh
         run: |
-          $p = Start-Process msiexec.exe -ArgumentList '/i', 'dist\abc-facturacion.msi', '/qn', '/l*v', 'msi.log' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Get-Content msi.log -Tail 50; exit $p.ExitCode }
-          & "$env:ProgramFiles\ABC Facturacion\abc-facturacion.exe" --salud
+          $msi = Join-Path $PWD 'dist\abc-facturacion.msi'
+          $log = Join-Path $PWD 'msi.log'
+          $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', "`"$log`"" -Wait -PassThru
+          Write-Host "msiexec terminó con código $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { Get-Content $log -Tail 60; exit $p.ExitCode }
+          $exe = Join-Path $env:ProgramFiles 'ABC Facturacion\abc-facturacion.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Host "No se encontró $exe. Contenido instalado:"
+            Get-ChildItem (Join-Path $env:ProgramFiles 'ABC Facturacion') -Recurse -Depth 1 -ErrorAction SilentlyContinue | Select-Object -First 40 FullName
+            Select-String -Path $log -Pattern 'INSTALLFOLDER|Error|Note: 1:' | Select-Object -First 40
+            exit 1
+          }
+          & $exe --salud
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
