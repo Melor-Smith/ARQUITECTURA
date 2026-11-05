@@ -84,8 +84,19 @@ class MigrarFichaLegado:
                                    codigo="ERR-PRODUCTO-NO-EXISTE", campo="codigo_producto")
 
             es_salida = ficha.sentido is SentidoMovimiento.SALIDA
+            # Lo que ocurrió en el negocio (una venta o una compra) no siempre es lo que se anota
+            # en el 12.1: SUNAT exige comprobante o guía para las operaciones 01 a 06. Si la ficha
+            # solo tiene un documento interno y no se indicó la operación, se anota como 99.
+            es_venta = es_salida and cmd.tipo_operacion in (None, TipoOperacionInventario.VENTA)
             operacion = cmd.tipo_operacion or (TipoOperacionInventario.VENTA if es_salida
                                                else TipoOperacionInventario.COMPRA)
+            observaciones = [clasificado.observacion] if clasificado.observacion else []
+            if (cmd.tipo_operacion is None and operacion.exige_comprobante
+                    and clasificado.documento.tipo is TipoDocumentoPLE.OTROS):
+                observaciones.append(
+                    f"Sustentada solo con documento interno: en el 12.1 se anota como operación 99 (Otros) y no "
+                    f"{operacion.value} ({operacion.descripcion}), porque SUNAT exige comprobante o guía de remisión.")
+                operacion = TipoOperacionInventario.OTROS
             kardex = self._kardex.obtener(cmd.establecimiento or self._establecimiento, producto)
             movimiento = kardex.registrar(
                 id_movimiento=self._ids.siguiente("MOV"),
@@ -96,7 +107,7 @@ class MigrarFichaLegado:
                 documento=clasificado.documento,
                 glosa=f"Migrado del sistema antiguo: {ficha.producto}",
             )
-            if not (es_salida and operacion is TipoOperacionInventario.VENTA):
+            if not es_venta:
                 estado = EstadoMigracion.NO_REQUIERE_FACTURA
             elif clasificado.documento.tipo in (TipoDocumentoPLE.FACTURA, TipoDocumentoPLE.BOLETA):
                 estado = EstadoMigracion.FACTURADA_EN_SISTEMA_ANTIGUO  # no se vuelve a facturar
@@ -105,7 +116,7 @@ class MigrarFichaLegado:
             migracion = MigracionLegado(
                 self._ids.siguiente("MIG"), ficha, homologacion, movimiento, estado,
                 regla_documento=clasificado.regla,
-                observaciones=(clasificado.observacion,) if clasificado.observacion else (),
+                observaciones=tuple(observaciones),
                 clave=clave,
             )
             self._kardex.guardar(kardex)

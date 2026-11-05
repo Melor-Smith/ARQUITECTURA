@@ -179,7 +179,12 @@ class UnidadMedida(_EnumConDescripcion):
 
     @property
     def unidad_ple(self) -> UnidadMedidaPLE:
-        """Tabla de equivalencias Catálogo 03 (UNECE) → Tabla 6 (PLE)."""
+        """Equivalencia Catálogo 03 (UNECE) → códigos numéricos de la tabla 6 anterior (01, 07…).
+
+        Se conserva como referencia histórica y para el formato impreso. **No va en el TXT**:
+        el validador PLE 5.2.0.7 rechaza esos códigos en el campo 16 del 12.1 ("El valor no se
+        encontró en la tabla de parámetros") y acepta el código UN/ECE (KGM, NIU…).
+        """
         return _UNECE_A_TABLA6.get(self, UnidadMedidaPLE.OTROS)
 
 
@@ -279,6 +284,13 @@ class TipoOperacionInventario(_EnumConDescripcion):
     ENTRADA_TRANSFERENCIA = ("21", "Entrada por transferencia entre almacenes")
     ENTRADA_DEVOLUCION_CLIENTE = ("24", "Entrada por devolución del cliente")
     OTROS = ("99", "Otros")
+
+    @property
+    def exige_comprobante(self) -> bool:
+        """Anexo 2, formato 12.1, campo 11: si la operación es 01 a 06 (venta, compra,
+        consignación, devolución…), el documento no puede ser '00' (interno): debe ser un
+        comprobante de pago o una guía de remisión. Lo confirmó el validador PLE 5.2.0.7."""
+        return self.value in {"01", "02", "03", "04", "05", "06"}
 
     @property
     def sentidos_permitidos(self) -> frozenset[SentidoMovimiento]:

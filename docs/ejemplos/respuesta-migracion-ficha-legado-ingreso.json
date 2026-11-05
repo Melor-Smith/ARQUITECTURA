@@ -5,7 +5,9 @@
   "regla_documento": "DOCUMENTO_INTERNO",
   "estado": "NO_REQUIERE_FACTURA",
   "comprobante": null,
-  "observaciones": [],
+  "observaciones": [
+    "Sustentada solo con documento interno: en el 12.1 se anota como operación 99 (Otros) y no 02 (Compra), porque SUNAT exige comprobante o guía de remisión."
+  ],
   "homologacion": {
     "texto_legado": "Saco de Arroz Extra 50kg",
     "codigo_producto": "AB-ARR-001",
@@ -17,8 +19,8 @@
     "establecimiento": "0000",
     "codigo_producto": "AB-ARR-001",
     "tipo_operacion": {
-      "codigo": "02",
-      "descripcion": "Compra"
+      "codigo": "99",
+      "descripcion": "Otros"
     },
     "documento": {
       "tipo": {

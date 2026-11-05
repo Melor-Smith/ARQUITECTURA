@@ -15,8 +15,8 @@ La RS 234-2006 exige, según el nivel de ingresos, el inventario permanente en *
 | Ficha del sistema antiguo | Qué le faltaba | Cómo se completa |
 |---|---|---|
 | `producto` (texto libre) | Código de existencia y tipo de existencia (tabla 5) | Tabla de homologación → `Producto` (código, tabla 5, unidad Catálogo 03) |
-| `ingreso` / `salida` | Unidad normalizada | Cantidad × factor de homologación (1 saco = 50 KGM); unidad del producto, con equivalencia a la tabla 6 |
-| `ingreso` / `salida` | Tipo de operación (tabla 12) | Por defecto, 02 (compra) para ingresos y 01 (venta) para salidas; se puede indicar otro (11, 13, 21…) |
+| `ingreso` / `salida` | Unidad normalizada | Cantidad × factor de homologación (1 saco = 50 KGM); unidad del producto en código UN/ECE (Catálogo 03), que es lo que valida el PLE en el campo 16 |
+| `ingreso` / `salida` | Tipo de operación (tabla 12) | Con comprobante o guía de remisión: 01 (venta) para salidas y 02 (compra) para ingresos. **Con documento interno (vale, guía interna, s/n): 99 (otros)**, porque SUNAT no acepta 01 a 06 con documento `00`; la venta sigue *pendiente de facturar* y queda una observación. Se puede indicar otra operación (11, 13, 21…) |
 | `nro_documento` | Documento de soporte tipificado (tabla 10) | Tipo `00` (documento interno); serie y número separados por el último guion (`VALE-SALIDA` / `0042`) |
 | — | Establecimiento | Código de establecimiento anexo (por defecto `0000`) |
 | — | Saldo | El `Kardex` mantiene el saldo, impide los saldos negativos y exige orden cronológico |
@@ -26,8 +26,10 @@ La RS 234-2006 exige, según el nivel de ingresos, el inventario permanente en *
 | Hecho | Tipo de operación (tabla 12) | Documento (tabla 10) |
 |---|---|---|
 | Inventario inicial | 16 saldo inicial | 00 |
-| Ficha antigua de salida | 01 venta (u otro indicado) | 00 (vale) |
-| Ficha antigua de ingreso | 02 compra (u otro indicado) | 00 (guía interna) |
+| Ficha antigua de salida con vale | 99 otros (u otro indicado, salvo 01 a 06) | 00 (vale) |
+| Ficha antigua de salida con factura, boleta o guía de remisión | 01 venta | 01 / 03 / 09 |
+| Ficha antigua de ingreso con guía interna | 99 otros (u otro indicado, salvo 01 a 06) | 00 (guía interna) |
+| Ficha antigua de ingreso con factura del proveedor | 02 compra | 01 |
 | Factura o boleta **sin** vale antiguo | 01 venta | 01 / 03 |
 | Factura o boleta **con** vale antiguo | — (la salida ya se registró con el vale; no se duplica) | — |
 | Nota de crédito por devolución (Catálogo 09: 06 o 07) | 24 entrada por devolución del cliente | 07 |
@@ -58,14 +60,21 @@ Una línea por movimiento, campos separados por `|`, `|` final y CRLF; sin cabec
 | 13 | Número del documento | Alfanumérico hasta 20 | Sí | `documento.numero` (`0` si no existe) |
 | 14 | Tipo de operación (tabla 12) | Numérico 2 | Sí | `tipo_operacion` |
 | 15 | Descripción de la existencia | Texto hasta 80 | Sí | `producto.descripcion` |
-| 16 | Unidad de medida (**tabla 6**) | Alfanumérico hasta 3 | Sí | `producto.unidad.unidad_ple` |
+| 16 | Unidad de medida | Alfanumérico hasta 3 | Sí | `producto.unidad`: código **UN/ECE** (`KGM`, `NIU`…). El PLE 5.2.0.7 rechaza los códigos numéricos de la tabla 6 anterior (`01`, `07`) |
 | 17 | Entradas | Importe, positivo o `0.00` | Sí | `entrada` |
 | 18 | Salidas | Importe, **negativo** o `0.00` | Sí | `−salida` |
 | 19 | Estado de la operación | `1`, `8` o `9` | Sí | `1` |
 
 (*) Desde el 1/1/2021, los campos 8 y 9 son obligatorios solo si el comprobante electrónico consignó un código UNSPSC o GTIN. Este sistema no los emite en el XML, así que van vacíos. Si se agregan al producto, basta llenarlos en `inventario_121`.
 
-Reglas entre campos que se validan: 17 y 18 son excluyentes; si hay campo 9, el 8 es obligatorio.
+Reglas entre campos que se validan:
+
+- 17 y 18 son excluyentes;
+- si hay campo 9, el 8 es obligatorio;
+- si el 14 es 01 a 06, el 11 no puede ser `00`;
+- el 16 debe ser una unidad UN/ECE del catálogo.
+
+**Validado con el PLE oficial de SUNAT 5.2.0.7: sin inconsistencias** ([constancia y detalle](../../docs/evidencia-ple/README.md)).
 
 El **saldo final** de cada movimiento no forma parte del TXT, pero sí del formato impreso: lo entregan la vista JSON (`?formato=json`) y `GET /api/v1/inventario/kardex/{codigo}`.
 

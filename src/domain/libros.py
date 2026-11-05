@@ -247,7 +247,9 @@ def inventario_121(ruc: Ruc, periodo: Periodo, movimientos: Iterable[MovimientoI
             numero_documento=m.documento.numero or "0",
             tipo_operacion=m.tipo_operacion.value,
             descripcion_existencia=m.producto.descripcion,
-            unidad_medida=m.producto.unidad.unidad_ple.value,
+            # Campo 16: el PLE 5.2.0.7 valida contra los códigos UN/ECE (KGM, NIU…), los mismos
+            # del Catálogo 03 del XML; rechaza los códigos numéricos de la tabla 6 anterior (01, 07…).
+            unidad_medida=m.producto.unidad.value,
             entrada=m.entrada,
             salida=CERO - m.salida,  # campo 18: las salidas se anotan en negativo
             estado=ESTADO_OPERACION_DEL_PERIODO,

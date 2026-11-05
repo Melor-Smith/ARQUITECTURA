@@ -200,7 +200,12 @@ Característica: PLE
   Escenario: Inventario en unidades físicas 12.1
     Cuando pido GET /api/v1/libros-electronicos/inventario-unidades-fisicas/202610
     Entonces cada movimiento lleva establecimiento, tipo de existencia (tabla 5), documento (tabla 10),
-      tipo de operación (tabla 12) y unidad de la tabla 6 ("01" para KGM)
+      tipo de operación (tabla 12) y unidad UN/ECE ("KGM"), como exige el validador PLE 5.2.0.7
+
+  Escenario: Venta sustentada solo con un vale del sistema antiguo
+    Cuando migro una ficha de salida con nro_documento "VALE-SALIDA-0042" sin indicar tipo_operacion
+    Entonces queda PENDIENTE_FACTURACION y en el 12.1 se anota como operación "99" con documento "00"
+      Y si pido explícitamente tipo_operacion "01" la respuesta es 422 "ERR-KARDEX-DOCUMENTO-OPERACION"
 ```
 
 Pruebas: `TestRegistroVentas141`, `TestInventario121`.

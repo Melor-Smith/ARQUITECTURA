@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 
+from src.domain.catalogos import UnidadMedida
 from src.domain.errores import ErrorDominio
 
 SEPARADOR = "|"
@@ -304,9 +305,15 @@ def _reglas_121(v: dict[int, str], n: int) -> list[Inconsistencia]:
         falla(18, "entradas (17) y salidas (18) son excluyentes")
     if v[9] and not v[8]:
         falla(8, "es obligatorio cuando se informa el código internacional (campo 9)")
+    if v[16] not in _UNIDADES_UNECE:
+        falla(16, "el valor no se encontró en la tabla de parámetros (unidades UN/ECE, p. ej. KGM o NIU)")
+    if v[14] in {"01", "02", "03", "04", "05", "06"} and v[11] == "00":
+        falla(11, "tipo de documento no válido para el tipo de operación efectuada (14 = 01 a 06 exige "
+                  "comprobante o guía, no '00')")
     return errores
 
 
+_UNIDADES_UNECE = frozenset(u.value for u in UnidadMedida)
 _REGLAS = {"140100": _reglas_141, "120100": _reglas_121}
 
 

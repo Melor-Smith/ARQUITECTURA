@@ -17,7 +17,7 @@
    - documento de soporte (tabla 10, tipo 00);
    - establecimiento;
    - saldo.
-4. **Equivalencia de unidades.** El XML usa el Catálogo 03 (UNECE) y el PLE la tabla 6; `UnidadMedida.unidad_ple` traduce de uno a otro.
+4. **Equivalencia de unidades.** El XML usa el Catálogo 03 (UNECE) y se creó la equivalencia a la tabla 6 numérica (`UnidadMedida.unidad_ple`). *Actualización (05/11/2026): el validador PLE 5.2.0.7 rechazó esos códigos numéricos en el campo 16 y aceptó los UN/ECE; el 12.1 usa UN/ECE ([evidencia](../../docs/evidencia-ple/README.md)). La equivalencia se conserva solo como referencia.*
 5. **Separación modelo/vista.** Las filas tipadas viven en el dominio (`libros.py`). *Reemplazado por el [ADR 0010](0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md): la estructura del TXT también es del dominio y se valida contra el Anexo 2 oficial.*
 
 ## Consecuencias

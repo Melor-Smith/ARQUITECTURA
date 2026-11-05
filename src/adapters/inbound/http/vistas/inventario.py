@@ -74,7 +74,7 @@ def kardex_json(k: Kardex) -> KardexSalida:
     return KardexSalida(
         establecimiento=k.establecimiento,
         producto=ProductoSalida(codigo=p.codigo, descripcion=p.descripcion, unidad_medida=_cd(p.unidad),
-                                unidad_medida_ple=_cd(p.unidad.unidad_ple), tipo_existencia=_cd(p.tipo_existencia)),
+                                unidad_medida_ple=_cd(p.unidad), tipo_existencia=_cd(p.tipo_existencia)),
         saldo_final=k.saldo,
         movimientos=[movimiento_json(m) for m in k.movimientos],
     )

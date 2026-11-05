@@ -19,6 +19,7 @@ from src.domain.valores import Ruc
 
 ARROZ = Producto("AB-ARR-001", "ARROZ", UnidadMedida.KILOGRAMO)
 DOC = DocumentoSoporte(TipoDocumentoPLE.OTROS, "INV", "1", dt.date(2026, 10, 1))
+FACTURA = DocumentoSoporte(TipoDocumentoPLE.FACTURA, "F001", "1", dt.date(2026, 10, 5))
 
 
 def kardex_con(saldo: str) -> Kardex:
@@ -32,8 +33,17 @@ class TestKardex:
     def test_saldo_se_actualiza_con_cada_movimiento(self):
         k = kardex_con("100")
         m = k.registrar(id_movimiento="M2", fecha=dt.date(2026, 10, 5), tipo_operacion=TipoOperacionInventario.VENTA,
-                        sentido=SentidoMovimiento.SALIDA, cantidad=D("30"), documento=DOC)
+                        sentido=SentidoMovimiento.SALIDA, cantidad=D("30"), documento=FACTURA)
         assert (m.salida, m.saldo, k.saldo) == (D("30"), D("70"), D("70"))
+
+    @pytest.mark.parametrize("operacion", [TipoOperacionInventario.VENTA, TipoOperacionInventario.DEVOLUCION_ENTREGADA])
+    def test_venta_o_compra_con_documento_interno_se_rechaza(self, operacion):
+        """Anexo 2, 12.1, campo 11: las operaciones 01 a 06 no admiten documento '00' (confirmado
+        con el validador PLE 5.2.0.7: "Tipo de documento no válido para tipo de operación efectuada")."""
+        with pytest.raises(ErrorDominio) as error:
+            kardex_con("100").registrar(id_movimiento="M2", fecha=dt.date(2026, 10, 5), tipo_operacion=operacion,
+                                        sentido=SentidoMovimiento.SALIDA, cantidad=D("1"), documento=DOC)
+        assert error.value.codigo == "ERR-KARDEX-DOCUMENTO-OPERACION"
 
     def test_no_permite_saldo_negativo(self):
         with pytest.raises(SaldoInsuficiente):
@@ -136,7 +146,8 @@ class TestLibros:
         k = kardex_con("100")
         libro = inventario_121(Ruc("20556677884"), Periodo(2026, 10), k.movimientos)
         fila = libro.filas[0]
-        assert (fila.unidad_medida, fila.tipo_operacion, fila.tipo_documento) == ("01", "16", "00")
+        # campo 16 en UN/ECE: el PLE 5.2.0.7 rechaza los códigos numéricos de la tabla 6 anterior
+        assert (fila.unidad_medida, fila.tipo_operacion, fila.tipo_documento) == ("KGM", "16", "00")
         assert libro.nombre_archivo == "LE2055667788420261000120100001111.txt"
         assert inventario_121(Ruc("20556677884"), Periodo(2026, 11), k.movimientos).nombre_archivo.endswith(
             "120100001011.txt")  # posición 30 "1" empresa operativa; posición 31 "0" sin información

@@ -19,12 +19,21 @@ class TestMigracion:
         assert (cuerpo["movimiento"]["documento"]["serie"], cuerpo["movimiento"]["documento"]["numero"]) == (
             "VALE-SALIDA", "0042")
         assert cuerpo["movimiento"]["salida"] == "250"  # 5 sacos x 50 kg
-        assert cuerpo["movimiento"]["tipo_operacion"]["codigo"] == "01"
+        # Sigue siendo una venta pendiente de facturar, pero en el 12.1 se anota como 99 (Otros):
+        # con un vale (documento 00) SUNAT no acepta la operación 01 (validador PLE 5.2.0.7).
+        assert cuerpo["movimiento"]["tipo_operacion"]["codigo"] == "99"
+        assert any("operación 99" in o for o in cuerpo["observaciones"])
         assert r.headers["location"] == f"{URL_MIGRACIONES}/VALE-SALIDA-0042"
+
+    def test_venta_con_vale_y_operacion_01_explicita_se_rechaza(self, migrar):
+        payload = ejemplo("ficha-legado-salida.json") | {"tipo_operacion": "01"}
+        r = migrar(payload)
+        assert (r.status_code, r.json()["codigo"]) == (422, "ERR-KARDEX-DOCUMENTO-OPERACION")
 
     def test_ingreso_por_compra(self, migrar):
         cuerpo = migrar(ejemplo("ficha-legado-ingreso.json")).json()
-        assert (cuerpo["estado"], cuerpo["movimiento"]["tipo_operacion"]["codigo"]) == ("NO_REQUIERE_FACTURA", "02")
+        # guía interna (00): la compra se anota como 99 en el 12.1
+        assert (cuerpo["estado"], cuerpo["movimiento"]["tipo_operacion"]["codigo"]) == ("NO_REQUIERE_FACTURA", "99")
         assert cuerpo["movimiento"]["entrada"] == "1000"
 
     def test_documento_duplicado_409(self, migrar):
@@ -159,7 +168,7 @@ class TestKardex:
         cuerpo = cliente.get(f"{URL_KARDEX}/AB-ARR-001", headers=CONSULTA).json()
         assert cuerpo["saldo_final"] == "2000"
         assert cuerpo["producto"]["unidad_medida"]["codigo"] == "KGM"
-        assert cuerpo["producto"]["unidad_medida_ple"]["codigo"] == "01"
+        assert cuerpo["producto"]["unidad_medida_ple"]["codigo"] == "KGM"  # lo que exige el PLE 5.2.0.7
         assert cuerpo["producto"]["tipo_existencia"]["codigo"] == "01"
 
     def test_producto_inexistente(self, cliente):
@@ -209,5 +218,5 @@ class TestInventario121:
         assert len(vale) == 20  # 19 campos del Anexo 2 (PLE 5.0) + separador final
         assert (saldo_inicial[13], saldo_inicial[16]) == ("16", "1000.00")
         assert vale[7:9] == ["", ""]  # 8 y 9: catálogo internacional (UNSPSC/GTIN), opcional
-        assert vale[10:14] == ["00", "VALE-SALIDA", "0042", "01"]
-        assert (vale[15], vale[16], vale[17]) == ("01", "0.00", "-250.00")  # tabla 6: 01 = kg; salida negativa
+        assert vale[10:14] == ["00", "VALE-SALIDA", "0042", "99"]  # documento interno: operación 99
+        assert (vale[15], vale[16], vale[17]) == ("KGM", "0.00", "-250.00")  # UN/ECE; salida negativa

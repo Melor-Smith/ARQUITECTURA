@@ -5,7 +5,9 @@
   "regla_documento": "DOCUMENTO_INTERNO",
   "estado": "PENDIENTE_FACTURACION",
   "comprobante": null,
-  "observaciones": [],
+  "observaciones": [
+    "Sustentada solo con documento interno: en el 12.1 se anota como operación 99 (Otros) y no 01 (Venta), porque SUNAT exige comprobante o guía de remisión."
+  ],
   "homologacion": {
     "texto_legado": "Saco de Azúcar Rubia 50kg",
     "codigo_producto": "AB-AZU-001",
@@ -17,8 +19,8 @@
     "establecimiento": "0000",
     "codigo_producto": "AB-AZU-001",
     "tipo_operacion": {
-      "codigo": "01",
-      "descripcion": "Venta"
+      "codigo": "99",
+      "descripcion": "Otros"
     },
     "documento": {
       "tipo": {

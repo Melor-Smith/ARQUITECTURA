@@ -2069,7 +2069,8 @@ components:
           description: Catálogo 03 (UNECE).
         unidad_medida_ple:
           $ref: '#/components/schemas/CodigoDescripcion'
-          description: Tabla 6 del PLE (equivalencia).
+          description: 'Código que va en el campo 16 del PLE 12.1: UN/ECE Rec. 20, el mismo del Catálogo 03 (verificado con
+            el validador PLE 5.2.0.7).'
         tipo_existencia:
           $ref: '#/components/schemas/CodigoDescripcion'
           description: Tabla 5 del PLE.

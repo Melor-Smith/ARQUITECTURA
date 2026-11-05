@@ -42,6 +42,11 @@ La causa de fondo: la estructura estaba **implícita** en el orden de los atribu
 - Los defectos de la tabla quedaron corregidos y cada uno tiene su prueba (`tests/unit/ple/`).
 - Una plantilla del 14.1 con 36 columnas, que divide el campo 30 en dos, se detecta como inválida (`test_estructura_de_36_columnas_no_es_la_del_anexo_2`). El análisis está en `specs/ple/formato-14.1.md`.
 - `xlrd` se agrega solo como dependencia de desarrollo, para leer el `.xls` en las pruebas.
+- **Validación con el programa oficial (05/11/2026).** El 12.1 generado por el sistema pasó el PLE 5.2.0.7 **sin inconsistencias**, en la tercera ronda. Las dos primeras rondas encontraron dos reglas más, que se incorporaron al dominio y al validador propio:
+  - unidad UN/ECE en el campo 16;
+  - las operaciones 01 a 06 no admiten documento `00`.
+
+  Ver [`docs/evidencia-ple/`](../../docs/evidencia-ple/README.md).
 - **Fuera de alcance:**
   - las validaciones del programa PLE que dependen del padrón RUC o de la estructura 1 (tipo de cambio diario);
   - cargar los TXT en el validador de escritorio de SUNAT, que es un paso manual pendiente.

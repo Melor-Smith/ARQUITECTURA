@@ -18,7 +18,7 @@ Cada brecha está enlazada con lo que la cierra en el sistema y con la prueba qu
 | B4 | Ventas al crédito sin registro formal | Incumple la RS 193-2020 (forma de pago) | `FormaPago` con cuotas que deben sumar el total | `tests/unit/test_letras_y_pagos.py` |
 | B5 | Sin numeración controlada | Números repetidos o saltados | Correlativo asignado por el servidor de forma atómica, después de validar | `tests/integration/test_concurrencia.py` |
 | B6 | Sin constancia de SUNAT | El comprobante "existe" aunque SUNAT no lo haya recibido | Estado según el CDR; 202 y reenvío si la OSE no responde | `TestOse` |
-| B7 | Kardex informal | Incumple la RS 234-2006; no hay formato 12.1 | `Kardex` con saldo, tabla 5, tabla 10, tabla 12 y unidad de la tabla 6 | `TestInventario121` |
+| B7 | Kardex informal | Incumple la RS 234-2006; no hay formato 12.1 | `Kardex` con saldo, tabla 5, tabla 10, tabla 12 y unidad UN/ECE (validado con el PLE de SUNAT) | `TestInventario121` |
 | B8 | Sin registro de ventas | No hay formato 14.1 | Libro 14.1 generado desde los comprobantes | `TestRegistroVentas141` |
 | B9 | Fichas con fechas, glosas y documentos libres | Datos históricos inutilizables | Migración con homologación, clasificación de documentos, lotes con observaciones y conciliación | `TestLoteDeMigracion` |
 

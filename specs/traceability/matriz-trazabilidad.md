@@ -62,7 +62,7 @@ Fuentes: RS 097-2012/SUNAT y anexos (catálogos), RS 193-2020/SUNAT (forma de pa
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | T30 | Número de línea | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:ID` | 1..1 |  | `(orden de lineas[])` | — | — | — | — | `test_una_invoice_line_por_cada_linea_del_dominio_numerada_desde_1` |
 | T31 | Cantidad | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` | 0..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].cantidad` | `ingreso / salida × factor` | — | 17 / 18 (salida en negativo) | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
-| T32 | Unidad de medida | Cat. 03 (UN/ECE Rec. 20) → Tabla 6 | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode` | atributo opcional | ⚠ SUNAT exige; XSD opcional | `lineas[].unidad_medida` | — | — | 16 (tabla 6) | `ERR-SUNAT-CAT03` | `test_unidad_de_medida_catalogo_03_por_linea` |
+| T32 | Unidad de medida | Cat. 03 (UN/ECE Rec. 20); el 12.1 usa el mismo código | O | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode` | atributo opcional | ⚠ SUNAT exige; XSD opcional | `lineas[].unidad_medida` | — | — | 16 (tabla 6) | `ERR-SUNAT-CAT03` | `test_unidad_de_medida_catalogo_03_por_linea` |
 | T33 | Valor de venta de la línea | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cbc:LineExtensionAmount` | 1..1 |  | `lineas[].valor_venta (respuesta)` | — | — | — | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
 | T34 | Precio unitario con impuestos | Cat. 16 (tipo 01) | O | `/Invoice/cac:InvoiceLine/cac:PricingReference/cac:AlternativeConditionPrice/cbc:PriceAmount` | 1..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].precio_unitario (respuesta)` | — | — | — | — | `test_precio_unitario_con_impuestos_catalogo_16` |
 | T35 | Valor unitario sin impuestos | Perfil SUNAT | O | `/Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` | 1..1 | ⚠ SUNAT exige; XSD opcional | `lineas[].valor_unitario` | — | — | — | — | `test_cantidad_valor_de_venta_y_valor_unitario` |
@@ -128,8 +128,8 @@ Fuentes: RS 097-2012/SUNAT y anexos (catálogos), RS 193-2020/SUNAT (forma de pa
 | ID | Dato | Norma / catálogo | SUNAT | XPath UBL 2.1 | Card. XSD | Perfil SUNAT | Contrato (JSON) | Sistema antiguo | 14.1 | 12.1 | Error | Prueba |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | T90 | Tipo de existencia | Tabla 5 PLE | O | — | — |  | `(dato maestro del producto)` | `producto (homologado)` | — | 6 | — | `test_kardex_con_saldo_final_y_equivalencia_de_unidades` |
-| T91 | Tipo de operación | Tabla 12 PLE | O | — | — |  | `tipo_operacion (migración)` | `ingreso / salida` | — | 14 | `ERR-KARDEX-TIPO-OPERACION` | `test_tipo_de_operacion_incompatible` |
-| T92 | Unidad de medida del libro | Tabla 6 PLE (equivalencia desde Cat. 03) | O | — | — |  | `(derivado)` | — | — | 16 | — | `test_catalogo_03_unece_a_tabla_6_ple` |
+| T91 | Tipo de operación | Tabla 12 PLE | O | — | — |  | `tipo_operacion (migración)` | `ingreso / salida` | — | 14 (99 si el documento es interno) | `ERR-KARDEX-DOCUMENTO-OPERACION` | `test_tipo_de_operacion_incompatible` |
+| T92 | Unidad de medida del libro | Campo 16 del 12.1: UN/ECE (validado con PLE 5.2.0.7) | O | — | — |  | `(derivado)` | — | — | 16 | — | `test_unidad_con_codigo_numerico_de_la_tabla_6_anterior_se_rechaza` |
 | T93 | Saldo en unidades físicas | RS 234-2006 | O | — | — |  | `saldo_final (Kardex)` | — | — | (formato impreso) | `ERR-KARDEX-SALDO-INSUFICIENTE` | `test_no_permite_saldo_negativo` |
 | T94 | Estado de la anotación | RS 286-2009 | O | — | — |  | `(servidor)` | — | 35 | 19 | — | `test_txt_del_ple` |
 

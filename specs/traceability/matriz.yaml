@@ -43,7 +43,7 @@ secciones:
     filas:
       - {id: T30, dato: Número de línea, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:ID, contrato: "(orden de lineas[])", prueba: test_una_invoice_line_por_cada_linea_del_dominio_numerada_desde_1}
       - {id: T31, dato: Cantidad, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:InvoicedQuantity, contrato: "lineas[].cantidad", legado: "ingreso / salida × factor", ple_121: "17 / 18 (salida en negativo)", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
-      - {id: T32, dato: Unidad de medida, norma: Cat. 03 (UN/ECE Rec. 20) → Tabla 6, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode, contrato: "lineas[].unidad_medida", ple_121: "16 (tabla 6)", error: ERR-SUNAT-CAT03, prueba: test_unidad_de_medida_catalogo_03_por_linea}
+      - {id: T32, dato: Unidad de medida, norma: Cat. 03 (UN/ECE Rec. 20); el 12.1 usa el mismo código, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode, contrato: "lineas[].unidad_medida", ple_121: "16 (tabla 6)", error: ERR-SUNAT-CAT03, prueba: test_unidad_de_medida_catalogo_03_por_linea}
       - {id: T33, dato: Valor de venta de la línea, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:LineExtensionAmount, contrato: "lineas[].valor_venta (respuesta)", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
       - {id: T34, dato: Precio unitario con impuestos, norma: Cat. 16 (tipo 01), sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:PricingReference/cac:AlternativeConditionPrice/cbc:PriceAmount, contrato: "lineas[].precio_unitario (respuesta)", prueba: test_precio_unitario_con_impuestos_catalogo_16}
       - {id: T35, dato: Valor unitario sin impuestos, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount, contrato: "lineas[].valor_unitario", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
@@ -99,7 +99,7 @@ secciones:
   - titulo: "8. Inventario permanente (formato 12.1, sin XML)"
     filas:
       - {id: T90, dato: Tipo de existencia, norma: Tabla 5 PLE, sunat: O, contrato: (dato maestro del producto), legado: producto (homologado), ple_121: "6", prueba: test_kardex_con_saldo_final_y_equivalencia_de_unidades}
-      - {id: T91, dato: Tipo de operación, norma: Tabla 12 PLE, sunat: O, contrato: tipo_operacion (migración), legado: "ingreso / salida", ple_121: "14", error: ERR-KARDEX-TIPO-OPERACION, prueba: test_tipo_de_operacion_incompatible}
-      - {id: T92, dato: Unidad de medida del libro, norma: Tabla 6 PLE (equivalencia desde Cat. 03), sunat: O, contrato: (derivado), ple_121: "16", prueba: test_catalogo_03_unece_a_tabla_6_ple}
+      - {id: T91, dato: Tipo de operación, norma: Tabla 12 PLE, sunat: O, contrato: tipo_operacion (migración), legado: "ingreso / salida", ple_121: "14 (99 si el documento es interno)", error: ERR-KARDEX-DOCUMENTO-OPERACION, prueba: test_tipo_de_operacion_incompatible}
+      - {id: T92, dato: Unidad de medida del libro, norma: "Campo 16 del 12.1: UN/ECE (validado con PLE 5.2.0.7)", sunat: O, contrato: (derivado), ple_121: "16", prueba: test_unidad_con_codigo_numerico_de_la_tabla_6_anterior_se_rechaza}
       - {id: T93, dato: Saldo en unidades físicas, norma: RS 234-2006, sunat: O, contrato: saldo_final (Kardex), ple_121: (formato impreso), error: ERR-KARDEX-SALDO-INSUFICIENTE, prueba: test_no_permite_saldo_negativo}
       - {id: T94, dato: Estado de la anotación, norma: RS 286-2009, sunat: O, contrato: (servidor), ple_141: "35", ple_121: "19", prueba: test_txt_del_ple}

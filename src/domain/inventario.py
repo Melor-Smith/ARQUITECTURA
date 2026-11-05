@@ -223,6 +223,13 @@ class Kardex:
         glosa: str = "",
     ) -> MovimientoInventario:
         self.verificar(fecha=fecha, tipo_operacion=tipo_operacion, sentido=sentido, cantidad=cantidad)
+        if tipo_operacion.exige_comprobante and documento.tipo is TipoDocumentoPLE.OTROS:
+            raise ErrorDominio(
+                f"La operación {tipo_operacion.value} ({tipo_operacion.descripcion}) debe sustentarse con un "
+                f"comprobante de pago o una guía de remisión, no con un documento interno "
+                f"('{documento.referencia}'). Use la operación 99 (Otros) o adjunte el comprobante.",
+                codigo="ERR-KARDEX-DOCUMENTO-OPERACION", campo="tipo_operacion",
+            )
         es_entrada = sentido is SentidoMovimiento.ENTRADA
         movimiento = MovimientoInventario(
             id=id_movimiento,

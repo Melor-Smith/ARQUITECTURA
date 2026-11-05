@@ -347,7 +347,9 @@ class ProductoSalida(_Salida):
     codigo: str
     descripcion: str
     unidad_medida: CodigoDescripcion = Field(description="Catálogo 03 (UNECE).")
-    unidad_medida_ple: CodigoDescripcion = Field(description="Tabla 6 del PLE (equivalencia).")
+    unidad_medida_ple: CodigoDescripcion = Field(
+        description="Código que va en el campo 16 del PLE 12.1: UN/ECE Rec. 20, el mismo del Catálogo 03 "
+                    "(verificado con el validador PLE 5.2.0.7).")
     tipo_existencia: CodigoDescripcion = Field(description="Tabla 5 del PLE.")
 
 

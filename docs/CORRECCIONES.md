@@ -1,6 +1,6 @@
 # Respuesta a la revisión (38/100): observación → corrección → evidencia
 
-Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (484 pruebas).
+Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (490 pruebas).
 
 Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorrelativo` significa la clase de pruebas `TestSerieYCorrelativo` dentro de ese archivo.
 
@@ -56,7 +56,7 @@ Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorr
 | 9c | El vale iba en `DespatchDocumentReference` con tipo 09 (guía de remisión). | Va en `cac:AdditionalDocumentReference` con Catálogo 12, tipo `99` (otros). Un vale no se factura dos veces. | `test_el_xml_referencia_el_vale_como_documento_relacionado_99`; `test_un_vale_no_se_factura_dos_veces` |
 | 10a | No había formato 14.1. | El dominio tiene `FilaRegistroVentas141` (35 campos), con notas de crédito en negativo, conversión por tipo de cambio y comprobante modificado. Endpoint TXT/JSON con el nombre de archivo PLE. | [`src/domain/libros.py`](../src/domain/libros.py); [`specs/ple/formato-14.1.md`](../specs/ple/formato-14.1.md); `TestRegistroVentas141` |
 | 10b | No había formato 12.1 (el "Kardex valorizado" es el 13.1). | Inventario permanente **en unidades físicas**: establecimiento, tipo de existencia (tabla 5), tipo de operación (tabla 12), documento de soporte (tabla 10) y saldo final. El ingreso o salida del sistema antiguo es la materia prima. | `Kardex`, `inventario_121`; [`specs/ple/formato-12.1.md`](../specs/ple/formato-12.1.md); `TestInventario121` |
-| 10c | El PLE usa la tabla 6, no UNECE; hacía falta una tabla de equivalencias. | `UnidadMedida.unidad_ple`: Catálogo 03 → tabla 6 (KGM→01, NIU→07, BX→12…). Además hay homologación de glosas antiguas con factor de conversión (1 saco = 50 KGM). | `TestEquivalenciaUnidades`; `test_salida_por_venta_queda_pendiente_de_facturar_sin_numero_sunat` (5 sacos → 250 KGM) |
+| 10c | El PLE usa la tabla 6, no UNECE; hacía falta una tabla de equivalencias. | Se implementó la equivalencia `UnidadMedida.unidad_ple`: Catálogo 03 → tabla 6 (KGM→01, NIU→07, BX→12…). **Luego se validó con el programa PLE 5.2.0.7 de SUNAT**, que rechazó los códigos numéricos en el campo 16 ("El valor no se encontró en la tabla de parámetros") y aceptó los UN/ECE. El 12.1 usa hoy UN/ECE y la equivalencia queda como referencia: ver [evidencia y constancia](evidencia-ple/README.md). Además hay homologación de glosas antiguas con factor de conversión (1 saco = 50 KGM). | `TestEquivalenciaUnidades`; `test_salida_por_venta_queda_pendiente_de_facturar_sin_numero_sunat` (5 sacos → 250 KGM) |
 
 ## 5. Orden del repositorio
 
@@ -95,11 +95,13 @@ El contraste con el Excel oficial del PLE encontró seis defectos más, todos co
 
 El detalle está en el [ADR 0010](../specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md).
 
+Por último, el 12.1 se validó con el **programa PLE 5.2.0.7 oficial de SUNAT**, que entregó una constancia de **información consistente** después de corregir dos reglas que solo el validador oficial reveló. Las rondas, la constancia y sus totales de control están en [`docs/evidencia-ple/`](evidencia-ple/README.md).
+
 ## Aciertos que se conservaron
 
 - **Catálogo 08** con `cbc:TierRange`. Ahora además se **calcula** el ISC de los tres sistemas.
 - **TaxScheme** 1000/IGV/VAT, 2000/ISC/EXC y 7152/ICBPER/OTH, `CustomizationID` 2.0 y `TaxExemptionReasonCode`.
-- **Ciclo rojo → verde**: se pasó de 20 a 484 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
+- **Ciclo rojo → verde**: se pasó de 20 a 490 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
 - **Los puertos del diagrama hexagonal**, que ahora existen en el código.
 - **Diagnóstico RS 234-2006 y distribución MSI/APK**, conservados en el ADR 0008.
 

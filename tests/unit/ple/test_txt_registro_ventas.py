@@ -43,8 +43,8 @@ SALIDA = FilaInventario121(
     periodo="20261000", cuo="I202610000002", correlativo_asiento="M2", establecimiento="0000", catalogo="9",
     tipo_existencia="01", codigo_existencia="AB-AZU-001", catalogo_internacional="", codigo_internacional="",
     fecha_documento=dt.date(2026, 10, 15), tipo_documento="00", serie_documento="VALE-SALIDA",
-    numero_documento="0042", tipo_operacion="01", descripcion_existencia="AZÚCAR RUBIA",
-    unidad_medida="01", entrada=D("0"), salida=D("-250"), estado="1", saldo_final=D("750"),
+    numero_documento="0042", tipo_operacion="99", descripcion_existencia="AZÚCAR RUBIA",
+    unidad_medida="KGM", entrada=D("0"), salida=D("-250"), estado="1", saldo_final=D("750"),
 )
 
 
@@ -196,6 +196,22 @@ class TestLineaDelInventario121:
 
     def test_documento_sin_serie_se_rechaza(self):
         assert [e.campo for e in validar_filas("120100", [dataclasses.replace(SALIDA, serie_documento="")])] == [12]
+
+    def test_venta_con_documento_interno_se_rechaza(self):
+        # Error que devolvió el PLE 5.2.0.7 (filas 2, 6, 13 y 14, columna 11) con la versión anterior.
+        fila = dataclasses.replace(SALIDA, tipo_operacion="01")
+        [error] = validar_filas("120100", [fila])
+        assert (error.campo, "tipo de operación" in error.motivo) == (11, True)
+
+    def test_unidad_con_codigo_numerico_de_la_tabla_6_anterior_se_rechaza(self):
+        # Error que devolvió el PLE 5.2.0.7 en las 23 filas (columna 16) con la versión anterior.
+        [error] = validar_filas("120100", [dataclasses.replace(SALIDA, unidad_medida="01")])
+        assert error.campo == 16
+
+    def test_venta_con_factura_se_acepta(self):
+        fila = dataclasses.replace(SALIDA, tipo_operacion="01", tipo_documento="01", serie_documento="F001",
+                                   numero_documento="1")
+        assert validar_filas("120100", [fila]) == []
 
     def test_establecimiento_de_menos_de_4_digitos_se_rechaza(self):
         assert [e.campo for e in validar_filas("120100", [dataclasses.replace(SALIDA, establecimiento="1")])] == [4]
