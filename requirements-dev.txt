@@ -1,0 +1,8 @@
+# Dependencias de desarrollo, pruebas y generación de código
+-r requirements.txt
+pytest==9.2.0
+httpx==0.28.1
+PyYAML==6.0.3
+ruff==0.17.3
+xsdata[cli]==26.10
+xlrd==2.0.1

@@ -1,0 +1,19 @@
+# Contraejemplos: solicitudes que la API DEBE rechazar, con el código HTTP y el código de error esperados.
+# 400 = no cumple el esquema del contrato · 422 = cumple el esquema pero viola una regla SUNAT o de negocio.
+# Los verifica tests/acceptance/test_contrato.py::test_cada_contraejemplo_se_rechaza_como_se_espera
+i01-factura-con-serie-de-boleta:      {destino: comprobantes, http: 422, codigo: ERR-SUNAT-SERIE}
+i02-boleta-con-serie-de-factura:      {destino: comprobantes, http: 422, codigo: ERR-SUNAT-SERIE}
+i03-ruc-con-digito-verificador-errado: {destino: comprobantes, http: 422, codigo: ERR-SUNAT-RUC}
+i04-factura-a-cliente-con-dni:        {destino: comprobantes, http: 422, codigo: ERR-SUNAT-RUC}
+i05-cliente-envia-impuestos-y-totales: {destino: comprobantes, http: 400, codigo: ERR-CONTRATO-CAMPO-NO-PERMITIDO}
+i06-cliente-envia-correlativo:        {destino: comprobantes, http: 400, codigo: ERR-CONTRATO-CAMPO-NO-PERMITIDO}
+i07-isc-sistema-fuera-del-catalogo-08: {destino: comprobantes, http: 400, codigo: ERR-SUNAT-CAT08}
+i08-isc-monto-fijo-sin-monto:         {destino: comprobantes, http: 422, codigo: ERR-SUNAT-CAT08}
+i09-unidad-fuera-del-catalogo-03:     {destino: comprobantes, http: 400, codigo: ERR-SUNAT-CAT03}
+i10-cuotas-que-no-suman-el-total:     {destino: comprobantes, http: 422, codigo: ERR-SUNAT-FORMA-PAGO}
+i11-dolares-sin-tipo-de-cambio:       {destino: comprobantes, http: 422, codigo: ERR-SUNAT-COMPROBANTE}
+i12-boleta-anonima-mayor-a-700:       {destino: comprobantes, http: 422, codigo: ERR-SUNAT-COMPROBANTE}
+i13-nota-de-credito-sin-referencia:   {destino: comprobantes, http: 400, codigo: ERR-CONTRATO-FORMATO}
+i14-ficha-sin-movimiento:             {destino: migraciones, http: 422, codigo: ERR-LEGADO-SIN-MOVIMIENTO}
+i15-ficha-con-fecha-imposible:        {destino: migraciones, http: 422, codigo: ERR-LEGADO-FECHA}
+i16-ficha-con-glosa-sin-homologar:    {destino: migraciones, http: 422, codigo: ERR-LEGADO-NO-HOMOLOGADO}

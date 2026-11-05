@@ -1,114 +1,127 @@
-# ABC Software Corp — Sistema de Facturación Electrónica UBL 2.1 y Migración Legado
+# ABC Software Corp: facturación electrónica UBL 2.1 e inventario permanente
 
-Proyecto integral desarrollado bajo la metodología **Spec-Driven Development (Spec-First)**, adaptado al caso de estudio de **ABC Software Corp** (distribución de abarrotes y mercadería al por mayor y menor, migración de fichas informales de almacén, cumplimiento de la normativa **SUNAT RS N° 097-2012** y **RS N° 234-2006**, el **Catálogo 08 de SUNAT (Sistemas de ISC)** y el estándar internacional **OASIS UBL-Invoice-2.1.xsd**).
+API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
 
----
+- **Comprobantes electrónicos SUNAT:** factura (01), boleta (03), nota de crédito (07) y nota de débito (08), al contado o al crédito con cuotas.
+  - IGV, ISC (Catálogo 08) e ICBPER calculados en el dominio con `Decimal`.
+  - Correlativo atómico.
+  - **XML generado desde las clases del XSD OASIS UBL 2.1**, validado, firmado (XMLDSig) y enviado a la OSE; el estado sale del CDR.
+- **Migración del sistema antiguo** (`fecha`, `ingreso`, `salida`, `producto`, `nro_documento`) al inventario permanente de la RS 234-2006, ficha por ficha o por lotes, con observaciones y conciliación.
+- **Libros electrónicos PLE 14.1** (Registro de Ventas) **y 12.1** (Inventario en unidades físicas):
+  - estructura verificada campo por campo contra el **Excel oficial del Anexo 2** (PLE 5.0);
+  - nunca se entrega un TXT que el PLE rechazaría.
 
-## 📌 Enlaces Directos a los Entregables Oficiales (Punto 4 del Examen)
+| Documento | Para quién |
+|---|---|
+| **[`docs/TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md)** | **Taller 2 (segundo parcial):** generación del XML desde `UBL-Invoice-2.1.xsd` en el lenguaje del dominio y sus pruebas unitarias |
+| **[`docs/CORRECCIONES.md`](docs/CORRECCIONES.md)** | Revisión del primer entregable (38/100): cada observación, su corrección y la prueba que la demuestra |
 
-| # | Entregable Oficial | Descripción Técnica | Enlace Directo |
-| :-: | :--- | :--- | :--- |
-| **1** | **Modelo de Dominio y Contratos** | DTOs tipados en Pydantic v2 y schemas OpenAPI sincronizados con identificador canónico `serie_numero` | [`src/models/schemas.py`](src/models/schemas.py)<br/>[`specs/contracts/ubl-invoice-api.yaml`](specs/contracts/ubl-invoice-api.yaml)<br/>[`specs/domain/modelo-dominio-tributario.md`](specs/domain/modelo-dominio-tributario.md) |
-| **2** | **Diagramas de Arquitectura y Distribución** | Diagramas MVC Limpio, Evolución a Arquitectura Hexagonal y Estrategia de distribución Windows MSI y Android APK | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md)<br/>[`specs/architecture/01-arquitectura-mvc-y-hexagonal.md`](specs/architecture/01-arquitectura-mvc-y-hexagonal.md)<br/>[`specs/adr/0001-decisiones-mvc-y-hexagonal.md`](specs/adr/0001-decisiones-mvc-y-hexagonal.md) |
-| **3** | **Especificación OpenAPI 3.0 (YAML)** | Contrato canónico Spec-First (emisión Nubefact y migración de almacén con `serie_numero` -> `<cbc:ID>`) | [`specs/contracts/ubl-invoice-api.yaml`](specs/contracts/ubl-invoice-api.yaml) |
-| **4** | **Matriz de Trazabilidad y Tabla de Match** | Cruce formal de 5 columnas: Legado ➔ SUNAT (Catálogo 8 ISC) ➔ OASIS UBL 2.1 ➔ DTO OpenAPI ➔ Tests | [`specs/features/001-proceso-abc-software-ubl.md`](specs/features/001-proceso-abc-software-ubl.md)<br/>[`specs/features/001-facturacion-ubl-y-migracion.md`](specs/features/001-facturacion-ubl-y-migracion.md) |
-| **5** | **Mocks, Pruebas y Plantillas** | Banco de datos en memoria, plantillas XML UBL 2.1 y batería de 20 tests (Fase Roja ➔ Verde) | [`specs/templates/factura-ubl-2.1-template.xml`](specs/templates/factura-ubl-2.1-template.xml)<br/>[`tests/acceptance/test_facturacion_sdd.py`](tests/acceptance/test_facturacion_sdd.py)<br/>[`tests/unit/test_reglas_sunat.py`](tests/unit/test_reglas_sunat.py) |
+## Entregables
 
----
+| # | Entregable | Dónde |
+|:-:|---|---|
+| 1 | Análisis del caso, normativa y casos de uso | [`docs/analisis/`](docs/analisis): [brechas y riesgos](docs/analisis/01-caso-brechas-y-riesgos.md) · [marco normativo y estudio del XSD](docs/analisis/02-marco-normativo.md) · [casos de uso](docs/analisis/03-casos-de-uso.md) · [atributos de calidad](docs/analisis/04-atributos-de-calidad.md) |
+| 2 | Modelo de dominio y DTOs | [`src/domain/`](src/domain) (sin dependencias externas) · [`specs/domain/modelo-dominio.md`](specs/domain/modelo-dominio.md) · DTO en [`esquemas.py`](src/adapters/inbound/http/esquemas.py) |
+| 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0010) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
+| 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) (generado desde el código y verificado) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
+| 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**, columnas PLE 14.1 / 12.1 · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (484 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
-## 📋 TABLA DE MATCH: LEGADO <-> SUNAT PERÚ <-> OASIS UBL-Invoice-2.1.xsd
+## Arquitectura en una imagen
 
-Esta tabla formal constituye el contrato de transformación entre las fichas de almacén de **ABC Software Corp**, el modelo canónico tributario de **SUNAT** y el estándar internacional **OASIS UBL 2.1**:
+```mermaid
+flowchart LR
+    HTTP["Adaptador HTTP (MVC)<br/>controladores · vistas JSON/XML/TXT · DTO"] --> APP
+    CLI["Adaptador CLI<br/>generar-xml (Taller 2)"] --> APP
+    subgraph APP["application"]
+        UC["casos de uso"] --> PORTS["puertos (Protocol)"]
+    end
+    UC --> DOM["domain<br/>Comprobante · FormaPago · Kardex · tributos · PLE<br/>(solo stdlib)"]
+    MEM["persistencia en memoria"] -.-> PORTS
+    UBL["UBL: xsdata + lxml"] -.-> PORTS
+    SIG["firma: signxml"] -.-> PORTS
+    OSE["OSE (simulada)"] -.-> PORTS
+```
 
-| Campo Sistema Legado ABC Software Corp | Nombre en Modelo SUNAT Perú | Nodo / XPath exacto en OASIS UBL-Invoice-2.1.xsd | Catálogo / Regla Normativa SUNAT | Ejemplo Real de Negocio |
-| :--- | :--- | :--- | :--- | :--- |
-| `nro_documento` (salida comercial) | **`serie_numero`** | `/Invoice/cbc:ID` | **Regla Serie-Número SUNAT**: Serie alfanumérica `F` + 3 dígitos (`F001`) y correlativo de hasta 8 dígitos (`000001`). Catálogo 01 (`01` = Factura). | `F001-000001` |
-| `nro_documento` (trazabilidad origen) | `nro_documento_legado_origen` | `/Invoice/cac:DespatchDocumentReference/cbc:ID` | **RS N° 097-2012 / RS N° 234-2006**: Trazabilidad entre el despacho físico de almacén y la factura electrónica. | `VALE-SALIDA-0042` |
-| `fecha` | `fecha_emision` | `/Invoice/cbc:IssueDate` | Formato ISO 8601 `YYYY-MM-DD`. Consistente con período tributario. | `2026-10-22` |
-| *(Hora de emisión)* | `hora_emision` | `/Invoice/cbc:IssueTime` | Formato ISO 8601 `hh:mm:ss`. Requerido en SUNAT UBL 2.1. | `10:30:00` |
-| *(Definido por transacción)* | `codigo_moneda` | `/Invoice/cbc:DocumentCurrencyCode` | **Catálogo 02 SUNAT**: Códigos de Moneda (`PEN` = Soles, `USD` = Dólares). | `PEN` |
-| *(RUC emisor ABC Software Corp)* | `vendedor.ruc` | `/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID` | **Catálogo 06 SUNAT**: Tipo de Documento de Identidad (`6` = RUC, 11 dígitos numéricos). | `20556677889` |
-| *(Razón social emisor)* | `vendedor.razon_social` | `/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` | Nombre o denominación legal inscrita en RUC ante SUNAT. | `ABC SOFTWARE CORP S.A.C.` |
-| *(RUC cliente)* | `comprador.ruc` | `/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID` | **Catálogo 06 SUNAT**: RUC (`6`) para facturas con derecho a crédito fiscal. | `20123456789` |
-| *(Razón social cliente)* | `comprador.razon_social` | `/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` | Razón social del adquiriente en el padrón RUC. | `DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.` |
-| `producto` (glosa comercial) | `items[].descripcion` | `/Invoice/cac:InvoiceLine/cac:Item/cbc:Description` | Glosa o descripción detallada del bien enajenado. | `Saco de Arroz Extra 50kg` |
-| `producto` (código de catálogo) | `items[].codigo_producto` | `/Invoice/cac:InvoiceLine/cac:Item/cac:SellersItemIdentification/cbc:ID` | Código interno único de inventario en ABC Software Corp. | `AB-ARR-001` |
-| `salida` (unidades despachadas) | `items[].cantidad` | `/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` | Unidad de medida normalizada según **Catálogo 03 SUNAT** (`NIU` = Unidad, `KGM` = Kilogramo). | `10.00` |
-| *(Precio de venta pactado / 1.18)* | `items[].valor_unitario` | `/Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` | Valor venta unitario sin tributos. | `100.00` |
-| *(Tipo de afectación tributaria)* | `items[].codigo_afectacion_igv` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cac:TaxScheme/cbc:ID` | **Catálogo 07 SUNAT**: Códigos de Afectación al IGV (`10` = Gravado - Operación Onerosa). | `10` |
-| *(Sistema de ISC en bebidas/licores)* | `items[].codigo_sistema_isc` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TierRange` | **Catálogo 08 SUNAT**: Tipos de Sistema de Cálculo del ISC (`01` = Al valor, `02` = Monto fijo, `03` = Precio de venta al público). | `01` |
-| *(Monto de ISC liquidado)* | `items[].isc_item` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (Scheme `2000`) | Impuesto Selectivo al Consumo liquidado según tasa SUNAT. | `15.00` |
-| *(Monto de IGV liquidado)* | `items[].igv_item` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (Scheme `1000`) | 18% sobre el valor venta unitario acumulado. | `180.00` |
-| *(Impuesto a bolsas plásticas)* | `items[].icbper_item` | `/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (Scheme `7152`) | Ley N° 30884: S/ 0.50 por bolsa plástica entregada al cliente. | `0.50` |
-| *(Suma de gravadas)* | `totales.total_gravadas` | `/Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` | Sumatoria neta de bienes gravados con IGV. | `1000.00` |
-| *(Suma de IGV)* | `totales.total_igv` | `/Invoice/cac:TaxTotal/cbc:TaxAmount` (Scheme `1000`) | Total liquidado de IGV de la factura. | `180.00` |
-| *(Suma de ISC)* | `totales.total_isc` | `/Invoice/cac:TaxTotal/cbc:TaxAmount` (Scheme `2000`) | Total liquidado de ISC (Catálogo 08) de la factura. | `15.00` |
-| *(Suma de ICBPER)* | `totales.total_icbper` | `/Invoice/cac:TaxTotal/cbc:TaxAmount` (Scheme `7152`) | Total liquidado de ICBPER de la factura. | `0.50` |
-| *(Importe total a pagar)* | `totales.importe_total` | `/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount` | Total liquidado de la venta (Gravadas + IGV + ISC + ICBPER). | `1195.50` |
-| `ingreso` (reposición de stock) | `tipo_movimiento = INGRESO_ALMACEN` | *(Kardex Valorizado RS 234-2006)* | Entradas de inventario: genera asiento de Kardex formal sin comprobante UBL de venta. | `50` (sacos) |
+```
+src/
+├── domain/          entidades, objetos de valor, reglas SUNAT, forma de pago, Kardex, filas y estructura PLE (solo stdlib)
+├── application/     casos de uso + puertos (typing.Protocol) + comandos
+├── adapters/
+│   ├── inbound/     http/ (FastAPI: controladores, vistas, DTO, problem+json, seguridad) · cli.py · traduccion.py
+│   └── outbound/    persistencia, ubl (generador xsdata + generated/ + validador), firma (signxml), ose, reloj
+├── bootstrap.py     raíz de composición (único lugar que conoce las clases concretas)
+├── config.py        configuración por variables de entorno
+└── main.py          app ASGI
+```
 
----
+## Instalación y ejecución (Python 3.10 o superior)
 
-## 🏛️ Arquitectura de Software y Visión Hexagonal
-
-El sistema sigue un diseño **MVC Desacoplado** listo para evolucionar hacia **Arquitectura Hexagonal (Ports & Adapters)**:
-* **Controlador (`src/controllers/`)**: Enrutadores FastAPI y gestión de respuestas HTTP.
-* **Modelo (`src/models/`, `src/services/`)**: Esquemas Pydantic v2, motor tributario SUNAT, validación de RUC (Catálogo 06), Catálogo 08 de ISC, IGV (18%), cálculo de Hash CPE SHA-256 y construcción de XML UBL 2.1.
-* **Vista (`specs/contracts/ubl-invoice-api.yaml`)**: Serialización REST OpenAPI 3.0 y generación canónica de `UBL-Invoice-2.1.xsd`.
-* **Persistencia (`src/repositories/`)**: Puerto de persistencia desacoplado consumiendo `tests/mocks/mock_db.py`.
-
-Consulte la documentación técnica completa de arquitectura en:
-* [`specs/architecture/01-arquitectura-mvc-y-hexagonal.md`](specs/architecture/01-arquitectura-mvc-y-hexagonal.md)
-* [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md)
-
----
-
-## 🌐 Catálogo de Endpoints API (OpenAPI 3.0)
-
-| Método | Endpoint | Caso de Uso | Respuestas |
-| :---: | :--- | :--- | :---: |
-| `POST` | `/api/v1/facturas` | Emite Factura Electrónica UBL 2.1 validando RUC y Catálogo 08 de ISC | `201 Created`<br/>`400 Bad Request` |
-| `GET` | `/api/v1/facturas/{serie_numero}` | Consulta estado SUNAT, Hash CPE y XML UBL generado por `serie_numero` (`cbc:ID`) | `200 OK`<br/>`404 Not Found` |
-| `POST` | `/api/v1/migracion/fichas-legado` | Migra registros históricos del almacén a entidades formales UBL y Kardex | `201 Created`<br/>`400 Bad Request` |
-| `GET` | `/` | Health check del servicio y versión UBL activa | `200 OK` |
-| `GET` | `/docs` | Interfaz interactiva Swagger UI | `200 OK` |
-
----
-
-## 🚀 Instrucciones de Instalación y Ejecución
-
-### 1. Clonar y preparar entorno virtual (Python 3.10+)
-```bash
-# Crear entorno virtual
+```powershell
 python -m venv .venv
+.venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
+pip install -r requirements-dev.txt
 
-# Activar en Windows PowerShell
-.venv\Scripts\Activate.ps1
+pytest -q                           # 484 pruebas
+pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
+ruff check .
 
-# Instalar dependencias
-pip install -r requirements.txt
+uvicorn src.main:app --reload       # http://localhost:8000/docs
+
+# Taller 2: generar XML firmados sin levantar el servidor
+python -m src.adapters.inbound.cli generar-xml specs/ejemplos/factura.json specs/ejemplos/factura-credito.json --fecha 2026-10-22
 ```
 
-### 2. Ejecutar la Batería de Pruebas (20 tests en Verde)
-```bash
-python -m pytest -v
-```
+Tokens de **desarrollo**; en producción se definen con `ABC_API_TOKENS`:
 
-### 3. Iniciar el Servidor de Desarrollo
-```bash
-python -m uvicorn src.main:app --reload --port 8000
-```
-La documentación interactiva estará disponible en: `http://localhost:8000/docs`.
+| Token | Alcances |
+|---|---|
+| `dev-facturador` | todos |
+| `dev-almacen` | `inventario:escribir`, `inventario:leer` |
+| `dev-consulta` | `comprobantes:leer`, `inventario:leer`, `libros:leer` |
 
----
+### Variables de entorno
 
-## 🧪 Demostración del Ciclo SDD (Spec-Driven Development)
+| Variable | Valor por defecto | Uso |
+|---|---|---|
+| `ABC_MODO_OSE` | `NORMAL` | `NORMAL`, `CAIDA`, `RESPUESTA_INVALIDA` o `RECHAZO`, para probar los caminos 201, 202, 502 y 503 |
+| `ABC_PLAZO_ENVIO_DIAS` | `3` | Antigüedad máxima de la fecha de emisión |
+| `ABC_API_TOKENS` | tokens `dev-*` | JSON `{"token": ["alcance", ...]}` |
+| `ABC_CERTIFICADO_PFX` / `ABC_CERTIFICADO_CONTRASENA` | autofirmado en memoria | Certificado digital del emisor (nunca se versiona) |
 
-1. **Fase Roja (Red Phase)**:
-   - Los contratos OpenAPI se definieron en `specs/contracts/ubl-invoice-api.yaml` y las especificaciones BDD en `specs/features/001-proceso-abc-software-ubl.md`.
-   - Se crearon los tests de aceptación y unitarios antes de la implementación de código en `src/`.
-   - `pytest` confirmó la ausencia previa de implementación.
+## Endpoints
 
-2. **Fase Verde (Green Phase)**:
-   - Se implementaron los modelos, repositorios, servicios, presentadores y controladores.
-   - Resultado: **20 pruebas ejecutadas exitosamente (100% Passed)** sin dependencias de base de datos externas.
+| Método | Ruta | Respuestas |
+|---|---|---|
+| `POST` | `/api/v1/comprobantes` | 201 (CDR) · 202 (OSE caída) · 200 (idempotente) · 400 · 401 · 403 · 409 · 422 |
+| `GET` | `/api/v1/comprobantes/{tipo}/{serie_numero}` | 200 · 400 · 401 · 403 · 404 |
+| `GET` | `/api/v1/comprobantes/{tipo}/{serie_numero}/xml` | 200 `application/xml` (UBL firmado) |
+| `POST` | `/api/v1/comprobantes/{tipo}/{serie_numero}/envios` | 200 · 404 · 409 · 502 · 503 (`Retry-After`) |
+| `POST` | `/api/v1/inventario/migraciones` | 201 · 400 · 409 · 422 |
+| `POST` | `/api/v1/inventario/migraciones/lotes` | 201 (resumen, observaciones y conciliación) · 400 |
+| `GET` | `/api/v1/inventario/migraciones/{clave}` · `/migraciones/lotes/{id}` | 200 · 404 |
+| `GET` | `/api/v1/inventario/kardex/{codigo_producto}` | 200 (con saldo final) · 404 |
+| `GET` | `/api/v1/libros-electronicos/registro-ventas/{AAAAMM}` | 200 TXT del PLE 14.1 (`?formato=json`) · 422 `ERR-PLE-ESTRUCTURA` |
+| `GET` | `/api/v1/libros-electronicos/inventario-unidades-fisicas/{AAAAMM}` | 200 TXT del PLE 12.1 (`?formato=json`) · 422 `ERR-PLE-ESTRUCTURA` |
+| `GET` | `/salud` | 200 |
+
+Todos los errores usan `application/problem+json` (RFC 9457) con un `codigo` estable: **400** si la solicitud no cumple el contrato y **422** si viola una regla de negocio.
+
+## Scripts
+
+| Script | Para qué |
+|---|---|
+| `python scripts/exportar_openapi.py` | Regenera `specs/contracts/openapi.yaml` desde el código |
+| `python scripts/matriz.py` | Regenera la matriz (MD + CSV) desde `matriz.yaml`, calculando la cardinalidad desde los XSD |
+| `python scripts/generar_ejemplos.py` | Regenera `docs/ejemplos/` con salidas reales (XML firmado, JSON, TXT del PLE) |
+| `scripts/generar_clases_ubl.ps1` / `.sh` | Regenera las clases xsdata desde los XSD oficiales |
+
+Hay una prueba por cada artefacto generado que falla si quedó desactualizado.
+
+## Límites conocidos
+
+- La OSE es **simulada**: verifica la firma y el XSD y devuelve un CDR, pero no aplica todas las reglas de validación de SUNAT.
+- La persistencia es en memoria.
+- La estructura de los TXT del PLE se verifica contra el Excel oficial del Anexo 2 ([ADR 0010](specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)). Falta cargarlos en el programa PLE de escritorio, que además valida contra el padrón RUC.
+
+Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009 y 0010.

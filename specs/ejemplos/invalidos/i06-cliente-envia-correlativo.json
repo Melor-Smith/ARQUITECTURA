@@ -1,0 +1,30 @@
+{
+  "tipo_comprobante": "01",
+  "serie": "F001",
+  "moneda": "PEN",
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.",
+    "direccion": "JR. COMERCIO 123, LIMA"
+  },
+  "lineas": [
+    {
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "50",
+      "valor_unitario": "4.20",
+      "afectacion_igv": "10"
+    },
+    {
+      "codigo_producto": "AB-AZU-001",
+      "descripcion": "Azúcar rubia a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "25",
+      "valor_unitario": "3.80",
+      "afectacion_igv": "10"
+    }
+  ],
+  "correlativo": 15
+}

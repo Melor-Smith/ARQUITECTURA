@@ -1,0 +1,296 @@
+{
+  "id_lote": "LOTE-000001",
+  "procesado_en": "2026-10-22T10:30:00-05:00",
+  "resumen": {
+    "total": 9,
+    "migradas": 5,
+    "observadas": 2,
+    "duplicadas": 2,
+    "cuadra": true
+  },
+  "conciliacion": [
+    {
+      "establecimiento": "0000",
+      "codigo_producto": "AB-ACE-001",
+      "saldo_inicial": "240",
+      "entradas": "0",
+      "salidas": "72",
+      "saldo_final": "168",
+      "cuadra": true
+    },
+    {
+      "establecimiento": "0000",
+      "codigo_producto": "AB-ARR-001",
+      "saldo_inicial": "3000",
+      "entradas": "1000",
+      "salidas": "150",
+      "saldo_final": "3850",
+      "cuadra": true
+    },
+    {
+      "establecimiento": "0000",
+      "codigo_producto": "AB-AZU-001",
+      "saldo_inicial": "750",
+      "entradas": "0",
+      "salidas": "50",
+      "saldo_final": "700",
+      "cuadra": true
+    }
+  ],
+  "resultados": [
+    {
+      "indice": 1,
+      "nro_documento": "VALE-SALIDA-0099",
+      "estado": "MIGRADA",
+      "codigo": null,
+      "mensaje": null,
+      "migracion": {
+        "id_migracion": "MIG-000004",
+        "clave": "VALE-SALIDA-0099",
+        "nro_documento_legado": "VALE-SALIDA-0099",
+        "regla_documento": "DOCUMENTO_INTERNO",
+        "estado": "PENDIENTE_FACTURACION",
+        "comprobante": null,
+        "observaciones": [],
+        "homologacion": {
+          "texto_legado": "Caja Aceite Vegetal 12x1L",
+          "codigo_producto": "AB-ACE-001",
+          "factor_conversion": "12"
+        },
+        "movimiento": {
+          "id": "MOV-000011",
+          "fecha": "2026-10-17",
+          "establecimiento": "0000",
+          "codigo_producto": "AB-ACE-001",
+          "tipo_operacion": {
+            "codigo": "01",
+            "descripcion": "Venta"
+          },
+          "documento": {
+            "tipo": {
+              "codigo": "00",
+              "descripcion": "Otros (documento interno)"
+            },
+            "serie": "VALE-SALIDA",
+            "numero": "0099",
+            "fecha": "2026-10-17"
+          },
+          "entrada": "0",
+          "salida": "24",
+          "saldo": "216",
+          "glosa": "Migrado del sistema antiguo: Caja Aceite Vegetal 12x1L"
+        }
+      }
+    },
+    {
+      "indice": 2,
+      "nro_documento": "VALE-SALIDA-0042",
+      "estado": "DUPLICADA",
+      "codigo": "ERR-LEGADO-DUPLICADO",
+      "mensaje": "El documento legado 'VALE-SALIDA-0042' ya fue migrado (MIG-000001).",
+      "migracion": null
+    },
+    {
+      "indice": 3,
+      "nro_documento": "FACT 001-4587",
+      "estado": "MIGRADA",
+      "codigo": null,
+      "mensaje": null,
+      "migracion": {
+        "id_migracion": "MIG-000003",
+        "clave": "FACT 001-4587",
+        "nro_documento_legado": "FACT 001-4587",
+        "regla_documento": "FACTURA_FISICA",
+        "estado": "NO_REQUIERE_FACTURA",
+        "comprobante": null,
+        "observaciones": [],
+        "homologacion": {
+          "texto_legado": "Saco de Arroz Extra 50kg",
+          "codigo_producto": "AB-ARR-001",
+          "factor_conversion": "50"
+        },
+        "movimiento": {
+          "id": "MOV-000010",
+          "fecha": "2026-10-16",
+          "establecimiento": "0000",
+          "codigo_producto": "AB-ARR-001",
+          "tipo_operacion": {
+            "codigo": "02",
+            "descripcion": "Compra"
+          },
+          "documento": {
+            "tipo": {
+              "codigo": "01",
+              "descripcion": "Factura"
+            },
+            "serie": "0001",
+            "numero": "4587",
+            "fecha": "2026-10-16"
+          },
+          "entrada": "1000",
+          "salida": "0",
+          "saldo": "4000",
+          "glosa": "Migrado del sistema antiguo: Saco de Arroz Extra 50kg"
+        }
+      }
+    },
+    {
+      "indice": 4,
+      "nro_documento": "B001-0000231",
+      "estado": "MIGRADA",
+      "codigo": null,
+      "mensaje": null,
+      "migracion": {
+        "id_migracion": "MIG-000005",
+        "clave": "B001-0000231",
+        "nro_documento_legado": "B001-0000231",
+        "regla_documento": "COMPROBANTE_ELECTRONICO",
+        "estado": "FACTURADA_EN_SISTEMA_ANTIGUO",
+        "comprobante": null,
+        "observaciones": [],
+        "homologacion": {
+          "texto_legado": "Saco de Arroz Extra 50kg",
+          "codigo_producto": "AB-ARR-001",
+          "factor_conversion": "50"
+        },
+        "movimiento": {
+          "id": "MOV-000012",
+          "fecha": "2026-10-18",
+          "establecimiento": "0000",
+          "codigo_producto": "AB-ARR-001",
+          "tipo_operacion": {
+            "codigo": "01",
+            "descripcion": "Venta"
+          },
+          "documento": {
+            "tipo": {
+              "codigo": "03",
+              "descripcion": "Boleta de venta"
+            },
+            "serie": "B001",
+            "numero": "231",
+            "fecha": "2026-10-18"
+          },
+          "entrada": "0",
+          "salida": "150",
+          "saldo": "3850",
+          "glosa": "Migrado del sistema antiguo: SACO DE ARROZ EXTRA 50KG"
+        }
+      }
+    },
+    {
+      "indice": 5,
+      "nro_documento": "s/n",
+      "estado": "MIGRADA",
+      "codigo": null,
+      "mensaje": null,
+      "migracion": {
+        "id_migracion": "MIG-000006",
+        "clave": "SN-42273372CA4A",
+        "nro_documento_legado": "s/n",
+        "regla_documento": "SIN_DOCUMENTO",
+        "estado": "PENDIENTE_FACTURACION",
+        "comprobante": null,
+        "observaciones": [
+          "La ficha no tiene documento de soporte; se registró como documento interno sin número."
+        ],
+        "homologacion": {
+          "texto_legado": "Saco de Azúcar Rubia 50kg",
+          "codigo_producto": "AB-AZU-001",
+          "factor_conversion": "50"
+        },
+        "movimiento": {
+          "id": "MOV-000013",
+          "fecha": "2026-10-19",
+          "establecimiento": "0000",
+          "codigo_producto": "AB-AZU-001",
+          "tipo_operacion": {
+            "codigo": "01",
+            "descripcion": "Venta"
+          },
+          "documento": {
+            "tipo": {
+              "codigo": "00",
+              "descripcion": "Otros (documento interno)"
+            },
+            "serie": "SN",
+            "numero": "20261019",
+            "fecha": "2026-10-19"
+          },
+          "entrada": "0",
+          "salida": "50",
+          "saldo": "700",
+          "glosa": "Migrado del sistema antiguo: saco de azucar rubia 50kg"
+        }
+      }
+    },
+    {
+      "indice": 6,
+      "nro_documento": "GUIA 0002-781",
+      "estado": "MIGRADA",
+      "codigo": null,
+      "mensaje": null,
+      "migracion": {
+        "id_migracion": "MIG-000007",
+        "clave": "GUIA 0002-781",
+        "nro_documento_legado": "GUIA 0002-781",
+        "regla_documento": "GUIA_REMISION",
+        "estado": "PENDIENTE_FACTURACION",
+        "comprobante": null,
+        "observaciones": [],
+        "homologacion": {
+          "texto_legado": "Caja Aceite Vegetal 12x1L",
+          "codigo_producto": "AB-ACE-001",
+          "factor_conversion": "12"
+        },
+        "movimiento": {
+          "id": "MOV-000014",
+          "fecha": "2026-10-20",
+          "establecimiento": "0000",
+          "codigo_producto": "AB-ACE-001",
+          "tipo_operacion": {
+            "codigo": "01",
+            "descripcion": "Venta"
+          },
+          "documento": {
+            "tipo": {
+              "codigo": "09",
+              "descripcion": "Guía de remisión - remitente"
+            },
+            "serie": "0002",
+            "numero": "781",
+            "fecha": "2026-10-20"
+          },
+          "entrada": "0",
+          "salida": "48",
+          "saldo": "168",
+          "glosa": "Migrado del sistema antiguo: Caja Aceite Vegetal 12x1L"
+        }
+      }
+    },
+    {
+      "indice": 7,
+      "nro_documento": "VALE-ING-0007",
+      "estado": "OBSERVADA",
+      "codigo": "ERR-LEGADO-FECHA",
+      "mensaje": "La fecha '31/09/2026' no es válida (formatos aceptados: AAAA-MM-DD, DD/MM/AAAA, DD-MM-AAAA, DD.MM.AAAA, DD/MM/AA).",
+      "migracion": null
+    },
+    {
+      "indice": 8,
+      "nro_documento": "VALE-SALIDA-0101",
+      "estado": "OBSERVADA",
+      "codigo": "ERR-LEGADO-NO-HOMOLOGADO",
+      "mensaje": "La glosa 'Fideos sueltos' no está en la tabla de homologación; envíe 'codigo_producto' y 'factor_conversion'.",
+      "migracion": null
+    },
+    {
+      "indice": 9,
+      "nro_documento": "VALE-SALIDA-0042",
+      "estado": "DUPLICADA",
+      "codigo": "ERR-LEGADO-DUPLICADO",
+      "mensaje": "El documento legado 'VALE-SALIDA-0042' ya fue migrado (MIG-000001).",
+      "migracion": null
+    }
+  ]
+}

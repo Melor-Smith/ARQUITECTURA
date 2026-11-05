@@ -1,0 +1,13 @@
+{
+  "fichas": [
+    { "fecha": "17/10/2026", "ingreso": 0,  "salida": 2, "producto": "Caja Aceite Vegetal 12x1L",  "nro_documento": "VALE-SALIDA-0099" },
+    { "fecha": "2026-10-15", "ingreso": 0,  "salida": 5, "producto": "Saco de Azúcar Rubia 50kg",  "nro_documento": "VALE-SALIDA-0042" },
+    { "fecha": "16-10-2026", "ingreso": 20, "salida": 0, "producto": "Saco de Arroz Extra 50kg",   "nro_documento": "FACT 001-4587" },
+    { "fecha": "18.10.2026", "ingreso": 0,  "salida": 3, "producto": "SACO DE ARROZ EXTRA 50KG",   "nro_documento": "B001-0000231" },
+    { "fecha": "19/10/26",   "ingreso": 0,  "salida": 1, "producto": "saco de azucar rubia 50kg",  "nro_documento": "s/n" },
+    { "fecha": "20/10/2026", "ingreso": 0,  "salida": 4, "producto": "Caja Aceite Vegetal 12x1L",  "nro_documento": "GUIA 0002-781" },
+    { "fecha": "31/09/2026", "ingreso": 10, "salida": 0, "producto": "Saco de Arroz Extra 50kg",   "nro_documento": "VALE-ING-0007" },
+    { "fecha": "21/10/2026", "ingreso": 0,  "salida": 2, "producto": "Fideos sueltos",             "nro_documento": "VALE-SALIDA-0101" },
+    { "fecha": "2026-10-15", "ingreso": 0,  "salida": 5, "producto": "Saco de Azúcar Rubia 50kg",  "nro_documento": "VALE-SALIDA-0042" }
+  ]
+}

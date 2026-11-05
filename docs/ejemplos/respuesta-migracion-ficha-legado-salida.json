@@ -1,0 +1,37 @@
+{
+  "id_migracion": "MIG-000001",
+  "clave": "VALE-SALIDA-0042",
+  "nro_documento_legado": "VALE-SALIDA-0042",
+  "regla_documento": "DOCUMENTO_INTERNO",
+  "estado": "PENDIENTE_FACTURACION",
+  "comprobante": null,
+  "observaciones": [],
+  "homologacion": {
+    "texto_legado": "Saco de Azúcar Rubia 50kg",
+    "codigo_producto": "AB-AZU-001",
+    "factor_conversion": "50"
+  },
+  "movimiento": {
+    "id": "MOV-000008",
+    "fecha": "2026-10-15",
+    "establecimiento": "0000",
+    "codigo_producto": "AB-AZU-001",
+    "tipo_operacion": {
+      "codigo": "01",
+      "descripcion": "Venta"
+    },
+    "documento": {
+      "tipo": {
+        "codigo": "00",
+        "descripcion": "Otros (documento interno)"
+      },
+      "serie": "VALE-SALIDA",
+      "numero": "0042",
+      "fecha": "2026-10-15"
+    },
+    "entrada": "0",
+    "salida": "250",
+    "saldo": "750",
+    "glosa": "Migrado del sistema antiguo: Saco de Azúcar Rubia 50kg"
+  }
+}

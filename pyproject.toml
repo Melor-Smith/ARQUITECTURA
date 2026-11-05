@@ -1,0 +1,28 @@
+[project]
+name = "abc-facturacion-ubl"
+version = "2.0.0"
+description = "Facturación electrónica UBL 2.1 (SUNAT), inventario permanente y PLE 14.1/12.1 para ABC Software Corp"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["src/adapters/outbound/ubl/generated", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "RUF001", "RUF002", "RUF003",  # tildes y signos del español en textos y comentarios
+    "B008",                         # Depends/Query/Body en firmas: patrón idiomático de FastAPI
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "tests"]

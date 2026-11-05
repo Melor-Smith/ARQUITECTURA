@@ -1,0 +1,77 @@
+{
+  "tipo_comprobante": {
+    "codigo": "03",
+    "descripcion": "Boleta de venta"
+  },
+  "serie": "B001",
+  "correlativo": 1,
+  "serie_numero": "B001-1",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "1",
+    "numero_documento": "46027897",
+    "nombre": "MARÍA QUISPE HUAMÁN"
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "AB-ACE-001",
+      "descripcion": "Aceite vegetal botella 1 L",
+      "unidad_medida": "NIU",
+      "cantidad": "2",
+      "valor_unitario": "8.50",
+      "precio_unitario": "10.03",
+      "valor_venta": "17.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "17.00",
+        "monto": "3.06"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "17.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "3.06",
+    "icbper": "0.00",
+    "total_impuestos": "3.06",
+    "valor_venta": "17.00",
+    "importe_total": "20.06"
+  },
+  "monto_en_letras": "VEINTE CON 06/100 SOLES",
+  "forma_pago": null,
+  "documentos_legado": [],
+  "referencia": null,
+  "motivo": null,
+  "sustento": null,
+  "estado": "ACEPTADO",
+  "hash_cpe": "KTGbA2l5z5bqa2AidYl5iDsNMMNaG4pjyyN9ekJwEM4=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Boleta de venta numero B001-1, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/03/B001-1",
+    "xml": "/api/v1/comprobantes/03/B001-1/xml",
+    "envios": "/api/v1/comprobantes/03/B001-1/envios"
+  }
+}

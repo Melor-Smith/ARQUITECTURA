@@ -1,0 +1,20 @@
+{
+  "tipo_comprobante": "08",
+  "serie": "FD01",
+  "referencia": { "tipo_comprobante": "01", "serie_numero": "F001-1" },
+  "motivo": "01",
+  "sustento": "Intereses por pago fuera de plazo",
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "descripcion": "Intereses moratorios",
+      "unidad_medida": "ZZ",
+      "cantidad": "1",
+      "valor_unitario": "15.00"
+    }
+  ]
+}

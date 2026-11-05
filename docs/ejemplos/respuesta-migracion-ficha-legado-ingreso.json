@@ -1,0 +1,37 @@
+{
+  "id_migracion": "MIG-000002",
+  "clave": "GUIA-INT-0015",
+  "nro_documento_legado": "GUIA-INT-0015",
+  "regla_documento": "DOCUMENTO_INTERNO",
+  "estado": "NO_REQUIERE_FACTURA",
+  "comprobante": null,
+  "observaciones": [],
+  "homologacion": {
+    "texto_legado": "Saco de Arroz Extra 50kg",
+    "codigo_producto": "AB-ARR-001",
+    "factor_conversion": "50"
+  },
+  "movimiento": {
+    "id": "MOV-000009",
+    "fecha": "2026-10-16",
+    "establecimiento": "0000",
+    "codigo_producto": "AB-ARR-001",
+    "tipo_operacion": {
+      "codigo": "02",
+      "descripcion": "Compra"
+    },
+    "documento": {
+      "tipo": {
+        "codigo": "00",
+        "descripcion": "Otros (documento interno)"
+      },
+      "serie": "GUIA-INT",
+      "numero": "0015",
+      "fecha": "2026-10-16"
+    },
+    "entrada": "1000",
+    "salida": "0",
+    "saldo": "3000",
+    "glosa": "Migrado del sistema antiguo: Saco de Arroz Extra 50kg"
+  }
+}

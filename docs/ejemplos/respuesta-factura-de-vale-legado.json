@@ -1,0 +1,83 @@
+{
+  "tipo_comprobante": {
+    "codigo": "01",
+    "descripcion": "Factura"
+  },
+  "serie": "F001",
+  "correlativo": 3,
+  "serie_numero": "F001-3",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "AB-AZU-001",
+      "descripcion": "Azúcar rubia (5 sacos de 50 kg despachados con VALE-SALIDA-0042)",
+      "unidad_medida": "KGM",
+      "cantidad": "250",
+      "valor_unitario": "3.80",
+      "precio_unitario": "4.48",
+      "valor_venta": "950.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "950.00",
+        "monto": "171.00"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "950.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "171.00",
+    "icbper": "0.00",
+    "total_impuestos": "171.00",
+    "valor_venta": "950.00",
+    "importe_total": "1121.00"
+  },
+  "monto_en_letras": "MIL CIENTO VEINTIUNO CON 00/100 SOLES",
+  "forma_pago": {
+    "tipo": "CONTADO",
+    "monto_pendiente": "0.00",
+    "cuotas": []
+  },
+  "documentos_legado": [
+    "VALE-SALIDA-0042"
+  ],
+  "referencia": null,
+  "motivo": null,
+  "sustento": null,
+  "estado": "ACEPTADO",
+  "hash_cpe": "1PT7GttozSRb8QtWTEyiPk2oX6oAdhuCVIB3+bBVyb0=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Factura numero F001-3, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/01/F001-3",
+    "xml": "/api/v1/comprobantes/01/F001-3/xml",
+    "envios": "/api/v1/comprobantes/01/F001-3/envios"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "tipo_comprobante": {
+    "codigo": "01",
+    "descripcion": "Factura"
+  },
+  "serie": "F001",
+  "correlativo": 1,
+  "serie_numero": "F001-1",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "50",
+      "valor_unitario": "4.20",
+      "precio_unitario": "4.96",
+      "valor_venta": "210.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "210.00",
+        "monto": "37.80"
+      },
+      "icbper": "0.00"
+    },
+    {
+      "numero": 2,
+      "codigo_producto": "AB-AZU-001",
+      "descripcion": "Azúcar rubia a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "25",
+      "valor_unitario": "3.80",
+      "precio_unitario": "4.48",
+      "valor_venta": "95.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "95.00",
+        "monto": "17.10"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "305.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "54.90",
+    "icbper": "0.00",
+    "total_impuestos": "54.90",
+    "valor_venta": "305.00",
+    "importe_total": "359.90"
+  },
+  "monto_en_letras": "TRESCIENTOS CINCUENTA Y NUEVE CON 90/100 SOLES",
+  "forma_pago": {
+    "tipo": "CONTADO",
+    "monto_pendiente": "0.00",
+    "cuotas": []
+  },
+  "documentos_legado": [],
+  "referencia": null,
+  "motivo": null,
+  "sustento": null,
+  "estado": "ACEPTADO",
+  "hash_cpe": "s4Xj55PozG+Fqxc+nv02CY1EkgMkYOJ5Q/6lKe2PfA8=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Factura numero F001-1, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/01/F001-1",
+    "xml": "/api/v1/comprobantes/01/F001-1/xml",
+    "envios": "/api/v1/comprobantes/01/F001-1/envios"
+  }
+}

@@ -3,7 +3,13 @@ v/
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
 *.egg-info/
 dist/
 build/
 .coverage
+# Certificados digitales y claves: nunca se versionan
+*.pfx
+*.p12
+*.pem
+*.key

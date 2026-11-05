@@ -1,0 +1,19 @@
+{
+  "tipo_comprobante": "01",
+  "serie": "F001",
+  "documentos_legado": ["VALE-SALIDA-0042"],
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "codigo_producto": "AB-AZU-001",
+      "descripcion": "Azúcar rubia (5 sacos de 50 kg despachados con VALE-SALIDA-0042)",
+      "unidad_medida": "KGM",
+      "cantidad": "250",
+      "valor_unitario": "3.80"
+    }
+  ]
+}
