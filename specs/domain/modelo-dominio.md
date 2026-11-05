@@ -2,6 +2,10 @@
 
 El código vive en [`src/domain/`](../../src/domain): Python puro, sin frameworks. El diagrama de clases y la máquina de estados están en [`arquitectura.md`](../architecture/arquitectura.md) §5 y §6.
 
+![Diagrama de clases del dominio](../../docs/diagramas/06-clases-dominio.svg)
+
+Diagrama 06: [SVG](../../docs/diagramas/06-clases-dominio.svg) · [PNG](../../docs/diagramas/06-clases-dominio.png) · [fuente Mermaid](../../docs/diagramas/06-clases-dominio.mmd). Estados: [diagrama 08](../../docs/diagramas/08-estados-comprobante.svg). Los DTO que cruzan la frontera HTTP están escritos como contrato en [`specs/contracts/schemas/`](../contracts/schemas).
+
 ## Objetos de valor ([`valores.py`](../../src/domain/valores.py))
 
 | Objeto | Invariante | Error |

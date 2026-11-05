@@ -1,0 +1,41 @@
+---
+title: "MVC dentro del adaptador HTTP: el Modelo es el núcleo hexagonal"
+---
+flowchart TB
+    cliente(["Cliente HTTP"])
+
+    subgraph HTTP["Adaptador de entrada HTTP · src/adapters/inbound/http"]
+        direction TB
+        dto["DTO Pydantic<br/>esquemas.py<br/><i>implementan el contrato</i>"]
+        subgraph C["Controladores · controladores/"]
+            c1["comprobantes.py"]
+            c2["inventario.py"]
+            c3["libros.py"]
+        end
+        subgraph V["Vistas · vistas/"]
+            v1["comprobante.py<br/>JSON y XML UBL firmado"]
+            v2["inventario.py<br/>JSON Kardex y migración"]
+            v3["ple.py<br/>TXT del PLE 14.1 y 12.1"]
+        end
+        prob["problemas.py<br/>application/problem+json"]
+        seg["seguridad.py<br/>Bearer + alcances"]
+    end
+
+    subgraph M["Modelo = núcleo"]
+        direction TB
+        app["application/casos_uso<br/>EmitirComprobante, MigrarLoteLegado,<br/>GenerarRegistroVentas141..."]
+        dom["domain<br/>Comprobante, Linea, Totales,<br/>Kardex, MigracionLegado"]
+        app --> dom
+    end
+
+    contrato[["specs/contracts<br/>openapi.yaml + schemas/*.schema.json<br/><b>contrato escrito primero</b>"]]
+
+    cliente -- "1 solicitud JSON" --> seg --> dto
+    dto -- "2 400 si no cumple" --> prob
+    dto -- "3 comando" --> C
+    C -- "4 invoca" --> app
+    app -- "5 entidad" --> C
+    C -- "6 elige la vista" --> V
+    V -- "7 representación" --> cliente
+    app -. "422 / 409" .-> prob
+    contrato -. "verificado por test_contrato.py" .-> dto

@@ -1,0 +1,209 @@
+---
+title: "Modelo de dominio (src/domain): entidades, agregados y objetos de valor"
+---
+classDiagram
+    direction LR
+
+    namespace Facturacion {
+        class Comprobante {
+            <<agregado raíz>>
+            +TipoComprobante tipo
+            +NumeroComprobante numero
+            +date fecha_emision
+            +Moneda moneda
+            +Decimal tipo_cambio
+            +EstadoComprobante estado
+            +str hash_cpe
+            +int intentos_envio
+            +serie_numero() str
+            +monto_en_letras() str
+            +registrar_firma(xml, hash)
+            +registrar_cdr(cdr)
+            +registrar_envio_fallido()
+        }
+        class BorradorComprobante {
+            <<fábrica>>
+            +Serie serie
+            +preparar() reglas cruzadas
+            +numerar(correlativo) Comprobante
+        }
+        class Linea {
+            <<entidad>>
+            +int numero
+            +str codigo_producto
+            +UnidadMedida unidad
+            +Decimal cantidad
+            +Decimal valor_unitario
+            +AfectacionIGV afectacion
+            +bool aplica_icbper
+            +Decimal monto_isc
+            +Decimal monto_igv
+            +Decimal monto_icbper
+            +calcular() Linea
+            +precio_unitario() Decimal
+        }
+        class Totales {
+            <<objeto de valor>>
+            +Decimal gravadas
+            +Decimal exoneradas
+            +Decimal inafectas
+            +Decimal exportacion
+            +Decimal isc
+            +Decimal igv
+            +Decimal icbper
+            +Decimal importe_total
+            +de_lineas(lineas) Totales$
+        }
+        class ConfiguracionISC {
+            <<objeto de valor>>
+            +SistemaISC sistema
+            +Decimal tasa
+            +Decimal monto_fijo
+            +Decimal precio_venta_publico
+            +calcular(cantidad, valor_venta) Decimal
+        }
+        class FormaPago {
+            <<objeto de valor>>
+            +TipoFormaPago tipo
+            +monto_pendiente() Decimal
+            +validar(importe_total)
+        }
+        class Cuota {
+            <<objeto de valor>>
+            +Decimal monto
+            +date fecha_vencimiento
+        }
+        class Cdr {
+            <<objeto de valor>>
+            +str codigo
+            +str descripcion
+            +estado_resultante() EstadoComprobante
+        }
+        class Emisor {
+            <<objeto de valor>>
+            +Ruc ruc
+            +str razon_social
+            +str codigo_establecimiento
+        }
+        class Cliente {
+            <<objeto de valor>>
+            +DocumentoIdentidad documento
+            +str nombre
+        }
+    }
+
+    namespace ObjetosDeValor {
+        class Ruc {
+            +str valor
+            11 dígitos, módulo 11
+        }
+        class Serie {
+            +str valor
+            F o B y 3 alfanuméricos
+        }
+        class Correlativo {
+            +int valor
+            1 a 99 999 999
+        }
+        class NumeroComprobante {
+            +Serie serie
+            +Correlativo correlativo
+            +parsear(texto) NumeroComprobante$
+        }
+        class DocumentoIdentidad {
+            +TipoDocumentoIdentidad tipo
+            +str numero
+        }
+    }
+
+    namespace Inventario {
+        class Kardex {
+            <<agregado raíz>>
+            +str establecimiento
+            +Producto producto
+            +saldo() Decimal
+            +verificar(movimiento)
+            +registrar(movimiento)
+        }
+        class MovimientoInventario {
+            <<entidad>>
+            +date fecha
+            +TipoOperacionInventario tipo_operacion
+            +Decimal entrada
+            +Decimal salida
+            +Decimal saldo
+        }
+        class DocumentoSoporte {
+            <<objeto de valor>>
+            +TipoDocumentoPLE tipo
+            +str serie
+            +str numero
+        }
+        class Producto {
+            <<entidad>>
+            +str codigo
+            +UnidadMedida unidad
+            +TipoExistencia tipo_existencia
+        }
+        class FichaLegado {
+            <<objeto de valor>>
+            +date fecha
+            +Decimal ingreso
+            +Decimal salida
+            +str producto
+            +str nro_documento
+        }
+        class MigracionLegado {
+            <<entidad>>
+            +EstadoMigracion estado
+            +str comprobante
+            +marcar_facturada(comprobante)
+            +revertir_facturacion()
+        }
+        class Homologacion {
+            <<objeto de valor>>
+            +str texto_legado
+            +str codigo_producto
+            +Decimal factor_conversion
+        }
+        class LoteMigracion {
+            <<entidad>>
+            +contar(estado) int
+            +cuadra() bool
+        }
+    }
+
+    class EstadoComprobante {
+        <<enumeración>>
+        REGISTRADO
+        PENDIENTE_ENVIO
+        ACEPTADO
+        ACEPTADO_CON_OBSERVACIONES
+        RECHAZADO
+    }
+
+    BorradorComprobante ..> Comprobante : numerar()
+    Comprobante *-- NumeroComprobante
+    Comprobante *-- "1..500" Linea
+    Comprobante *-- Totales
+    Comprobante *-- "0..1" FormaPago
+    Comprobante *-- "0..1" Cdr
+    Comprobante --> Emisor
+    Comprobante --> Cliente
+    Comprobante --> "0..1" Comprobante : referencia (notas 07 y 08)
+    Comprobante --> EstadoComprobante
+    Linea *-- "0..1" ConfiguracionISC
+    FormaPago *-- "0..60" Cuota
+    NumeroComprobante *-- Serie
+    NumeroComprobante *-- Correlativo
+    Emisor *-- Ruc
+    Cliente *-- DocumentoIdentidad
+
+    Kardex *-- "*" MovimientoInventario
+    Kardex --> Producto
+    MovimientoInventario *-- DocumentoSoporte
+    MigracionLegado --> FichaLegado
+    MigracionLegado --> Homologacion
+    MigracionLegado --> MovimientoInventario
+    LoteMigracion *-- "1..5000" MigracionLegado : resultados
+    MigracionLegado ..> Comprobante : facturada por (documentos_legado)

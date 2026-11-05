@@ -1,0 +1,32 @@
+---
+title: "Despliegue: cajas Windows (MSI), almacén Android (APK), servidor Docker y SUNAT"
+---
+flowchart TB
+    subgraph SUC["Sucursal"]
+        direction LR
+        pos["<b>Caja POS Windows</b><br/>MSI: PyInstaller + WiX (ADR 0008)<br/>API local 127.0.0.1 + SQLite<br/>PENDIENTE_ENVIO si no hay internet"]
+        apk["<b>Terminal del almacén</b><br/>APK: Kotlin nativo (ADR 0008)<br/>Room/SQLite sin conexión + escáner"]
+    end
+
+    subgraph SRV["Servidor central (nube o local)"]
+        direction LR
+        api["<b>Contenedor Docker</b><br/>python:3.12-slim · usuario no root<br/>uvicorn src.main:app :8000<br/>healthcheck /salud"]
+        vol[("<b>Volumen /datos</b><br/>abc.db (SQLite)")]
+        sec["<b>Secretos (variables de entorno)</b><br/>ABC_API_TOKENS · ABC_CERTIFICADO_PFX<br/>ABC_SUNAT_USUARIO_SOL / CLAVE_SOL"]
+        sec -. inyecta .-> api
+        api --- vol
+    end
+
+    subgraph SUNAT["SUNAT · billService"]
+        direction LR
+        beta["<b>e-beta.sunat.gob.pe</b><br/>pruebas (MODDATOS)"]
+        prod["<b>e-factura.sunat.gob.pe</b><br/>producción: exige certificado,<br/>usuario SOL y tokens propios"]
+    end
+
+    ci["<b>GitHub Actions</b><br/>CI: pruebas, contrato, Docker, diagramas<br/>sunat-beta semanal · MSI en windows-latest"]
+
+    pos -- "HTTPS/JSON" --> api
+    apk -- "HTTPS/JSON al recuperar señal" --> api
+    api -- "SOAP sendBill<br/>ABC_SUNAT_ENDPOINT=beta" --> beta
+    api -- "SOAP sendBill<br/>ABC_SUNAT_ENDPOINT=produccion" --> prod
+    ci -. "envía los 7 comprobantes del caso" .-> beta

@@ -1,0 +1,34 @@
+---
+title: "C4 nivel 2 · Contenedores: qué se despliega y cómo se comunica"
+---
+flowchart TB
+    usuarios["<b>Cajero · almacenero · contador</b><br/>[Personas]<br/>Swagger, POS Windows, app Android"]
+
+    subgraph ABC["Sistema de facturación e inventario ABC  [límite del sistema]"]
+        direction TB
+        api["<b>API REST</b><br/>[Contenedor: Python 3.12, FastAPI]<br/>Controladores, vistas JSON/XML/TXT,<br/>DTO, problem+json, Bearer"]
+        cli["<b>CLI generar-xml</b><br/>[Contenedor: Python]<br/>Taller 2: XML firmados sin servidor"]
+        nucleo["<b>Núcleo</b><br/>[Componente: domain + application, solo stdlib]<br/>Reglas SUNAT, tributos con Decimal,<br/>Kardex, PLE; casos de uso y puertos"]
+        db[("<b>Base de datos</b><br/>[SQLite o memoria]<br/>Comprobantes, correlativos,<br/>Kardex, migraciones")]
+        ubl["<b>Generador y validador UBL</b><br/>[xsdata + lxml]<br/>XML desde las clases del XSD"]
+        firma["<b>Firma digital</b><br/>[signxml]<br/>XMLDSig en ext:UBLExtensions"]
+        soap["<b>Cliente SOAP SUNAT</b><br/>[urllib + zipfile + lxml]<br/>sendBill con WS-Security"]
+    end
+
+    sunat["<b>SUNAT / OSE</b><br/>[Sistema externo]<br/>billService beta o producción"]
+
+    usuarios -- "Usa [HTTPS/JSON]" --> api
+    api -- "Invoca casos de uso" --> nucleo
+    cli -- "Invoca EmitirComprobante" --> nucleo
+    nucleo -- "Repositorios [SQL]" --> db
+    nucleo -- "GeneradorUBL" --> ubl
+    nucleo -- "FirmaDigital" --> firma
+    nucleo -- "ClienteOSE" --> soap
+    soap -- "sendBill [SOAP/HTTPS]" --> sunat
+
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
+    classDef externo fill:#8a8a8a,stroke:#6b6b6b,color:#ffffff
+    class usuarios persona
+    class api,cli,nucleo,db,ubl,firma,soap contenedor
+    class sunat externo

@@ -11,3 +11,7 @@ docs/evidencia-ple/paquete/** -text
 # Evidencia de SUNAT beta: XML firmados y respuestas tal como viajaron (la firma depende de cada byte).
 docs/evidencia-sunat/** -text
 tests/fixtures/** -text
+# Binarios: diagramas renderizados e informe.
+*.png binary
+*.pdf binary
+*.docx binary

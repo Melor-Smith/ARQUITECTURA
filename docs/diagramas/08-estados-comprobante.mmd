@@ -1,0 +1,27 @@
+---
+title: "Máquina de estados del comprobante: el estado sale del CDR"
+---
+stateDiagram-v2
+    direction LR
+    [*] --> REGISTRADO: validado, numerado y firmado
+    REGISTRADO --> ACEPTADO: CDR 0
+    REGISTRADO --> ACEPTADO_CON_OBSERVACIONES: CDR 0 con obs. o 4000+
+    REGISTRADO --> RECHAZADO: CDR 2000-3999
+    REGISTRADO --> PENDIENTE_ENVIO: SUNAT no responde (202)
+    PENDIENTE_ENVIO --> ACEPTADO: reenvío, CDR 0
+    PENDIENTE_ENVIO --> ACEPTADO_CON_OBSERVACIONES: reenvío, con obs.
+    PENDIENTE_ENVIO --> RECHAZADO: reenvío, CDR 2000-3999
+    ACEPTADO --> DADO_DE_BAJA: baja aceptada (ADR 0014, planificado)
+
+    note right of PENDIENTE_ENVIO
+        Reenvío: POST .../envios
+        Si SUNAT sigue caída: 503 + Retry-After
+        y el estado no cambia
+    end note
+    note left of RECHAZADO
+        El rechazo revierte el Kardex
+    end note
+    note right of ACEPTADO
+        Con CDR ya no se reenvía:
+        409 ERR-COMPROBANTE-YA-PROCESADO
+    end note

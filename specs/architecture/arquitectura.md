@@ -2,6 +2,24 @@
 
 Este documento describe **lo que está implementado**. Cada caja de los diagramas es un módulo que existe en `src/`, y las reglas de dependencia se verifican con pruebas automáticas (`tests/integration/test_arquitectura.py`).
 
+## Diagramas renderizados
+
+Las fuentes Mermaid están en [`docs/diagramas/`](../../docs/diagramas) y se renderizan con `scripts/renderizar_diagramas.ps1`. `tests/integration/test_diagramas.py` falla si a un `.mmd` le falta su `.svg` o su `.png`.
+
+| # | Diagrama | Qué muestra | Archivos |
+|:-:|---|---|---|
+| 01 | **Contexto C4 (nivel 1)** | ABC, cajeros, almaceneros, contador, SUNAT/OSE, sistema antiguo y programa PLE | [SVG](../../docs/diagramas/01-contexto-c4.svg) · [PNG](../../docs/diagramas/01-contexto-c4.png) · [fuente](../../docs/diagramas/01-contexto-c4.mmd) |
+| 02 | **Contenedores C4 (nivel 2)** | API FastAPI, CLI, núcleo, SQLite, generador UBL, firma y cliente SOAP de SUNAT | [SVG](../../docs/diagramas/02-contenedores-c4.svg) · [PNG](../../docs/diagramas/02-contenedores-c4.png) · [fuente](../../docs/diagramas/02-contenedores-c4.mmd) |
+| 03 | **MVC dentro del adaptador HTTP** | Controladores, vistas JSON/XML/TXT y el núcleo como Modelo (§2) | [SVG](../../docs/diagramas/03-mvc-actual.svg) · [PNG](../../docs/diagramas/03-mvc-actual.png) · [fuente](../../docs/diagramas/03-mvc-actual.mmd) |
+| 04 | **Hexagonal** | Puertos `Protocol` y sus adaptadores: memoria/SQLite, xsdata, signxml, SOAP/simulada (§3) | [SVG](../../docs/diagramas/04-hexagonal.svg) · [PNG](../../docs/diagramas/04-hexagonal.png) · [fuente](../../docs/diagramas/04-hexagonal.mmd) |
+| 05 | **Evolución** | MVC del primer entregable → hexagonal actual → microservicios (facturación, inventario, libros) | [SVG](../../docs/diagramas/05-evolucion.svg) · [PNG](../../docs/diagramas/05-evolucion.png) · [fuente](../../docs/diagramas/05-evolucion.mmd) |
+| 06 | **Clases del dominio** | `Comprobante`, `Linea`, `Totales`, `FormaPago`, `Cuota`, `Kardex`, `MigracionLegado` y objetos de valor (§6) | [SVG](../../docs/diagramas/06-clases-dominio.svg) · [PNG](../../docs/diagramas/06-clases-dominio.png) · [fuente](../../docs/diagramas/06-clases-dominio.mmd) |
+| 07 | **Secuencia de emisión** | POST → validar → calcular → XML → XSD → firmar → `sendBill` → CDR → estado (§4) | [SVG](../../docs/diagramas/07-secuencia-emision.svg) · [PNG](../../docs/diagramas/07-secuencia-emision.png) · [fuente](../../docs/diagramas/07-secuencia-emision.mmd) |
+| 08 | **Estados del comprobante** | Máquina de estados según el CDR (§5) | [SVG](../../docs/diagramas/08-estados-comprobante.svg) · [PNG](../../docs/diagramas/08-estados-comprobante.png) · [fuente](../../docs/diagramas/08-estados-comprobante.mmd) |
+| 09 | **Despliegue** | Docker y volumen `/datos`, SUNAT beta/producción, MSI y APK (§8) | [SVG](../../docs/diagramas/09-despliegue.svg) · [PNG](../../docs/diagramas/09-despliegue.png) · [fuente](../../docs/diagramas/09-despliegue.mmd) |
+
+![Arquitectura hexagonal](../../docs/diagramas/04-hexagonal.svg)
+
 ## 1. Por qué la versión anterior no era migrable
 
 | Síntoma | Consecuencia |
@@ -21,7 +39,7 @@ MVC es un patrón de **presentación**. En una arquitectura hexagonal no desapar
 | **Controlador** | [`adapters/inbound/http/controladores/`](../../src/adapters/inbound/http/controladores) | Traduce HTTP ↔ comando, invoca el caso de uso y elige la vista. Sin reglas de negocio |
 | **Modelo** | [`application/`](../../src/application) (casos de uso) y [`domain/`](../../src/domain) (entidades y reglas) | Toda la lógica: cálculo tributario, reglas SUNAT, Kardex, máquina de estados |
 | **Vista** | [`adapters/inbound/http/vistas/`](../../src/adapters/inbound/http/vistas) | Representaciones del modelo: **JSON**, **XML UBL firmado** y **TXT del PLE** |
-| *(contrato, no vista)* | [`specs/contracts/openapi.yaml`](../contracts/openapi.yaml) | Describe las vistas y las entradas; se genera desde los DTO |
+| *(contrato, no vista)* | [`specs/contracts/openapi.yaml`](../contracts/openapi.yaml) | Describe las vistas y las entradas. Se escribe **primero, a mano**, y los DTO lo implementan ([ADR 0013](../adr/0013-contrato-escrito-primero-y-verificado-contra-el-codigo.md)) |
 
 ## 3. Hexágono implementado
 
@@ -233,7 +251,7 @@ classDiagram
 | `src/repositories/memory_repo.py` → `tests/mocks` | `adapters/outbound/persistencia/memoria.py` + `semillas.py`, inyectados |
 | `src/controllers/factura_controller.py` | `adapters/inbound/http/controladores/*` |
 | `src/views/presenters.py` | `adapters/inbound/http/vistas/*` (JSON, XML, TXT) |
-| `specs/contracts/ubl-invoice-api.yaml` (a mano, divergente) | `specs/contracts/openapi.yaml` (generado y verificado) |
+| `specs/contracts/ubl-invoice-api.yaml` (a mano, divergente) | `specs/contracts/openapi.yaml` + `schemas/*.schema.json` (escritos primero; el código se verifica contra ellos) |
 
 ## 8. Distribución
 

@@ -1,0 +1,50 @@
+---
+title: "Arquitectura hexagonal: puertos (typing.Protocol) y sus adaptadores · línea punteada = implementado por"
+---
+flowchart LR
+    subgraph IN["Adaptadores de entrada"]
+        direction TB
+        http["HTTP FastAPI<br/>(MVC: controladores, vistas, DTO)"]
+        cli["CLI generar-xml<br/>(Taller 2)"]
+        tr["traduccion.py<br/>DTO → comando"]
+        boot{{"bootstrap.py<br/>única raíz de composición<br/>(elige adaptadores según config.py)"}}
+        http --> tr
+        cli --> tr
+    end
+
+    subgraph HEX["Núcleo"]
+        direction TB
+        uc["application · casos de uso<br/>EmitirComprobante · ReenviarComprobante<br/>MigrarFichaLegado · MigrarLoteLegado<br/>GenerarRegistroVentas141 · GenerarInventario121"]
+        d["domain (solo stdlib)<br/>Comprobante · Linea · Totales · FormaPago<br/>Ruc · Serie · Correlativo<br/>Kardex · MigracionLegado · filas PLE"]
+        uc --> d
+    end
+
+    subgraph PORTS["Puertos · application/puertos.py"]
+        direction TB
+        p1(["Repositorio* · SecuenciaCorrelativos<br/>UnidadDeTrabajo"])
+        p2(["GeneradorUBL<br/>ValidadorEsquemaUBL"])
+        p3(["FirmaDigital"])
+        p4(["ClienteOSE"])
+        p5(["Reloj"])
+    end
+
+    subgraph OUT["Adaptadores de salida"]
+        direction TB
+        a1a["persistencia/memoria.py"]
+        a1b["persistencia/sqlite.py"]
+        a2["ubl/generador.py (xsdata)<br/>ubl/validador.py (lxml + XSD)"]
+        a3["firma/xmldsig.py (signxml)"]
+        a4a["ose/simulada.py"]
+        a4b["ose/sunat_soap.py<br/>SOAP sendBill"]
+        a5["reloj.py (UTC-5)"]
+    end
+
+    tr --> uc
+    uc -- usa --> PORTS
+    p1 -.-> a1a
+    p1 -.-> a1b
+    p2 -.-> a2
+    p3 -.-> a3
+    p4 -.-> a4a
+    p4 -.-> a4b
+    p5 -.-> a5

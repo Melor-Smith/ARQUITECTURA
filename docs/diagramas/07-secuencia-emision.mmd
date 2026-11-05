@@ -1,0 +1,44 @@
+---
+title: "Secuencia de emisión: POST /api/v1/comprobantes hasta el estado que dicta el CDR"
+---
+sequenceDiagram
+    autonumber
+    actor C as Cajero (cliente HTTP)
+    participant Ctl as Controlador + DTO
+    participant UC as EmitirComprobante
+    participant Dom as Dominio
+    participant Seq as SecuenciaCorrelativos
+    participant UBL as GeneradorUBL + ValidadorXSD
+    participant F as FirmaDigital
+    participant O as ClienteOSE (SOAP SUNAT)
+
+    C->>Ctl: POST /api/v1/comprobantes (sin impuestos, totales ni correlativo)
+    Ctl->>Ctl: validar contra el contrato (schema)
+    alt no cumple el contrato
+        Ctl-->>C: 400 problem+json (ERR-CONTRATO-*, ERR-SUNAT-CAT*)
+    end
+    Ctl->>UC: EmitirComprobanteCmd
+    rect rgb(235, 240, 250)
+    note over UC,F: Una transacción (UnidadDeTrabajo)
+    UC->>Dom: Linea.calcular: IGV, ISC (Cat. 08), ICBPER con Decimal
+    UC->>Dom: BorradorComprobante.preparar: reglas cruzadas SUNAT
+    alt viola una regla
+        UC-->>C: 422 problem+json (ERR-SUNAT-*), sin consumir correlativo
+    end
+    UC->>Seq: siguiente(ruc, tipo, serie): reserva atómica
+    UC->>UBL: generar XML UBL 2.1 desde las clases del XSD
+    UBL-->>UC: XML validado contra el XSD (antes de firmar)
+    UC->>F: firmar (XMLDSig en ext:UBLExtensions)
+    F-->>UC: XML firmado + hash (ds:DigestValue)
+    UC->>UBL: validar XSD (después de firmar)
+    UC->>Dom: registrar_firma, Kardex.registrar, vale legado FACTURADA
+    end
+    UC->>O: sendBill(ZIP Base64) fuera de la transacción
+    alt SUNAT devuelve CDR
+        O-->>UC: CDR (0, 2000-3999 o 4000+)
+        UC->>Dom: registrar_cdr → ACEPTADO / ACEPTADO_CON_OBSERVACIONES / RECHAZADO
+        UC-->>C: 201 + Location (estado tomado del CDR)
+    else SUNAT caída o respuesta inválida
+        UC->>Dom: registrar_envio_fallido → PENDIENTE_ENVIO
+        UC-->>C: 202 + Location (reintento: POST .../envios)
+    end

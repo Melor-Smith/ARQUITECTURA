@@ -1,0 +1,27 @@
+---
+title: "C4 nivel 1 · Contexto del sistema de ABC Software Corp"
+---
+flowchart TB
+    cajero["<b>Cajero</b><br/>[Persona]<br/>Emite facturas, boletas y notas<br/>en la caja de cada sucursal"]
+    almacenero["<b>Almacenero</b><br/>[Persona]<br/>Registra ingresos y salidas,<br/>también sin conexión"]
+    contador["<b>Contador</b><br/>[Persona]<br/>Descarga y valida los libros<br/>PLE 14.1 y 12.1"]
+
+    abc["<b>Sistema de facturación e inventario ABC</b><br/>[Sistema de software]<br/>API REST + núcleo hexagonal: XML UBL 2.1 firmado,<br/>Kardex en unidades físicas y libros PLE"]
+
+    legado["<b>Sistema antiguo</b><br/>[Sistema externo]<br/>Fichas: fecha, ingreso, salida,<br/>producto, nro_documento"]
+    sunat["<b>SUNAT / OSE</b><br/>[Sistema externo]<br/>billService SOAP (beta y producción):<br/>sendBill devuelve el CDR"]
+    ple["<b>Programa PLE 5.2.0.7</b><br/>[Sistema externo de SUNAT]<br/>Valida los TXT de los libros"]
+
+    cajero -- "Emite comprobantes<br/>[HTTPS/JSON, Bearer]" --> abc
+    almacenero -- "Registra movimientos y migra fichas<br/>[HTTPS/JSON]" --> abc
+    contador -- "Descarga 14.1 y 12.1<br/>[TXT]" --> abc
+    legado -- "Fichas migradas por lotes<br/>[JSON]" --> abc
+    abc -- "Envía el XML firmado y recibe el CDR<br/>[SOAP sendBill]" --> sunat
+    contador -. "Valida el TXT descargado" .-> ple
+
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef sistema fill:#1168bd,stroke:#0b4884,color:#ffffff
+    classDef externo fill:#8a8a8a,stroke:#6b6b6b,color:#ffffff
+    class cajero,almacenero,contador persona
+    class abc sistema
+    class legado,sunat,ple externo

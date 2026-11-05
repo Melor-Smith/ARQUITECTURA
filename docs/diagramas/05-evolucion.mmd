@@ -1,0 +1,34 @@
+---
+title: "Evolución de la arquitectura: MVC → hexagonal → microservicios"
+---
+flowchart LR
+    subgraph E1["1 · Antes (primer entregable)"]
+        direction TB
+        m1["Controlador FastAPI"] --> m2["Servicio estático<br/>XML con f-strings"]
+        m2 --> m3["Repositorio en memoria<br/>importado de tests/mocks"]
+        m4["DTO Pydantic usado como Modelo"]
+        m1 --> m4
+    end
+
+    subgraph E2["2 · Hoy: hexagonal (implementado)"]
+        direction TB
+        h1["Adaptadores de entrada<br/>HTTP (MVC) · CLI"] --> h2["application + domain<br/>sin frameworks"]
+        h3["Adaptadores de salida<br/>memoria/SQLite · xsdata · signxml · SOAP SUNAT"] -. puertos .-> h2
+    end
+
+    subgraph E3["3 · Futuro: microservicios (cuando la escala lo pida)"]
+        direction TB
+        gw["API Gateway<br/>(autenticación, cuotas)"]
+        f["Servicio de facturación<br/>Comprobante · UBL · firma · OSE"]
+        i["Servicio de inventario<br/>Kardex · migración del sistema antiguo"]
+        l["Servicio de libros<br/>PLE 14.1 y 12.1"]
+        bus[("Bus de eventos<br/>ComprobanteAceptado<br/>MovimientoRegistrado")]
+        gw --> f & i & l
+        f -- publica --> bus
+        i -- publica --> bus
+        bus -- consume --> i
+        bus -- consume --> l
+    end
+
+    E1 == "separar núcleo y adaptadores<br/>(ADR 0001)" ==> E2
+    E2 == "cada subdominio se lleva su<br/>domain + application; los puertos<br/>se vuelven eventos o HTTP" ==> E3
