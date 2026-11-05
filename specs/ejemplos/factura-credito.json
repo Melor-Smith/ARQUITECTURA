@@ -1,0 +1,25 @@
+{
+  "tipo_comprobante": "01",
+  "serie": "F001",
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20601234565",
+    "nombre": "BODEGA SAN MARTÍN & HIJOS E.I.R.L."
+  },
+  "forma_pago": {
+    "tipo": "CREDITO",
+    "cuotas": [
+      { "monto": "123.90", "fecha_vencimiento": "2027-01-15" },
+      { "monto": "123.90", "fecha_vencimiento": "2027-02-15" }
+    ]
+  },
+  "lineas": [
+    {
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "50",
+      "valor_unitario": "4.20"
+    }
+  ]
+}

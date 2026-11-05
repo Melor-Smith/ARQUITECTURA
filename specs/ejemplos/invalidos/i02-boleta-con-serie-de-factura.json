@@ -1,0 +1,18 @@
+{
+  "tipo_comprobante": "03",
+  "serie": "F001",
+  "cliente": {
+    "tipo_documento": "1",
+    "numero_documento": "46027897",
+    "nombre": "MARÍA QUISPE HUAMÁN"
+  },
+  "lineas": [
+    {
+      "codigo_producto": "AB-ACE-001",
+      "descripcion": "Aceite vegetal botella 1 L",
+      "unidad_medida": "NIU",
+      "cantidad": "2",
+      "valor_unitario": "8.50"
+    }
+  ]
+}

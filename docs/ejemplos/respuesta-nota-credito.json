@@ -1,0 +1,83 @@
+{
+  "tipo_comprobante": {
+    "codigo": "07",
+    "descripcion": "Nota de crédito"
+  },
+  "serie": "FC01",
+  "correlativo": 1,
+  "serie_numero": "FC01-1",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel (devolución)",
+      "unidad_medida": "KGM",
+      "cantidad": "10",
+      "valor_unitario": "4.20",
+      "precio_unitario": "4.96",
+      "valor_venta": "42.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "42.00",
+        "monto": "7.56"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "42.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "7.56",
+    "icbper": "0.00",
+    "total_impuestos": "7.56",
+    "valor_venta": "42.00",
+    "importe_total": "49.56"
+  },
+  "monto_en_letras": "CUARENTA Y NUEVE CON 56/100 SOLES",
+  "forma_pago": null,
+  "documentos_legado": [],
+  "referencia": {
+    "tipo_comprobante": "01",
+    "serie_numero": "F001-1"
+  },
+  "motivo": {
+    "codigo": "07",
+    "descripcion": "Devolución por ítem"
+  },
+  "sustento": "Devolución de 10 kg de arroz por empaque dañado",
+  "estado": "ACEPTADO",
+  "hash_cpe": "/XCg7eClvowWg97MGmfbYVMjaUZcWT4LCRGTFYLPviY=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Nota de crédito numero FC01-1, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/07/FC01-1",
+    "xml": "/api/v1/comprobantes/07/FC01-1/xml",
+    "envios": "/api/v1/comprobantes/07/FC01-1/envios"
+  }
+}

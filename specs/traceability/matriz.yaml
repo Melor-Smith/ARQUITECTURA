@@ -1,0 +1,105 @@
+# Fuente ÚNICA de la matriz de trazabilidad.
+#   python scripts/matriz.py   → regenera matriz-trazabilidad.md (bloque entre marcadores) y matriz.csv
+# Campos: id, dato, norma, sunat (O = obligatorio, C = condicional), xpath (raíz Invoice/CreditNote/DebitNote),
+#         contrato (campo JSON), legado (campo del sistema antiguo), ple_141 / ple_121 (número de campo),
+#         error (código estable que devuelve la API), prueba (función de prueba que lo verifica).
+# La cardinalidad del XSD NO se escribe aquí: la calcula el script recorriendo los XSD oficiales.
+# tests/integration/test_matriz.py verifica que cada xpath exista en XML generados, que cada prueba exista
+# y que cada código de error exista en el código.
+version: 2
+secciones:
+  - titulo: "1. Identificación del comprobante"
+    filas:
+      - {id: T01, dato: Versión UBL, norma: OASIS UBL 2.1, sunat: O, xpath: /Invoice/cbc:UBLVersionID, contrato: (constante), prueba: test_version_ubl_y_personalizacion_sunat}
+      - {id: T02, dato: Versión de la estructura SUNAT, norma: Perfil SUNAT 2.0, sunat: O, xpath: /Invoice/cbc:CustomizationID, contrato: (constante), prueba: test_version_ubl_y_personalizacion_sunat}
+      - {id: T03, dato: Serie y correlativo, norma: "Serie [FB][A-Z0-9]{3}; correlativo 1-99999999", sunat: O, xpath: /Invoice/cbc:ID, contrato: "serie (correlativo lo asigna el servidor)", ple_141: "7, 8", ple_121: "12, 13", error: ERR-SUNAT-SERIE, prueba: test_cbc_id_une_serie_y_correlativo_solo_al_serializar}
+      - {id: T04, dato: Fecha de emisión, norma: Plazo de envío (configurable), sunat: O, xpath: /Invoice/cbc:IssueDate, contrato: fecha_emision, ple_141: "4", error: ERR-SUNAT-FECHA, prueba: test_fecha_y_hora_de_emision}
+      - {id: T05, dato: Hora de emisión, norma: SEE, sunat: C, xpath: /Invoice/cbc:IssueTime, contrato: (servidor), prueba: test_fecha_y_hora_de_emision}
+      - {id: T06, dato: Tipo de comprobante, norma: Cat. 01, sunat: O, xpath: /Invoice/cbc:InvoiceTypeCode, contrato: tipo_comprobante, ple_141: "6", ple_121: "11", prueba: test_invoice_type_code_catalogo_01_y_tipo_de_operacion_catalogo_51}
+      - {id: T07, dato: Tipo de operación, norma: Cat. 51, sunat: O, xpath: /Invoice/cbc:InvoiceTypeCode/@listID, contrato: (derivado de las afectaciones), prueba: test_invoice_type_code_catalogo_01_y_tipo_de_operacion_catalogo_51}
+      - {id: T08, dato: Importe en letras, norma: Cat. 52 (leyenda 1000), sunat: O, xpath: "/Invoice/cbc:Note[@languageLocaleID='1000']", contrato: monto_en_letras (respuesta), prueba: test_leyenda_1000_importe_en_letras}
+      - {id: T09, dato: Moneda, norma: Cat. 02 / Tabla 4, sunat: O, xpath: /Invoice/cbc:DocumentCurrencyCode, contrato: moneda, ple_141: "26", error: ERR-SUNAT-CAT02, prueba: test_moneda_catalogo_02_en_el_documento_y_en_cada_importe}
+      - {id: T10, dato: Moneda de cada importe, norma: Cat. 02, sunat: O, xpath: /Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount/@currencyID, contrato: moneda, prueba: test_moneda_catalogo_02_en_el_documento_y_en_cada_importe}
+      - {id: T11, dato: Tipo de cambio, norma: Formato 14.1, sunat: C, contrato: tipo_cambio, ple_141: "27", error: ERR-SUNAT-COMPROBANTE, prueba: test_usd_requiere_tipo_de_cambio}
+      - {id: T12, dato: Vale facturado (documento relacionado), norma: Cat. 12 tipo 99, sunat: C, xpath: /Invoice/cac:AdditionalDocumentReference/cbc:ID, contrato: "documentos_legado[]", legado: nro_documento, error: ERR-LEGADO-NO-MIGRADO, prueba: test_vale_legado_como_documento_relacionado_catalogo_12_tipo_99}
+      - {id: T13, dato: Tipo de documento relacionado, norma: Cat. 12, sunat: C, xpath: /Invoice/cac:AdditionalDocumentReference/cbc:DocumentTypeCode, contrato: (constante 99), prueba: test_vale_legado_como_documento_relacionado_catalogo_12_tipo_99}
+      - {id: T14, dato: Documento que sustenta el movimiento, norma: Tabla 10 PLE, sunat: O, contrato: nro_documento (migración), legado: nro_documento, ple_121: "11, 12, 13", prueba: test_reconoce_el_documento_real}
+      - {id: T15, dato: Fecha del movimiento de inventario, norma: Formato 12.1, sunat: O, contrato: fecha (migración), legado: fecha, ple_121: "10", error: ERR-LEGADO-FECHA, prueba: test_formatos_de_fecha}
+
+  - titulo: "2. Emisor y adquiriente"
+    filas:
+      - {id: T20, dato: RUC del emisor, norma: Cat. 06 + módulo 11, sunat: O, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID, contrato: (configuración del servidor), ple_141: (nombre de archivo), ple_121: (nombre de archivo), error: ERR-SUNAT-RUC, prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T21, dato: Tipo de documento del emisor, norma: Cat. 06, sunat: O, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID, contrato: (constante 6), prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T22, dato: Nombre comercial, norma: Perfil SUNAT, sunat: C, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name, contrato: (configuración), prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T23, dato: Razón social del emisor, norma: Padrón RUC, sunat: O, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName, contrato: (configuración), prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T24, dato: Establecimiento anexo, norma: Código SUNAT del establecimiento, sunat: O, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cac:RegistrationAddress/cbc:AddressTypeCode, contrato: establecimiento (migración), ple_121: "4", prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T25, dato: Ubigeo del emisor, norma: INEI, sunat: C, xpath: /Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cac:RegistrationAddress/cbc:ID, contrato: (configuración), prueba: test_emisor_ruc_razon_social_y_establecimiento}
+      - {id: T26, dato: Tipo de documento del cliente, norma: Cat. 06 / Tabla 2, sunat: O, xpath: /Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID/@schemeID, contrato: cliente.tipo_documento, ple_141: "10", error: ERR-SUNAT-CAT06, prueba: test_cliente_con_dni_en_boleta}
+      - {id: T27, dato: Número de documento del cliente, norma: "Cat. 06 (RUC: módulo 11; DNI: 8 dígitos)", sunat: O, xpath: /Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID, contrato: cliente.numero_documento, ple_141: "11", error: ERR-SUNAT-RUC, prueba: test_cliente_con_ruc}
+      - {id: T28, dato: Nombre o razón social del cliente, norma: Padrón RUC / RENIEC, sunat: O, xpath: /Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName, contrato: cliente.nombre, ple_141: "12", prueba: test_nombre_con_ampersand_se_escapa_y_se_recupera_intacto}
+      - {id: T29, dato: Referencia UBL a la firma, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:Signature/cbc:ID, contrato: (servidor), prueba: test_el_xml_se_genera_sin_firma_la_agrega_el_adaptador_de_firma}
+
+  - titulo: "3. Líneas de detalle"
+    filas:
+      - {id: T30, dato: Número de línea, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:ID, contrato: "(orden de lineas[])", prueba: test_una_invoice_line_por_cada_linea_del_dominio_numerada_desde_1}
+      - {id: T31, dato: Cantidad, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:InvoicedQuantity, contrato: "lineas[].cantidad", legado: "ingreso / salida × factor", ple_121: "17 / 18 (salida en negativo)", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
+      - {id: T32, dato: Unidad de medida, norma: Cat. 03 (UN/ECE Rec. 20) → Tabla 6, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode, contrato: "lineas[].unidad_medida", ple_121: "16 (tabla 6)", error: ERR-SUNAT-CAT03, prueba: test_unidad_de_medida_catalogo_03_por_linea}
+      - {id: T33, dato: Valor de venta de la línea, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cbc:LineExtensionAmount, contrato: "lineas[].valor_venta (respuesta)", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
+      - {id: T34, dato: Precio unitario con impuestos, norma: Cat. 16 (tipo 01), sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:PricingReference/cac:AlternativeConditionPrice/cbc:PriceAmount, contrato: "lineas[].precio_unitario (respuesta)", prueba: test_precio_unitario_con_impuestos_catalogo_16}
+      - {id: T35, dato: Valor unitario sin impuestos, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount, contrato: "lineas[].valor_unitario", prueba: test_cantidad_valor_de_venta_y_valor_unitario}
+      - {id: T36, dato: Descripción del bien, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:Item/cbc:Description, contrato: "lineas[].descripcion", legado: producto, ple_121: "15", prueba: test_descripcion_y_codigo_del_producto}
+      - {id: T37, dato: Código del producto, norma: Tabla 13 (catálogo propio), sunat: C, xpath: /Invoice/cac:InvoiceLine/cac:Item/cac:SellersItemIdentification/cbc:ID, contrato: "lineas[].codigo_producto", legado: producto (homologado), ple_121: "5, 7", error: ERR-PRODUCTO-NO-EXISTE, prueba: test_descripcion_y_codigo_del_producto}
+      - {id: T38, dato: Cantidad acreditada, norma: Nota de crédito, sunat: O, xpath: /CreditNote/cac:CreditNoteLine/cbc:CreditedQuantity, contrato: "lineas[].cantidad", prueba: test_notas_usan_credited_quantity_y_debited_quantity}
+      - {id: T39, dato: Cantidad debitada, norma: Nota de débito, sunat: O, xpath: /DebitNote/cac:DebitNoteLine/cbc:DebitedQuantity, contrato: "lineas[].cantidad", prueba: test_notas_usan_credited_quantity_y_debited_quantity}
+
+  - titulo: "4. Tributos (calculados por el servidor)"
+    filas:
+      - {id: T40, dato: Afectación del IGV, norma: Cat. 07, sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode, contrato: "lineas[].afectacion_igv", ple_141: "13, 14, 18, 19", error: ERR-SUNAT-CAT07, prueba: test_igv_gravado_categoria_s_18_por_ciento_y_afectacion_10}
+      - {id: T41, dato: Código del tributo, norma: Cat. 05, sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cac:TaxScheme/cbc:ID, contrato: (derivado), prueba: test_igv_gravado_categoria_s_18_por_ciento_y_afectacion_10}
+      - {id: T42, dato: Categoría del tributo, norma: UN/ECE 5305 (S, E, O, G), sunat: O, xpath: /Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID, contrato: (derivado), prueba: test_exonerado_e_inafecto}
+      - {id: T43, dato: Sistema de cálculo del ISC, norma: Cat. 08, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='2000']/cac:TaxCategory/cbc:TierRange", contrato: "lineas[].isc.sistema", error: ERR-SUNAT-CAT08, prueba: test_isc_catalogo_08_en_tier_range}
+      - {id: T44, dato: Tasa del ISC (sistemas 01 y 03), norma: Cat. 08, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='2000']/cac:TaxCategory/cbc:Percent", contrato: "lineas[].isc.tasa", prueba: test_isc_al_valor_lleva_porcentaje_y_monto_fijo_lleva_importe_por_unidad}
+      - {id: T45, dato: Monto fijo del ISC (sistema 02), norma: Cat. 08, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='2000']/cac:TaxCategory/cbc:PerUnitAmount", contrato: "lineas[].isc.monto_fijo", prueba: test_isc_al_valor_lleva_porcentaje_y_monto_fijo_lleva_importe_por_unidad}
+      - {id: T46, dato: ISC de la línea, norma: TUO Ley IGV-ISC art. 56, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='2000']/cbc:TaxAmount", contrato: "lineas[].isc.monto (respuesta)", ple_141: "20 (suma)", prueba: test_isc_catalogo_08_en_tier_range}
+      - {id: T47, dato: IGV de la línea (18 % sobre valor + ISC), norma: TUO Ley IGV, sunat: O, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='1000']/cbc:TaxAmount", contrato: "lineas[].igv (respuesta)", ple_141: "16 (suma)", prueba: test_el_igv_se_calcula_sobre_valor_de_venta_mas_isc}
+      - {id: T48, dato: ICBPER de la línea, norma: Ley 30884, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='7152']/cbc:TaxAmount", contrato: "lineas[].aplica_icbper", ple_141: "23 (suma)", error: ERR-SUNAT-CAT03, prueba: test_icbper_por_bolsa}
+      - {id: T49, dato: Tasa del ICBPER por bolsa, norma: Ley 30884, sunat: C, xpath: "/Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='7152']/cac:TaxCategory/cbc:PerUnitAmount", contrato: (por año de emisión), prueba: test_icbper_por_bolsa}
+      - {id: T50, dato: Total de tributos, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:TaxTotal/cbc:TaxAmount, contrato: totales.total_impuestos, prueba: test_tax_total_del_documento_suma_el_de_las_lineas}
+      - {id: T51, dato: Base de operaciones gravadas, norma: Cat. 05 (1000), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='1000']/cbc:TaxableAmount", contrato: totales.gravadas, ple_141: "14 (sin ISC)", prueba: test_subtotales_del_documento_por_tributo}
+      - {id: T52, dato: Total del IGV, norma: Cat. 05 (1000), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='1000']/cbc:TaxAmount", contrato: totales.igv, ple_141: "16", prueba: test_subtotales_del_documento_por_tributo}
+      - {id: T53, dato: Total exonerado, norma: Cat. 05 (9997), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='9997']/cbc:TaxableAmount", contrato: totales.exoneradas, ple_141: "18", prueba: test_subtotales_del_documento_por_tributo}
+      - {id: T54, dato: Total inafecto, norma: Cat. 05 (9998), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='9998']/cbc:TaxableAmount", contrato: totales.inafectas, ple_141: "19", prueba: test_subtotales_del_documento_por_tributo}
+      - {id: T55, dato: Valor de exportación, norma: Cat. 05 (9995), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='9995']/cbc:TaxableAmount", contrato: totales.exportacion, ple_141: "13", prueba: test_exportacion_9995_categoria_g}
+      - {id: T56, dato: Total del ISC, norma: Cat. 05 (2000), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='2000']/cbc:TaxAmount", contrato: totales.isc, ple_141: "20", prueba: test_subtotales_del_documento_por_tributo}
+      - {id: T57, dato: Total del ICBPER, norma: Cat. 05 (7152), sunat: C, xpath: "/Invoice/cac:TaxTotal/cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:ID='7152']/cbc:TaxAmount", contrato: totales.icbper, ple_141: "23", prueba: test_subtotales_del_documento_por_tributo}
+
+  - titulo: "5. Totales y forma de pago"
+    filas:
+      - {id: T60, dato: Valor de venta total, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount, contrato: totales.valor_venta, prueba: test_totales_monetarios}
+      - {id: T61, dato: Total con impuestos, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount, contrato: totales.importe_total, prueba: test_totales_monetarios}
+      - {id: T62, dato: Importe total a pagar, norma: Perfil SUNAT, sunat: O, xpath: /Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount, contrato: totales.importe_total, ple_141: "25", prueba: test_importe_total_es_valor_de_venta_mas_tributos}
+      - {id: T63, dato: Importe total de la nota de débito, norma: Nota de débito, sunat: O, xpath: /DebitNote/cac:RequestedMonetaryTotal/cbc:PayableAmount, contrato: totales.importe_total, ple_141: "25", prueba: test_nota_de_debito_usa_requested_monetary_total}
+      - {id: T64, dato: Forma de pago (Contado / Crédito), norma: RS 193-2020, sunat: O, xpath: "/Invoice/cac:PaymentTerms[cbc:ID='FormaPago']/cbc:PaymentMeansID", contrato: forma_pago.tipo, error: ERR-SUNAT-FORMA-PAGO, prueba: test_forma_de_pago_contado}
+      - {id: T65, dato: Monto neto pendiente de pago, norma: RS 193-2020, sunat: C, xpath: "/Invoice/cac:PaymentTerms[cbc:PaymentMeansID='Credito']/cbc:Amount", contrato: (suma de cuotas), error: ERR-SUNAT-FORMA-PAGO, prueba: test_forma_de_pago_credito_con_monto_pendiente_y_cuotas}
+      - {id: T66, dato: Cuotas (monto y vencimiento), norma: RS 193-2020, sunat: C, xpath: "/Invoice/cac:PaymentTerms[starts-with(cbc:PaymentMeansID,'Cuota')]/cbc:PaymentDueDate", contrato: "forma_pago.cuotas[]", ple_141: "5 (última cuota, si vence hasta el mes siguiente)", error: ERR-SUNAT-FORMA-PAGO, prueba: test_forma_de_pago_credito_con_monto_pendiente_y_cuotas}
+
+  - titulo: "6. Notas de crédito y débito"
+    filas:
+      - {id: T70, dato: Comprobante que se modifica, norma: Nota de crédito / débito, sunat: O, xpath: /CreditNote/cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID, contrato: referencia.serie_numero, ple_141: "30, 31", error: ERR-REFERENCIA-NO-EXISTE, prueba: test_nota_de_credito_referencia_y_motivo_catalogo_09}
+      - {id: T71, dato: Tipo del comprobante modificado, norma: Cat. 01, sunat: O, xpath: /CreditNote/cac:BillingReference/cac:InvoiceDocumentReference/cbc:DocumentTypeCode, contrato: referencia.tipo_comprobante, ple_141: "29", prueba: test_nota_de_credito_referencia_y_motivo_catalogo_09}
+      - {id: T72, dato: Motivo de la nota de crédito, norma: Cat. 09, sunat: O, xpath: /CreditNote/cac:DiscrepancyResponse/cbc:ResponseCode, contrato: motivo, error: ERR-SUNAT-MOTIVO-NOTA, prueba: test_nota_de_credito_referencia_y_motivo_catalogo_09}
+      - {id: T73, dato: Sustento, norma: Nota de crédito / débito, sunat: O, xpath: /CreditNote/cac:DiscrepancyResponse/cbc:Description, contrato: sustento, prueba: test_nota_de_credito_referencia_y_motivo_catalogo_09}
+      - {id: T74, dato: Motivo de la nota de débito, norma: Cat. 10, sunat: O, xpath: /DebitNote/cac:DiscrepancyResponse/cbc:ResponseCode, contrato: motivo, error: ERR-SUNAT-MOTIVO-NOTA, prueba: test_nota_de_debito_motivo_catalogo_10}
+
+  - titulo: "7. Firma digital"
+    filas:
+      - {id: T80, dato: Firma XMLDSig, norma: SEE (firma digital), sunat: O, xpath: /Invoice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/ds:Signature, contrato: (servidor), prueba: test_firma_xmldsig_en_ubl_extensions_y_hash_cpe_es_el_digest_value}
+      - {id: T81, dato: Hash de la representación impresa, norma: SEE, sunat: O, xpath: /Invoice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/ds:Signature/ds:SignedInfo/ds:Reference/ds:DigestValue, contrato: hash_cpe (respuesta), prueba: test_hash_cpe_es_el_digest_value_del_xml_firmado}
+
+  - titulo: "8. Inventario permanente (formato 12.1, sin XML)"
+    filas:
+      - {id: T90, dato: Tipo de existencia, norma: Tabla 5 PLE, sunat: O, contrato: (dato maestro del producto), legado: producto (homologado), ple_121: "6", prueba: test_kardex_con_saldo_final_y_equivalencia_de_unidades}
+      - {id: T91, dato: Tipo de operación, norma: Tabla 12 PLE, sunat: O, contrato: tipo_operacion (migración), legado: "ingreso / salida", ple_121: "14", error: ERR-KARDEX-TIPO-OPERACION, prueba: test_tipo_de_operacion_incompatible}
+      - {id: T92, dato: Unidad de medida del libro, norma: Tabla 6 PLE (equivalencia desde Cat. 03), sunat: O, contrato: (derivado), ple_121: "16", prueba: test_catalogo_03_unece_a_tabla_6_ple}
+      - {id: T93, dato: Saldo en unidades físicas, norma: RS 234-2006, sunat: O, contrato: saldo_final (Kardex), ple_121: (formato impreso), error: ERR-KARDEX-SALDO-INSUFICIENTE, prueba: test_no_permite_saldo_negativo}
+      - {id: T94, dato: Estado de la anotación, norma: RS 286-2009, sunat: O, contrato: (servidor), ple_141: "35", ple_121: "19", prueba: test_txt_del_ple}

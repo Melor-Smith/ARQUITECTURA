@@ -1,0 +1,2339 @@
+# GENERADO desde el código con scripts/exportar_openapi.py. No editar a mano.
+openapi: 3.1.0
+info:
+  title: ABC Software Corp - Facturación electrónica UBL 2.1 e inventario
+  description: "\nAPI de facturación electrónica UBL 2.1 (SUNAT) e inventario de **ABC Software Corp**.\n\n* Comprobantes:\
+    \ factura (01), boleta (03), nota de crédito (07) y nota de débito (08).\n* El servidor calcula IGV, ISC (Catálogo 08)\
+    \ e ICBPER y asigna el correlativo; el cliente no envía montos de\n  impuestos.\n* XML generado desde clases del XSD OASIS\
+    \ UBL 2.1, validado y firmado con XMLDSig.\n* Migración de fichas del sistema antiguo al inventario permanente y libros\
+    \ electrónicos PLE 14.1 y 12.1.\n* Errores en `application/problem+json` (RFC 9457): 400 contrato, 422 regla de negocio,\
+    \ 409 conflicto.\n\nEste documento se genera desde el código; `specs/contracts/openapi.yaml` es su copia versionada y\
+    \ una prueba\nfalla si ambos divergen.\n"
+  version: 2.0.0
+paths:
+  /api/v1/comprobantes:
+    post:
+      tags:
+      - Comprobantes
+      summary: Emite una factura, boleta, nota de crédito o nota de débito
+      description: 'Valida las reglas SUNAT, calcula IGV, ISC (Catálogo 08) e ICBPER con Decimal, asigna el correlativo de
+        forma atómica, genera el XML UBL 2.1 desde clases del XSD, lo valida, lo firma (XMLDSig) y lo envía a la OSE. El cliente
+        NO envía impuestos, totales ni correlativo.
+
+
+        * **201**: la OSE devolvió CDR; el estado (`ACEPTADO`, `ACEPTADO_CON_OBSERVACIONES` o `RECHAZADO`) sale de ese CDR.
+
+        * **202**: comprobante firmado y registrado, pero la OSE no respondió (`PENDIENTE_ENVIO`). Reintente con `POST .../envios`.
+
+        * **200**: repetición idempotente (misma `Idempotency-Key` y mismo contenido).'
+      operationId: emitir_comprobante_api_v1_comprobantes_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 8
+            maxLength: 100
+          - type: 'null'
+          description: Evita duplicados si el cliente reintenta.
+          title: Idempotency-Key
+        description: Evita duplicados si el cliente reintenta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - $ref: '#/components/schemas/FacturaEntrada'
+              - $ref: '#/components/schemas/BoletaEntrada'
+              - $ref: '#/components/schemas/NotaCreditoEntrada'
+              - $ref: '#/components/schemas/NotaDebitoEntrada'
+              discriminator:
+                propertyName: tipo_comprobante
+                mapping:
+                  '01': '#/components/schemas/FacturaEntrada'
+                  '03': '#/components/schemas/BoletaEntrada'
+                  '07': '#/components/schemas/NotaCreditoEntrada'
+                  08: '#/components/schemas/NotaDebitoEntrada'
+              title: Cuerpo
+            examples:
+              factura:
+                summary: Factura
+                value:
+                  tipo_comprobante: '01'
+                  serie: F001
+                  moneda: PEN
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20123456786'
+                    nombre: DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.
+                    direccion: JR. COMERCIO 123, LIMA
+                  lineas:
+                  - codigo_producto: AB-ARR-001
+                    descripcion: Arroz extra a granel
+                    unidad_medida: KGM
+                    cantidad: '50'
+                    valor_unitario: '4.20'
+                    afectacion_igv: '10'
+                  - codigo_producto: AB-AZU-001
+                    descripcion: Azúcar rubia a granel
+                    unidad_medida: KGM
+                    cantidad: '25'
+                    valor_unitario: '3.80'
+                    afectacion_igv: '10'
+              factura_con_isc_e_icbper:
+                summary: Factura con isc e icbper
+                value:
+                  tipo_comprobante: '01'
+                  serie: FA01
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20601234565'
+                    nombre: BODEGA SAN MARTÍN & HIJOS E.I.R.L.
+                  lineas:
+                  - codigo_producto: BB-PIS-001
+                    descripcion: Pisco quebranta 750 ml
+                    unidad_medida: NIU
+                    cantidad: '6'
+                    valor_unitario: '45.00'
+                    isc:
+                      sistema: '01'
+                      tasa: '0.20'
+                  - codigo_producto: BB-CER-001
+                    descripcion: Cerveza botella 620 ml
+                    unidad_medida: NIU
+                    cantidad: '12'
+                    valor_unitario: '5.50'
+                    isc:
+                      sistema: '02'
+                      monto_fijo: '1.35'
+                  - codigo_producto: BB-GAS-001
+                    descripcion: Gaseosa 3 L
+                    unidad_medida: NIU
+                    cantidad: '4'
+                    valor_unitario: '9.00'
+                    isc:
+                      sistema: '03'
+                      tasa: '0.17'
+                      precio_venta_publico: '12.50'
+                  - codigo_producto: EM-BOL-001
+                    descripcion: Bolsa plástica con asa
+                    unidad_medida: NIU
+                    cantidad: '3'
+                    valor_unitario: '0.10'
+                    aplica_icbper: true
+              factura_al_credito:
+                summary: Factura al credito
+                value:
+                  tipo_comprobante: '01'
+                  serie: F001
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20601234565'
+                    nombre: BODEGA SAN MARTÍN & HIJOS E.I.R.L.
+                  forma_pago:
+                    tipo: CREDITO
+                    cuotas:
+                    - monto: '123.90'
+                      fecha_vencimiento: '2027-01-15'
+                    - monto: '123.90'
+                      fecha_vencimiento: '2027-02-15'
+                  lineas:
+                  - codigo_producto: AB-ARR-001
+                    descripcion: Arroz extra a granel
+                    unidad_medida: KGM
+                    cantidad: '50'
+                    valor_unitario: '4.20'
+              factura_de_vale_legado:
+                summary: Factura de vale legado
+                value:
+                  tipo_comprobante: '01'
+                  serie: F001
+                  documentos_legado:
+                  - VALE-SALIDA-0042
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20123456786'
+                    nombre: DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.
+                  lineas:
+                  - codigo_producto: AB-AZU-001
+                    descripcion: Azúcar rubia (5 sacos de 50 kg despachados con VALE-SALIDA-0042)
+                    unidad_medida: KGM
+                    cantidad: '250'
+                    valor_unitario: '3.80'
+              boleta:
+                summary: Boleta
+                value:
+                  tipo_comprobante: '03'
+                  serie: B001
+                  cliente:
+                    tipo_documento: '1'
+                    numero_documento: '46027897'
+                    nombre: MARÍA QUISPE HUAMÁN
+                  lineas:
+                  - codigo_producto: AB-ACE-001
+                    descripcion: Aceite vegetal botella 1 L
+                    unidad_medida: NIU
+                    cantidad: '2'
+                    valor_unitario: '8.50'
+              nota_de_credito:
+                summary: Nota de credito
+                value:
+                  tipo_comprobante: '07'
+                  serie: FC01
+                  referencia:
+                    tipo_comprobante: '01'
+                    serie_numero: F001-1
+                  motivo: '07'
+                  sustento: Devolución de 10 kg de arroz por empaque dañado
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20123456786'
+                    nombre: DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.
+                  lineas:
+                  - codigo_producto: AB-ARR-001
+                    descripcion: Arroz extra a granel (devolución)
+                    unidad_medida: KGM
+                    cantidad: '10'
+                    valor_unitario: '4.20'
+              nota_de_debito:
+                summary: Nota de debito
+                value:
+                  tipo_comprobante: 08
+                  serie: FD01
+                  referencia:
+                    tipo_comprobante: '01'
+                    serie_numero: F001-1
+                  motivo: '01'
+                  sustento: Intereses por pago fuera de plazo
+                  cliente:
+                    tipo_documento: '6'
+                    numero_documento: '20123456786'
+                    nombre: DISTRIBUIDORA DE ABARROTES EL SOL S.A.C.
+                  lineas:
+                  - descripcion: Intereses moratorios
+                    unidad_medida: ZZ
+                    cantidad: '1'
+                    valor_unitario: '15.00'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprobanteSalida'
+        '200':
+          description: 'Repetición idempotente: se devuelve el comprobante ya emitido, sin crear otro.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprobanteSalida'
+        '202':
+          description: Registrado y firmado; OSE no disponible (PENDIENTE_ENVIO).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprobanteSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: 'Conflicto: recurso duplicado, clave de idempotencia reutilizada o estado incompatible.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: La solicitud cumple el esquema, pero viola una regla de negocio o normativa SUNAT.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/comprobantes/{tipo_comprobante}/{serie_numero}:
+    get:
+      tags:
+      - Comprobantes
+      summary: Consulta un comprobante (vista JSON)
+      operationId: consultar_comprobante_api_v1_comprobantes__tipo_comprobante___serie_numero__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: tipo_comprobante
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TipoComprobante'
+          description: 'Catálogo 01: 01, 03, 07 u 08.'
+        description: 'Catálogo 01: 01, 03, 07 u 08.'
+      - name: serie_numero
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}-[0-9]{1,8}$
+          description: cbc:ID, p. ej. F001-1.
+          examples:
+          - F001-1
+          title: Serie Numero
+        description: cbc:ID, p. ej. F001-1.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprobanteSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/comprobantes/{tipo_comprobante}/{serie_numero}/xml:
+    get:
+      tags:
+      - Comprobantes
+      summary: Descarga el XML UBL 2.1 firmado (vista XML)
+      operationId: descargar_xml_api_v1_comprobantes__tipo_comprobante___serie_numero__xml_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: tipo_comprobante
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TipoComprobante'
+          description: 'Catálogo 01: 01, 03, 07 u 08.'
+        description: 'Catálogo 01: 01, 03, 07 u 08.'
+      - name: serie_numero
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}-[0-9]{1,8}$
+          description: cbc:ID, p. ej. F001-1.
+          examples:
+          - F001-1
+          title: Serie Numero
+        description: cbc:ID, p. ej. F001-1.
+      responses:
+        '200':
+          description: XML UBL 2.1 firmado.
+          content:
+            application/xml: {}
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/comprobantes/{tipo_comprobante}/{serie_numero}/envios:
+    post:
+      tags:
+      - Comprobantes
+      summary: Reintenta el envío a la OSE de un comprobante PENDIENTE_ENVIO
+      operationId: reenviar_comprobante_api_v1_comprobantes__tipo_comprobante___serie_numero__envios_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: tipo_comprobante
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TipoComprobante'
+          description: 'Catálogo 01: 01, 03, 07 u 08.'
+        description: 'Catálogo 01: 01, 03, 07 u 08.'
+      - name: serie_numero
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}-[0-9]{1,8}$
+          description: cbc:ID, p. ej. F001-1.
+          examples:
+          - F001-1
+          title: Serie Numero
+        description: cbc:ID, p. ej. F001-1.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComprobanteSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: 'Conflicto: recurso duplicado, clave de idempotencia reutilizada o estado incompatible.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '502':
+          description: La OSE respondió algo que no es un CDR válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '503':
+          description: La OSE no está disponible; reintente después del tiempo indicado en Retry-After.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/inventario/migraciones:
+    post:
+      tags:
+      - Inventario y migración
+      summary: Migra una ficha del sistema antiguo al inventario permanente (formato 12.1)
+      description: 'Homologa la glosa libre con un producto del catálogo (con factor de conversión de unidades), tipifica
+        el movimiento (tabla 12) y el documento de soporte (tabla 10: 00 = documento interno) y lo registra en el Kardex validando
+        el saldo. El vale interno NO se convierte en un número SUNAT.'
+      operationId: migrar_ficha_api_v1_inventario_migraciones_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FichaLegadoEntrada'
+            examples:
+              salida_por_venta:
+                summary: Salida por venta
+                value:
+                  fecha: '2026-10-15'
+                  ingreso: 0
+                  salida: 5
+                  producto: Saco de Azúcar Rubia 50kg
+                  nro_documento: VALE-SALIDA-0042
+              ingreso_por_compra:
+                summary: Ingreso por compra
+                value:
+                  fecha: '2026-10-16'
+                  ingreso: 20
+                  salida: 0
+                  producto: Saco de Arroz Extra 50kg
+                  nro_documento: GUIA-INT-0015
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigracionSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: 'Conflicto: recurso duplicado, clave de idempotencia reutilizada o estado incompatible.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: La solicitud cumple el esquema, pero viola una regla de negocio o normativa SUNAT.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+      security:
+      - HTTPBearer: []
+  /api/v1/inventario/migraciones/lotes:
+    post:
+      tags:
+      - Inventario y migración
+      summary: Migra un lote completo de fichas del sistema antiguo, con observaciones y conciliación
+      description: 'Ordena las fichas por fecha, migra cada una con las mismas reglas que la migración individual y NO se
+        detiene ante una falla: la ficha queda `OBSERVADA` con su código de error, para corregirla y reenviarla. Las fichas
+        ya migradas quedan `DUPLICADA` (reprocesar el archivo es seguro). Al final concilia por producto saldo inicial + entradas
+        − salidas contra el saldo final del Kardex.'
+      operationId: migrar_lote_api_v1_inventario_migraciones_lotes_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoteEntrada'
+            examples:
+              lote_del_sistema_antiguo:
+                summary: Lote del sistema antiguo
+                value:
+                  fichas:
+                  - fecha: 17/10/2026
+                    ingreso: 0
+                    salida: 2
+                    producto: Caja Aceite Vegetal 12x1L
+                    nro_documento: VALE-SALIDA-0099
+                  - fecha: '2026-10-15'
+                    ingreso: 0
+                    salida: 5
+                    producto: Saco de Azúcar Rubia 50kg
+                    nro_documento: VALE-SALIDA-0042
+                  - fecha: 16-10-2026
+                    ingreso: 20
+                    salida: 0
+                    producto: Saco de Arroz Extra 50kg
+                    nro_documento: FACT 001-4587
+                  - fecha: 18.10.2026
+                    ingreso: 0
+                    salida: 3
+                    producto: SACO DE ARROZ EXTRA 50KG
+                    nro_documento: B001-0000231
+                  - fecha: 19/10/26
+                    ingreso: 0
+                    salida: 1
+                    producto: saco de azucar rubia 50kg
+                    nro_documento: s/n
+                  - fecha: 20/10/2026
+                    ingreso: 0
+                    salida: 4
+                    producto: Caja Aceite Vegetal 12x1L
+                    nro_documento: GUIA 0002-781
+                  - fecha: 31/09/2026
+                    ingreso: 10
+                    salida: 0
+                    producto: Saco de Arroz Extra 50kg
+                    nro_documento: VALE-ING-0007
+                  - fecha: 21/10/2026
+                    ingreso: 0
+                    salida: 2
+                    producto: Fideos sueltos
+                    nro_documento: VALE-SALIDA-0101
+                  - fecha: '2026-10-15'
+                    ingreso: 0
+                    salida: 5
+                    producto: Saco de Azúcar Rubia 50kg
+                    nro_documento: VALE-SALIDA-0042
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoteSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+      security:
+      - HTTPBearer: []
+  /api/v1/inventario/migraciones/lotes/{id_lote}:
+    get:
+      tags:
+      - Inventario y migración
+      summary: Consulta el resultado de un lote de migración
+      operationId: consultar_lote_api_v1_inventario_migraciones_lotes__id_lote__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: id_lote
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 20
+          title: Id Lote
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoteSalida'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/inventario/migraciones/{nro_documento}:
+    get:
+      tags:
+      - Inventario y migración
+      summary: Consulta la migración de un documento del sistema antiguo
+      operationId: consultar_migracion_api_v1_inventario_migraciones__nro_documento__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: nro_documento
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 40
+          title: Nro Documento
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigracionSalida'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/inventario/kardex/{codigo_producto}:
+    get:
+      tags:
+      - Inventario y migración
+      summary: Kardex en unidades físicas de un producto, con saldo final
+      operationId: consultar_kardex_api_v1_inventario_kardex__codigo_producto__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: codigo_producto
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 30
+          pattern: ^[A-Z0-9-]+$
+          title: Codigo Producto
+      - name: establecimiento
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}$
+          - type: 'null'
+          title: Establecimiento
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KardexSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '404':
+          description: El recurso no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/libros-electronicos/registro-ventas/{periodo}:
+    get:
+      tags:
+      - Libros electrónicos (PLE)
+      summary: 'Formato 14.1: Registro de Ventas e Ingresos'
+      operationId: registro_ventas_api_v1_libros_electronicos_registro_ventas__periodo__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: periodo
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^\d{4}(0[1-9]|1[0-2])$
+          description: AAAAMM
+          examples:
+          - '202610'
+          title: Periodo
+        description: AAAAMM
+      - name: formato
+        in: query
+        required: false
+        schema:
+          enum:
+          - txt
+          - json
+          type: string
+          description: txt = archivo del PLE; json = vista legible.
+          default: txt
+          title: Formato
+        description: txt = archivo del PLE; json = vista legible.
+      responses:
+        '200':
+          description: Libro del periodo. En TXT, el nombre de archivo PLE va en Content-Disposition.
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibroElectronicoSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: 'ERR-PLE-ESTRUCTURA: alguna fila no cumple el Anexo 2 de la RS 286-2009 (línea, campo y motivo en el
+            detalle); no se entrega un TXT que el PLE rechazaría.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+      x-formato-ple: '140100'
+  /api/v1/libros-electronicos/inventario-unidades-fisicas/{periodo}:
+    get:
+      tags:
+      - Libros electrónicos (PLE)
+      summary: 'Formato 12.1: Registro del Inventario Permanente en Unidades Físicas'
+      operationId: inventario_fisico_api_v1_libros_electronicos_inventario_unidades_fisicas__periodo__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: periodo
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^\d{4}(0[1-9]|1[0-2])$
+          description: AAAAMM
+          examples:
+          - '202610'
+          title: Periodo
+        description: AAAAMM
+      - name: formato
+        in: query
+        required: false
+        schema:
+          enum:
+          - txt
+          - json
+          type: string
+          description: txt = archivo del PLE; json = vista legible.
+          default: txt
+          title: Formato
+        description: txt = archivo del PLE; json = vista legible.
+      responses:
+        '200':
+          description: Libro del periodo. En TXT, el nombre de archivo PLE va en Content-Disposition.
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibroElectronicoSalida'
+        '400':
+          description: La solicitud no cumple el esquema del contrato (tipos, formatos, catálogos, campos no permitidos).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '401':
+          description: Falta el token Bearer o no es válido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '403':
+          description: El token no tiene el alcance requerido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: 'ERR-PLE-ESTRUCTURA: alguna fila no cumple el Anexo 2 de la RS 286-2009 (línea, campo y motivo en el
+            detalle); no se entrega un TXT que el PLE rechazaría.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+      x-formato-ple: '120100'
+  /salud:
+    get:
+      tags:
+      - Salud
+      summary: Estado del servicio
+      operationId: salud_salud_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Salud'
+components:
+  schemas:
+    AfectacionIGV:
+      type: string
+      enum:
+      - '10'
+      - '20'
+      - '30'
+      - '40'
+      title: AfectacionIGV
+      description: Catálogo 07. Se serializa en ``cac:TaxCategory/cbc:TaxExemptionReasonCode``.
+    BoletaEntrada:
+      properties:
+        serie:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}$
+          title: Serie
+          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
+          examples:
+          - F001
+        fecha_emision:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Emision
+          description: Por defecto, la fecha actual del servidor (UTC-5).
+        moneda:
+          $ref: '#/components/schemas/Moneda'
+          description: Catálogo 02.
+          default: PEN
+        tipo_cambio:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Tipo Cambio
+          description: Obligatorio si la moneda es USD.
+        cliente:
+          $ref: '#/components/schemas/ClienteEntrada'
+        lineas:
+          items:
+            $ref: '#/components/schemas/LineaEntrada'
+          type: array
+          maxItems: 500
+          minItems: 1
+          title: Lineas
+        tipo_comprobante:
+          type: string
+          const: '03'
+          title: Tipo Comprobante
+          description: 'Catálogo 01: boleta de venta.'
+        documentos_legado:
+          items:
+            type: string
+            maxLength: 40
+            minLength: 1
+          type: array
+          maxItems: 50
+          title: Documentos Legado
+      additionalProperties: false
+      type: object
+      required:
+      - serie
+      - cliente
+      - lineas
+      - tipo_comprobante
+      title: BoletaEntrada
+    CdrSalida:
+      properties:
+        codigo:
+          type: string
+          title: Codigo
+        descripcion:
+          type: string
+          title: Descripcion
+        observaciones:
+          items:
+            type: string
+          type: array
+          title: Observaciones
+        fecha_recepcion:
+          type: string
+          format: date-time
+          title: Fecha Recepcion
+      type: object
+      required:
+      - codigo
+      - descripcion
+      - observaciones
+      - fecha_recepcion
+      title: CdrSalida
+    ClienteEntrada:
+      properties:
+        tipo_documento:
+          $ref: '#/components/schemas/TipoDocumentoIdentidad'
+          description: Catálogo 06.
+        numero_documento:
+          type: string
+          maxLength: 15
+          minLength: 1
+          title: Numero Documento
+          examples:
+          - '20123456786'
+        nombre:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Nombre
+          examples:
+          - DISTRIBUIDORA EL SOL S.A.C.
+        direccion:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Direccion
+      additionalProperties: false
+      type: object
+      required:
+      - tipo_documento
+      - numero_documento
+      - nombre
+      title: ClienteEntrada
+    CodigoDescripcion:
+      properties:
+        codigo:
+          type: string
+          title: Codigo
+        descripcion:
+          type: string
+          title: Descripcion
+      type: object
+      required:
+      - codigo
+      - descripcion
+      title: CodigoDescripcion
+    ComprobanteSalida:
+      properties:
+        tipo_comprobante:
+          $ref: '#/components/schemas/CodigoDescripcion'
+        serie:
+          type: string
+          title: Serie
+        correlativo:
+          type: integer
+          title: Correlativo
+        serie_numero:
+          type: string
+          title: Serie Numero
+          description: cbc:ID. Serie y correlativo solo se unen al serializar.
+        fecha_emision:
+          type: string
+          format: date
+          title: Fecha Emision
+        hora_emision:
+          type: string
+          format: time
+          title: Hora Emision
+        moneda:
+          type: string
+          title: Moneda
+        tipo_cambio:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tipo Cambio
+        emisor:
+          $ref: '#/components/schemas/ParteSalida'
+        cliente:
+          $ref: '#/components/schemas/ParteSalida'
+        lineas:
+          items:
+            $ref: '#/components/schemas/LineaSalida'
+          type: array
+          title: Lineas
+        totales:
+          $ref: '#/components/schemas/TotalesSalida'
+        monto_en_letras:
+          type: string
+          title: Monto En Letras
+          description: Leyenda 1000 (Catálogo 52).
+        forma_pago:
+          anyOf:
+          - $ref: '#/components/schemas/FormaPagoSalida'
+          - type: 'null'
+          description: Solo en facturas (RS 193-2020).
+        documentos_legado:
+          items:
+            type: string
+          type: array
+          title: Documentos Legado
+        referencia:
+          anyOf:
+          - $ref: '#/components/schemas/ReferenciaSalida'
+          - type: 'null'
+        motivo:
+          anyOf:
+          - $ref: '#/components/schemas/CodigoDescripcion'
+          - type: 'null'
+        sustento:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sustento
+        estado:
+          $ref: '#/components/schemas/EstadoComprobante'
+          description: Sale del CDR de la OSE; PENDIENTE_ENVIO si la OSE no respondió.
+        hash_cpe:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Hash Cpe
+          description: ds:DigestValue de la firma XMLDSig (base64).
+        cdr:
+          anyOf:
+          - $ref: '#/components/schemas/CdrSalida'
+          - type: 'null'
+        intentos_envio:
+          type: integer
+          title: Intentos Envio
+        enlaces:
+          $ref: '#/components/schemas/EnlacesComprobante'
+      type: object
+      required:
+      - tipo_comprobante
+      - serie
+      - correlativo
+      - serie_numero
+      - fecha_emision
+      - hora_emision
+      - moneda
+      - tipo_cambio
+      - emisor
+      - cliente
+      - lineas
+      - totales
+      - monto_en_letras
+      - forma_pago
+      - documentos_legado
+      - referencia
+      - motivo
+      - sustento
+      - estado
+      - hash_cpe
+      - cdr
+      - intentos_envio
+      - enlaces
+      title: ComprobanteSalida
+    ConciliacionSalida:
+      properties:
+        establecimiento:
+          type: string
+          title: Establecimiento
+        codigo_producto:
+          type: string
+          title: Codigo Producto
+        saldo_inicial:
+          type: string
+          title: Saldo Inicial
+        entradas:
+          type: string
+          title: Entradas
+        salidas:
+          type: string
+          title: Salidas
+        saldo_final:
+          type: string
+          title: Saldo Final
+        cuadra:
+          type: boolean
+          title: Cuadra
+      type: object
+      required:
+      - establecimiento
+      - codigo_producto
+      - saldo_inicial
+      - entradas
+      - salidas
+      - saldo_final
+      - cuadra
+      title: ConciliacionSalida
+    CuotaEntrada:
+      properties:
+        monto:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          title: Monto
+          examples:
+          - '179.95'
+        fecha_vencimiento:
+          type: string
+          format: date
+          title: Fecha Vencimiento
+      additionalProperties: false
+      type: object
+      required:
+      - monto
+      - fecha_vencimiento
+      title: CuotaEntrada
+    CuotaSalida:
+      properties:
+        numero:
+          type: integer
+          title: Numero
+        monto:
+          type: string
+          title: Monto
+        fecha_vencimiento:
+          type: string
+          format: date
+          title: Fecha Vencimiento
+      type: object
+      required:
+      - numero
+      - monto
+      - fecha_vencimiento
+      title: CuotaSalida
+    DocumentoSoporteSalida:
+      properties:
+        tipo:
+          $ref: '#/components/schemas/CodigoDescripcion'
+          description: Tabla 10 del PLE (00 = documento interno).
+        serie:
+          type: string
+          title: Serie
+        numero:
+          type: string
+          title: Numero
+        fecha:
+          type: string
+          format: date
+          title: Fecha
+      type: object
+      required:
+      - tipo
+      - serie
+      - numero
+      - fecha
+      title: DocumentoSoporteSalida
+    EnlacesComprobante:
+      properties:
+        detalle:
+          type: string
+          title: Detalle
+        xml:
+          type: string
+          title: Xml
+        envios:
+          type: string
+          title: Envios
+      type: object
+      required:
+      - detalle
+      - xml
+      - envios
+      title: EnlacesComprobante
+    ErrorCampo:
+      properties:
+        campo:
+          type: string
+          title: Campo
+        mensaje:
+          type: string
+          title: Mensaje
+      type: object
+      required:
+      - campo
+      - mensaje
+      title: ErrorCampo
+    EstadoComprobante:
+      type: string
+      enum:
+      - REGISTRADO
+      - PENDIENTE_ENVIO
+      - ACEPTADO
+      - ACEPTADO_CON_OBSERVACIONES
+      - RECHAZADO
+      title: EstadoComprobante
+    EstadoMigracion:
+      type: string
+      enum:
+      - PENDIENTE_FACTURACION
+      - FACTURADA
+      - FACTURADA_EN_SISTEMA_ANTIGUO
+      - NO_REQUIERE_FACTURA
+      title: EstadoMigracion
+    FacturaEntrada:
+      properties:
+        serie:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}$
+          title: Serie
+          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
+          examples:
+          - F001
+        fecha_emision:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Emision
+          description: Por defecto, la fecha actual del servidor (UTC-5).
+        moneda:
+          $ref: '#/components/schemas/Moneda'
+          description: Catálogo 02.
+          default: PEN
+        tipo_cambio:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Tipo Cambio
+          description: Obligatorio si la moneda es USD.
+        cliente:
+          $ref: '#/components/schemas/ClienteEntrada'
+        lineas:
+          items:
+            $ref: '#/components/schemas/LineaEntrada'
+          type: array
+          maxItems: 500
+          minItems: 1
+          title: Lineas
+        tipo_comprobante:
+          type: string
+          const: '01'
+          title: Tipo Comprobante
+          description: 'Catálogo 01: factura.'
+        forma_pago:
+          $ref: '#/components/schemas/FormaPagoEntrada'
+          description: Contado por defecto. Solo las facturas la informan.
+        documentos_legado:
+          items:
+            type: string
+            maxLength: 40
+            minLength: 1
+          type: array
+          maxItems: 50
+          title: Documentos Legado
+          description: Vales del sistema antiguo ya migrados que esta venta factura (cac:AdditionalDocumentReference, Catálogo
+            12 tipo 99).
+      additionalProperties: false
+      type: object
+      required:
+      - serie
+      - cliente
+      - lineas
+      - tipo_comprobante
+      title: FacturaEntrada
+    FichaLegadoEntrada:
+      properties:
+        fecha:
+          type: string
+          maxLength: 20
+          minLength: 6
+          title: Fecha
+          description: 'Tal como está en el sistema antiguo. Formatos: AAAA-MM-DD, DD/MM/AAAA, DD-MM-AAAA, DD.MM.AAAA y DD/MM/AA.'
+          examples:
+          - '2026-10-15'
+          - 15/10/2026
+        ingreso:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+          title: Ingreso
+        salida:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+          title: Salida
+        producto:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Producto
+          examples:
+          - Saco de Azúcar Rubia 50kg
+        nro_documento:
+          type: string
+          maxLength: 40
+          minLength: 1
+          title: Nro Documento
+          examples:
+          - VALE-SALIDA-0042
+        codigo_producto:
+          anyOf:
+          - type: string
+            maxLength: 30
+            pattern: ^[A-Z0-9-]+$
+          - type: 'null'
+          title: Codigo Producto
+          description: Solo si la glosa no está en la tabla de homologación.
+        factor_conversion:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Factor Conversion
+        tipo_operacion:
+          anyOf:
+          - $ref: '#/components/schemas/TipoOperacionInventario'
+          - type: 'null'
+          description: Tabla 12. Por defecto 01 (venta) para salidas y 02 (compra) para ingresos.
+        establecimiento:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}$
+          - type: 'null'
+          title: Establecimiento
+          description: Código de establecimiento anexo SUNAT.
+      additionalProperties: false
+      type: object
+      required:
+      - fecha
+      - ingreso
+      - salida
+      - producto
+      - nro_documento
+      title: FichaLegadoEntrada
+      description: Ficha tal como existe en el sistema antiguo, más datos opcionales de homologación.
+    FormaPagoEntrada:
+      properties:
+        tipo:
+          type: string
+          enum:
+          - CONTADO
+          - CREDITO
+          title: Tipo
+          default: CONTADO
+        cuotas:
+          items:
+            $ref: '#/components/schemas/CuotaEntrada'
+          type: array
+          maxItems: 60
+          title: Cuotas
+      additionalProperties: false
+      type: object
+      title: FormaPagoEntrada
+      description: RS 193-2020. Al crédito, la suma de las cuotas debe igualar el importe total que calcula el servidor.
+    FormaPagoSalida:
+      properties:
+        tipo:
+          type: string
+          enum:
+          - CONTADO
+          - CREDITO
+          title: Tipo
+        monto_pendiente:
+          type: string
+          title: Monto Pendiente
+        cuotas:
+          items:
+            $ref: '#/components/schemas/CuotaSalida'
+          type: array
+          title: Cuotas
+      type: object
+      required:
+      - tipo
+      - monto_pendiente
+      - cuotas
+      title: FormaPagoSalida
+    HomologacionSalida:
+      properties:
+        texto_legado:
+          type: string
+          title: Texto Legado
+        codigo_producto:
+          type: string
+          title: Codigo Producto
+        factor_conversion:
+          type: string
+          title: Factor Conversion
+      type: object
+      required:
+      - texto_legado
+      - codigo_producto
+      - factor_conversion
+      title: HomologacionSalida
+    IscEntrada:
+      properties:
+        sistema:
+          $ref: '#/components/schemas/SistemaISC'
+          description: 'Catálogo 08: 01 al valor, 02 monto fijo, 03 precio de venta al público.'
+        tasa:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Tasa
+          description: 'Sistemas 01 y 03. Ej.: 0.20'
+        monto_fijo:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Monto Fijo
+          description: Sistema 02, por unidad.
+        precio_venta_publico:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Precio Venta Publico
+          description: Sistema 03, por unidad.
+      additionalProperties: false
+      type: object
+      required:
+      - sistema
+      title: IscEntrada
+      description: Configuración del ISC según el Catálogo 08. El monto lo calcula el servidor.
+    IscLinea:
+      properties:
+        base:
+          type: string
+          title: Base
+        monto:
+          type: string
+          title: Monto
+        sistema:
+          $ref: '#/components/schemas/CodigoDescripcion'
+      type: object
+      required:
+      - base
+      - monto
+      - sistema
+      title: IscLinea
+    KardexSalida:
+      properties:
+        establecimiento:
+          type: string
+          title: Establecimiento
+        producto:
+          $ref: '#/components/schemas/ProductoSalida'
+        saldo_final:
+          type: string
+          title: Saldo Final
+        movimientos:
+          items:
+            $ref: '#/components/schemas/MovimientoSalida'
+          type: array
+          title: Movimientos
+      type: object
+      required:
+      - establecimiento
+      - producto
+      - saldo_final
+      - movimientos
+      title: KardexSalida
+    LibroElectronicoSalida:
+      properties:
+        formato:
+          type: string
+          title: Formato
+        nombre_archivo:
+          type: string
+          title: Nombre Archivo
+        periodo:
+          type: string
+          title: Periodo
+        filas:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+          title: Filas
+          description: Una fila por anotación, con los campos en orden.
+      type: object
+      required:
+      - formato
+      - nombre_archivo
+      - periodo
+      - filas
+      title: LibroElectronicoSalida
+    LineaEntrada:
+      properties:
+        codigo_producto:
+          anyOf:
+          - type: string
+            maxLength: 30
+            pattern: ^[A-Z0-9-]+$
+          - type: 'null'
+          title: Codigo Producto
+          description: Si se envía, debe existir en el catálogo y mueve el Kardex.
+          examples:
+          - AB-ARR-001
+        descripcion:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Descripcion
+          examples:
+          - Arroz extra a granel
+        unidad_medida:
+          $ref: '#/components/schemas/UnidadMedida'
+          description: Catálogo 03 (UN/ECE Rec. 20). Va en el atributo unitCode.
+        cantidad:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          title: Cantidad
+          examples:
+          - '50'
+        valor_unitario:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          title: Valor Unitario
+          description: Valor unitario SIN impuestos.
+          examples:
+          - '4.20'
+        afectacion_igv:
+          $ref: '#/components/schemas/AfectacionIGV'
+          description: Catálogo 07.
+          default: '10'
+        isc:
+          anyOf:
+          - $ref: '#/components/schemas/IscEntrada'
+          - type: 'null'
+        aplica_icbper:
+          type: boolean
+          title: Aplica Icbper
+          description: True si la línea son bolsas plásticas (Ley 30884).
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - descripcion
+      - unidad_medida
+      - cantidad
+      - valor_unitario
+      title: LineaEntrada
+    LineaSalida:
+      properties:
+        numero:
+          type: integer
+          title: Numero
+        codigo_producto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Codigo Producto
+        descripcion:
+          type: string
+          title: Descripcion
+        unidad_medida:
+          type: string
+          title: Unidad Medida
+        cantidad:
+          type: string
+          title: Cantidad
+        valor_unitario:
+          type: string
+          title: Valor Unitario
+        precio_unitario:
+          type: string
+          title: Precio Unitario
+          description: Con IGV e ISC (cac:PricingReference, tipo de precio 01).
+        valor_venta:
+          type: string
+          title: Valor Venta
+        afectacion_igv:
+          $ref: '#/components/schemas/CodigoDescripcion'
+        isc:
+          anyOf:
+          - $ref: '#/components/schemas/IscLinea'
+          - type: 'null'
+        igv:
+          $ref: '#/components/schemas/TributoLinea'
+        icbper:
+          type: string
+          title: Icbper
+      type: object
+      required:
+      - numero
+      - codigo_producto
+      - descripcion
+      - unidad_medida
+      - cantidad
+      - valor_unitario
+      - precio_unitario
+      - valor_venta
+      - afectacion_igv
+      - isc
+      - igv
+      - icbper
+      title: LineaSalida
+    LoteEntrada:
+      properties:
+        fichas:
+          items:
+            $ref: '#/components/schemas/FichaLegadoEntrada'
+          type: array
+          maxItems: 5000
+          minItems: 1
+          title: Fichas
+      additionalProperties: false
+      type: object
+      required:
+      - fichas
+      title: LoteEntrada
+    LoteSalida:
+      properties:
+        id_lote:
+          type: string
+          title: Id Lote
+        procesado_en:
+          type: string
+          format: date-time
+          title: Procesado En
+        resumen:
+          $ref: '#/components/schemas/ResumenLoteSalida'
+        conciliacion:
+          items:
+            $ref: '#/components/schemas/ConciliacionSalida'
+          type: array
+          title: Conciliacion
+        resultados:
+          items:
+            $ref: '#/components/schemas/ResultadoFichaSalida'
+          type: array
+          title: Resultados
+      type: object
+      required:
+      - id_lote
+      - procesado_en
+      - resumen
+      - conciliacion
+      - resultados
+      title: LoteSalida
+    MigracionSalida:
+      properties:
+        id_migracion:
+          type: string
+          title: Id Migracion
+        clave:
+          type: string
+          title: Clave
+          description: Identifica la ficha (su nro_documento, o un resumen si no tenía documento).
+        nro_documento_legado:
+          type: string
+          title: Nro Documento Legado
+        regla_documento:
+          type: string
+          title: Regla Documento
+          description: 'Cómo se reconoció el nro_documento: COMPROBANTE_ELECTRONICO, FACTURA_FISICA, BOLETA_FISICA, GUIA_REMISION,
+            DOCUMENTO_INTERNO, SIN_DOCUMENTO o NO_RECONOCIDO.'
+        estado:
+          $ref: '#/components/schemas/EstadoMigracion'
+        comprobante:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comprobante
+          description: tipo/serie-número del comprobante que la facturó.
+        observaciones:
+          items:
+            type: string
+          type: array
+          title: Observaciones
+          description: Supuestos que una persona debe revisar (no bloquean).
+        homologacion:
+          $ref: '#/components/schemas/HomologacionSalida'
+        movimiento:
+          $ref: '#/components/schemas/MovimientoSalida'
+      type: object
+      required:
+      - id_migracion
+      - clave
+      - nro_documento_legado
+      - regla_documento
+      - estado
+      - comprobante
+      - observaciones
+      - homologacion
+      - movimiento
+      title: MigracionSalida
+    Moneda:
+      type: string
+      enum:
+      - PEN
+      - USD
+      title: Moneda
+      description: Catálogo 02 / tabla 4 del PLE (ISO 4217).
+    MotivoNotaCredito:
+      type: string
+      enum:
+      - '01'
+      - '02'
+      - '03'
+      - '04'
+      - '05'
+      - '06'
+      - '07'
+      - 08
+      - 09
+      - '10'
+      title: MotivoNotaCredito
+      description: Catálogo 09.
+    MotivoNotaDebito:
+      type: string
+      enum:
+      - '01'
+      - '02'
+      - '03'
+      title: MotivoNotaDebito
+      description: Catálogo 10.
+    MovimientoSalida:
+      properties:
+        id:
+          type: string
+          title: Id
+        fecha:
+          type: string
+          format: date
+          title: Fecha
+        establecimiento:
+          type: string
+          title: Establecimiento
+        codigo_producto:
+          type: string
+          title: Codigo Producto
+        tipo_operacion:
+          $ref: '#/components/schemas/CodigoDescripcion'
+          description: Tabla 12 del PLE.
+        documento:
+          $ref: '#/components/schemas/DocumentoSoporteSalida'
+        entrada:
+          type: string
+          title: Entrada
+        salida:
+          type: string
+          title: Salida
+        saldo:
+          type: string
+          title: Saldo
+        glosa:
+          type: string
+          title: Glosa
+      type: object
+      required:
+      - id
+      - fecha
+      - establecimiento
+      - codigo_producto
+      - tipo_operacion
+      - documento
+      - entrada
+      - salida
+      - saldo
+      - glosa
+      title: MovimientoSalida
+    NotaCreditoEntrada:
+      properties:
+        serie:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}$
+          title: Serie
+          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
+          examples:
+          - F001
+        fecha_emision:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Emision
+          description: Por defecto, la fecha actual del servidor (UTC-5).
+        moneda:
+          $ref: '#/components/schemas/Moneda'
+          description: Catálogo 02.
+          default: PEN
+        tipo_cambio:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Tipo Cambio
+          description: Obligatorio si la moneda es USD.
+        cliente:
+          $ref: '#/components/schemas/ClienteEntrada'
+        lineas:
+          items:
+            $ref: '#/components/schemas/LineaEntrada'
+          type: array
+          maxItems: 500
+          minItems: 1
+          title: Lineas
+        tipo_comprobante:
+          type: string
+          const: '07'
+          title: Tipo Comprobante
+          description: 'Catálogo 01: nota de crédito.'
+        referencia:
+          $ref: '#/components/schemas/ReferenciaEntrada'
+        motivo:
+          $ref: '#/components/schemas/MotivoNotaCredito'
+        sustento:
+          type: string
+          maxLength: 250
+          minLength: 1
+          title: Sustento
+      additionalProperties: false
+      type: object
+      required:
+      - serie
+      - cliente
+      - lineas
+      - tipo_comprobante
+      - referencia
+      - motivo
+      - sustento
+      title: NotaCreditoEntrada
+    NotaDebitoEntrada:
+      properties:
+        serie:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}$
+          title: Serie
+          description: Serie de 4 caracteres. El correlativo lo asigna el servidor.
+          examples:
+          - F001
+        fecha_emision:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fecha Emision
+          description: Por defecto, la fecha actual del servidor (UTC-5).
+        moneda:
+          $ref: '#/components/schemas/Moneda'
+          description: Catálogo 02.
+          default: PEN
+        tipo_cambio:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Tipo Cambio
+          description: Obligatorio si la moneda es USD.
+        cliente:
+          $ref: '#/components/schemas/ClienteEntrada'
+        lineas:
+          items:
+            $ref: '#/components/schemas/LineaEntrada'
+          type: array
+          maxItems: 500
+          minItems: 1
+          title: Lineas
+        tipo_comprobante:
+          type: string
+          const: 08
+          title: Tipo Comprobante
+          description: 'Catálogo 01: nota de débito.'
+        referencia:
+          $ref: '#/components/schemas/ReferenciaEntrada'
+        motivo:
+          $ref: '#/components/schemas/MotivoNotaDebito'
+        sustento:
+          type: string
+          maxLength: 250
+          minLength: 1
+          title: Sustento
+      additionalProperties: false
+      type: object
+      required:
+      - serie
+      - cliente
+      - lineas
+      - tipo_comprobante
+      - referencia
+      - motivo
+      - sustento
+      title: NotaDebitoEntrada
+    ParteSalida:
+      properties:
+        tipo_documento:
+          type: string
+          title: Tipo Documento
+        numero_documento:
+          type: string
+          title: Numero Documento
+        nombre:
+          type: string
+          title: Nombre
+      type: object
+      required:
+      - tipo_documento
+      - numero_documento
+      - nombre
+      title: ParteSalida
+    Problema:
+      properties:
+        type:
+          type: string
+          title: Type
+          examples:
+          - urn:abc:problema:regla-negocio
+        title:
+          type: string
+          title: Title
+        status:
+          type: integer
+          title: Status
+        detail:
+          type: string
+          title: Detail
+        instance:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instance
+        codigo:
+          type: string
+          title: Codigo
+          description: Código estable para el cliente.
+          examples:
+          - ERR-SUNAT-RUC
+        errores:
+          items:
+            $ref: '#/components/schemas/ErrorCampo'
+          type: array
+          title: Errores
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - codigo
+      title: Problema
+    ProductoSalida:
+      properties:
+        codigo:
+          type: string
+          title: Codigo
+        descripcion:
+          type: string
+          title: Descripcion
+        unidad_medida:
+          $ref: '#/components/schemas/CodigoDescripcion'
+          description: Catálogo 03 (UNECE).
+        unidad_medida_ple:
+          $ref: '#/components/schemas/CodigoDescripcion'
+          description: Tabla 6 del PLE (equivalencia).
+        tipo_existencia:
+          $ref: '#/components/schemas/CodigoDescripcion'
+          description: Tabla 5 del PLE.
+      type: object
+      required:
+      - codigo
+      - descripcion
+      - unidad_medida
+      - unidad_medida_ple
+      - tipo_existencia
+      title: ProductoSalida
+    ReferenciaEntrada:
+      properties:
+        tipo_comprobante:
+          type: string
+          enum:
+          - '01'
+          - '03'
+          title: Tipo Comprobante
+        serie_numero:
+          type: string
+          pattern: ^[FB][A-Z0-9]{3}-[0-9]{1,8}$
+          title: Serie Numero
+          examples:
+          - F001-1
+      additionalProperties: false
+      type: object
+      required:
+      - tipo_comprobante
+      - serie_numero
+      title: ReferenciaEntrada
+    ReferenciaSalida:
+      properties:
+        tipo_comprobante:
+          type: string
+          title: Tipo Comprobante
+        serie_numero:
+          type: string
+          title: Serie Numero
+      type: object
+      required:
+      - tipo_comprobante
+      - serie_numero
+      title: ReferenciaSalida
+    ResultadoFichaSalida:
+      properties:
+        indice:
+          type: integer
+          title: Indice
+        nro_documento:
+          type: string
+          title: Nro Documento
+        estado:
+          type: string
+          enum:
+          - MIGRADA
+          - OBSERVADA
+          - DUPLICADA
+          title: Estado
+        codigo:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Codigo
+        mensaje:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mensaje
+        migracion:
+          anyOf:
+          - $ref: '#/components/schemas/MigracionSalida'
+          - type: 'null'
+      type: object
+      required:
+      - indice
+      - nro_documento
+      - estado
+      - codigo
+      - mensaje
+      - migracion
+      title: ResultadoFichaSalida
+    ResumenLoteSalida:
+      properties:
+        total:
+          type: integer
+          title: Total
+        migradas:
+          type: integer
+          title: Migradas
+        observadas:
+          type: integer
+          title: Observadas
+        duplicadas:
+          type: integer
+          title: Duplicadas
+        cuadra:
+          type: boolean
+          title: Cuadra
+      type: object
+      required:
+      - total
+      - migradas
+      - observadas
+      - duplicadas
+      - cuadra
+      title: ResumenLoteSalida
+    Salud:
+      properties:
+        estado:
+          type: string
+          title: Estado
+        version:
+          type: string
+          title: Version
+        version_ubl:
+          type: string
+          title: Version Ubl
+        modo_ose:
+          type: string
+          title: Modo Ose
+      type: object
+      required:
+      - estado
+      - version
+      - version_ubl
+      - modo_ose
+      title: Salud
+    SistemaISC:
+      type: string
+      enum:
+      - '01'
+      - '02'
+      - '03'
+      title: SistemaISC
+      description: Catálogo 08. Se serializa en ``cac:TaxCategory/cbc:TierRange``.
+    TipoComprobante:
+      type: string
+      enum:
+      - '01'
+      - '03'
+      - '07'
+      - 08
+      title: TipoComprobante
+      description: Catálogo 01 (y tabla 10 del PLE para estos mismos códigos).
+    TipoDocumentoIdentidad:
+      type: string
+      enum:
+      - '0'
+      - '1'
+      - '4'
+      - '6'
+      - '7'
+      - A
+      title: TipoDocumentoIdentidad
+      description: Catálogo 06 (equivale a la tabla 2 del PLE).
+    TipoOperacionInventario:
+      type: string
+      enum:
+      - '01'
+      - '02'
+      - '06'
+      - '11'
+      - '13'
+      - '16'
+      - '21'
+      - '24'
+      - '99'
+      title: TipoOperacionInventario
+      description: Tabla 12 del PLE (subconjunto usado por ABC Software Corp).
+    TotalesSalida:
+      properties:
+        gravadas:
+          type: string
+          title: Gravadas
+        exoneradas:
+          type: string
+          title: Exoneradas
+        inafectas:
+          type: string
+          title: Inafectas
+        exportacion:
+          type: string
+          title: Exportacion
+        isc:
+          type: string
+          title: Isc
+        igv:
+          type: string
+          title: Igv
+        icbper:
+          type: string
+          title: Icbper
+        total_impuestos:
+          type: string
+          title: Total Impuestos
+        valor_venta:
+          type: string
+          title: Valor Venta
+        importe_total:
+          type: string
+          title: Importe Total
+      type: object
+      required:
+      - gravadas
+      - exoneradas
+      - inafectas
+      - exportacion
+      - isc
+      - igv
+      - icbper
+      - total_impuestos
+      - valor_venta
+      - importe_total
+      title: TotalesSalida
+    TributoLinea:
+      properties:
+        base:
+          type: string
+          title: Base
+        monto:
+          type: string
+          title: Monto
+      type: object
+      required:
+      - base
+      - monto
+      title: TributoLinea
+    UnidadMedida:
+      type: string
+      enum:
+      - NIU
+      - ZZ
+      - KGM
+      - GRM
+      - TNE
+      - LBR
+      - LTR
+      - MLT
+      - GLL
+      - MTR
+      - MTQ
+      - BX
+      - BG
+      - BO
+      - CA
+      - PK
+      - SA
+      - DZN
+      - MIL
+      - BLL
+      title: UnidadMedida
+      description: Catálogo 03 (UN/ECE Recomendación 20). Va en el atributo ``unitCode`` de la cantidad.
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      description: 'Token de acceso. En desarrollo: dev-facturador, dev-almacen o dev-consulta.'
+      scheme: bearer
+tags:
+- name: Comprobantes
+  description: Emisión, consulta, XML y reenvío a la OSE.
+- name: Inventario y migración
+  description: Fichas del sistema antiguo, Kardex y saldos.
+- name: Libros electrónicos (PLE)
+  description: Formatos 14.1 y 12.1.
+- name: Salud
+  description: Estado del servicio.

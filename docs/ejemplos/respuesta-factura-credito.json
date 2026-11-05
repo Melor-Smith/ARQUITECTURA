@@ -1,0 +1,92 @@
+{
+  "tipo_comprobante": {
+    "codigo": "01",
+    "descripcion": "Factura"
+  },
+  "serie": "F001",
+  "correlativo": 2,
+  "serie_numero": "F001-2",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20601234565",
+    "nombre": "BODEGA SAN MARTÍN & HIJOS E.I.R.L."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel",
+      "unidad_medida": "KGM",
+      "cantidad": "50",
+      "valor_unitario": "4.20",
+      "precio_unitario": "4.96",
+      "valor_venta": "210.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "210.00",
+        "monto": "37.80"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "210.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "37.80",
+    "icbper": "0.00",
+    "total_impuestos": "37.80",
+    "valor_venta": "210.00",
+    "importe_total": "247.80"
+  },
+  "monto_en_letras": "DOSCIENTOS CUARENTA Y SIETE CON 80/100 SOLES",
+  "forma_pago": {
+    "tipo": "CREDITO",
+    "monto_pendiente": "247.80",
+    "cuotas": [
+      {
+        "numero": 1,
+        "monto": "123.90",
+        "fecha_vencimiento": "2027-01-15"
+      },
+      {
+        "numero": 2,
+        "monto": "123.90",
+        "fecha_vencimiento": "2027-02-15"
+      }
+    ]
+  },
+  "documentos_legado": [],
+  "referencia": null,
+  "motivo": null,
+  "sustento": null,
+  "estado": "ACEPTADO",
+  "hash_cpe": "nRG96gev2aimboOZqH5IZvVIKvKtxEilnt26BZi3Q9o=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Factura numero F001-2, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/01/F001-2",
+    "xml": "/api/v1/comprobantes/01/F001-2/xml",
+    "envios": "/api/v1/comprobantes/01/F001-2/envios"
+  }
+}

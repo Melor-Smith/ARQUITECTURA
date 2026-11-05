@@ -1,0 +1,21 @@
+{
+  "tipo_comprobante": "07",
+  "serie": "FC01",
+  "referencia": { "tipo_comprobante": "01", "serie_numero": "F001-1" },
+  "motivo": "07",
+  "sustento": "Devolución de 10 kg de arroz por empaque dañado",
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "codigo_producto": "AB-ARR-001",
+      "descripcion": "Arroz extra a granel (devolución)",
+      "unidad_medida": "KGM",
+      "cantidad": "10",
+      "valor_unitario": "4.20"
+    }
+  ]
+}

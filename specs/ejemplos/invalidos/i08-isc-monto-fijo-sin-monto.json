@@ -1,0 +1,53 @@
+{
+  "tipo_comprobante": "01",
+  "serie": "FA01",
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20601234565",
+    "nombre": "BODEGA SAN MARTÍN & HIJOS E.I.R.L."
+  },
+  "lineas": [
+    {
+      "codigo_producto": "BB-PIS-001",
+      "descripcion": "Pisco quebranta 750 ml",
+      "unidad_medida": "NIU",
+      "cantidad": "6",
+      "valor_unitario": "45.00",
+      "isc": {
+        "sistema": "02",
+        "tasa": "0.20"
+      }
+    },
+    {
+      "codigo_producto": "BB-CER-001",
+      "descripcion": "Cerveza botella 620 ml",
+      "unidad_medida": "NIU",
+      "cantidad": "12",
+      "valor_unitario": "5.50",
+      "isc": {
+        "sistema": "02",
+        "monto_fijo": "1.35"
+      }
+    },
+    {
+      "codigo_producto": "BB-GAS-001",
+      "descripcion": "Gaseosa 3 L",
+      "unidad_medida": "NIU",
+      "cantidad": "4",
+      "valor_unitario": "9.00",
+      "isc": {
+        "sistema": "03",
+        "tasa": "0.17",
+        "precio_venta_publico": "12.50"
+      }
+    },
+    {
+      "codigo_producto": "EM-BOL-001",
+      "descripcion": "Bolsa plástica con asa",
+      "unidad_medida": "NIU",
+      "cantidad": "3",
+      "valor_unitario": "0.10",
+      "aplica_icbper": true
+    }
+  ]
+}

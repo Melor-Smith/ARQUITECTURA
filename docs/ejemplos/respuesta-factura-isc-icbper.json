@@ -1,0 +1,162 @@
+{
+  "tipo_comprobante": {
+    "codigo": "01",
+    "descripcion": "Factura"
+  },
+  "serie": "FA01",
+  "correlativo": 1,
+  "serie_numero": "FA01-1",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20601234565",
+    "nombre": "BODEGA SAN MARTÍN & HIJOS E.I.R.L."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": "BB-PIS-001",
+      "descripcion": "Pisco quebranta 750 ml",
+      "unidad_medida": "NIU",
+      "cantidad": "6",
+      "valor_unitario": "45.00",
+      "precio_unitario": "63.72",
+      "valor_venta": "270.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": {
+        "base": "270.00",
+        "monto": "54.00",
+        "sistema": {
+          "codigo": "01",
+          "descripcion": "Sistema al valor"
+        }
+      },
+      "igv": {
+        "base": "324.00",
+        "monto": "58.32"
+      },
+      "icbper": "0.00"
+    },
+    {
+      "numero": 2,
+      "codigo_producto": "BB-CER-001",
+      "descripcion": "Cerveza botella 620 ml",
+      "unidad_medida": "NIU",
+      "cantidad": "12",
+      "valor_unitario": "5.50",
+      "precio_unitario": "8.08",
+      "valor_venta": "66.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": {
+        "base": "66.00",
+        "monto": "16.20",
+        "sistema": {
+          "codigo": "02",
+          "descripcion": "Aplicación del monto fijo"
+        }
+      },
+      "igv": {
+        "base": "82.20",
+        "monto": "14.80"
+      },
+      "icbper": "0.00"
+    },
+    {
+      "numero": 3,
+      "codigo_producto": "BB-GAS-001",
+      "descripcion": "Gaseosa 3 L",
+      "unidad_medida": "NIU",
+      "cantidad": "4",
+      "valor_unitario": "9.00",
+      "precio_unitario": "12.75",
+      "valor_venta": "36.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": {
+        "base": "42.35",
+        "monto": "7.20",
+        "sistema": {
+          "codigo": "03",
+          "descripcion": "Sistema de precios de venta al público"
+        }
+      },
+      "igv": {
+        "base": "43.20",
+        "monto": "7.78"
+      },
+      "icbper": "0.00"
+    },
+    {
+      "numero": 4,
+      "codigo_producto": "EM-BOL-001",
+      "descripcion": "Bolsa plástica con asa",
+      "unidad_medida": "NIU",
+      "cantidad": "3",
+      "valor_unitario": "0.10",
+      "precio_unitario": "0.12",
+      "valor_venta": "0.30",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "0.30",
+        "monto": "0.05"
+      },
+      "icbper": "1.50"
+    }
+  ],
+  "totales": {
+    "gravadas": "372.30",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "77.40",
+    "igv": "80.95",
+    "icbper": "1.50",
+    "total_impuestos": "159.85",
+    "valor_venta": "372.30",
+    "importe_total": "532.15"
+  },
+  "monto_en_letras": "QUINIENTOS TREINTA Y DOS CON 15/100 SOLES",
+  "forma_pago": {
+    "tipo": "CONTADO",
+    "monto_pendiente": "0.00",
+    "cuotas": []
+  },
+  "documentos_legado": [],
+  "referencia": null,
+  "motivo": null,
+  "sustento": null,
+  "estado": "ACEPTADO",
+  "hash_cpe": "zULCk2+DFDo/NZbRh3kpJwED/oQttoh2ocZxCSjZ0hw=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Factura numero FA01-1, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/01/FA01-1",
+    "xml": "/api/v1/comprobantes/01/FA01-1/xml",
+    "envios": "/api/v1/comprobantes/01/FA01-1/envios"
+  }
+}

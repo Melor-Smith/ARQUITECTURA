@@ -1,0 +1,8 @@
+# Los XML de referencia de las pruebas de generación se comparan byte a byte:
+# git no debe convertir sus saltos de línea en ningún sistema operativo.
+tests/unit/generacion_xml/esperados/*.xml -text
+# XSD oficiales: se conservan tal como los publica OASIS.
+specs/contracts/ubl-2.1/xsd/**/*.xsd -text
+*.xls binary
+# TXT del PLE: el CRLF es parte del formato; se guardan byte a byte.
+docs/ejemplos/*.txt -text

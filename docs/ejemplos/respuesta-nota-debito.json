@@ -1,0 +1,83 @@
+{
+  "tipo_comprobante": {
+    "codigo": "08",
+    "descripcion": "Nota de débito"
+  },
+  "serie": "FD01",
+  "correlativo": 1,
+  "serie_numero": "FD01-1",
+  "fecha_emision": "2026-10-22",
+  "hora_emision": "10:30:00",
+  "moneda": "PEN",
+  "tipo_cambio": null,
+  "emisor": {
+    "tipo_documento": "6",
+    "numero_documento": "20556677884",
+    "nombre": "ABC SOFTWARE CORP S.A.C."
+  },
+  "cliente": {
+    "tipo_documento": "6",
+    "numero_documento": "20123456786",
+    "nombre": "DISTRIBUIDORA DE ABARROTES EL SOL S.A.C."
+  },
+  "lineas": [
+    {
+      "numero": 1,
+      "codigo_producto": null,
+      "descripcion": "Intereses moratorios",
+      "unidad_medida": "ZZ",
+      "cantidad": "1",
+      "valor_unitario": "15.00",
+      "precio_unitario": "17.70",
+      "valor_venta": "15.00",
+      "afectacion_igv": {
+        "codigo": "10",
+        "descripcion": "Gravado - Operación onerosa"
+      },
+      "isc": null,
+      "igv": {
+        "base": "15.00",
+        "monto": "2.70"
+      },
+      "icbper": "0.00"
+    }
+  ],
+  "totales": {
+    "gravadas": "15.00",
+    "exoneradas": "0.00",
+    "inafectas": "0.00",
+    "exportacion": "0.00",
+    "isc": "0.00",
+    "igv": "2.70",
+    "icbper": "0.00",
+    "total_impuestos": "2.70",
+    "valor_venta": "15.00",
+    "importe_total": "17.70"
+  },
+  "monto_en_letras": "DIECISIETE CON 70/100 SOLES",
+  "forma_pago": null,
+  "documentos_legado": [],
+  "referencia": {
+    "tipo_comprobante": "01",
+    "serie_numero": "F001-1"
+  },
+  "motivo": {
+    "codigo": "01",
+    "descripcion": "Intereses por mora"
+  },
+  "sustento": "Intereses por pago fuera de plazo",
+  "estado": "ACEPTADO",
+  "hash_cpe": "yJCMoq9oCOmRBFDVvd2mO54kofOmjVPsGzoHsgtTZWA=",
+  "cdr": {
+    "codigo": "0",
+    "descripcion": "La Nota de débito numero FD01-1, ha sido aceptada",
+    "observaciones": [],
+    "fecha_recepcion": "2026-10-22T10:30:00-05:00"
+  },
+  "intentos_envio": 1,
+  "enlaces": {
+    "detalle": "/api/v1/comprobantes/08/FD01-1",
+    "xml": "/api/v1/comprobantes/08/FD01-1/xml",
+    "envios": "/api/v1/comprobantes/08/FD01-1/envios"
+  }
+}
