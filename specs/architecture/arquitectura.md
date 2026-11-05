@@ -53,7 +53,7 @@ flowchart LR
         A1["persistencia: memoria.py y sqlite.py<br/>mismos puertos; transacciones, secuencia atómica"]
         A2["ubl/generador.py (xsdata)<br/>ubl/validador.py (lxml + XSD)"]
         A3["firma/xmldsig.py (signxml)"]
-        A4["ose/simulada.py"]
+        A4["ose/simulada.py y ose/sunat_soap.py<br/>(SOAP sendBill de SUNAT)"]
         A5["reloj.py (UTC-5)"]
     end
 
@@ -87,7 +87,7 @@ La raíz de composición [`src/bootstrap.py`](../../src/bootstrap.py) es el úni
 | `GeneradorUBL` | `GeneradorUblXsdata` | — (es definitivo) |
 | `ValidadorEsquemaUBL` | `ValidadorXsdLxml` | — |
 | `FirmaDigital` | `FirmaXmlDsig` con certificado autofirmado | `FirmaXmlDsig` con el `.pfx` del emisor |
-| `ClienteOSE` | `OseSimulada` | Cliente SOAP `sendBill` de SUNAT o REST de la OSE |
+| `ClienteOSE` | `OseSimulada` **y** `ClienteSunatSoap` (SOAP `sendBill`, probado contra el servicio beta de SUNAT; se elige con `ABC_SUNAT_ENDPOINT`; [ADR 0012](../adr/0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md)) | `ClienteSunatSoap` con certificado y usuario SOL reales |
 | `Reloj` | `RelojSistema` / `RelojFijo` | — |
 
 ## 4. Flujo de emisión

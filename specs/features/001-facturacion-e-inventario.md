@@ -284,4 +284,4 @@ Característica: Generación del XML UBL 2.1
       | factura-de-vale | boleta | nota-credito | nota-debito |
 ```
 
-Pruebas: `tests/unit/generacion_xml/` (77 pruebas). Detalle en [`docs/TALLER-2-generacion-xml.md`](../../docs/TALLER-2-generacion-xml.md).
+Pruebas: `tests/unit/generacion_xml/` (92 pruebas). Detalle en [`docs/TALLER-2-generacion-xml.md`](../../docs/TALLER-2-generacion-xml.md).

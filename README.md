@@ -7,7 +7,8 @@ API y núcleo de negocio para **ABC Software Corp**, distribuidora de abarrotes:
 - **Comprobantes electrónicos SUNAT:** factura (01), boleta (03), nota de crédito (07) y nota de débito (08), al contado o al crédito con cuotas.
   - IGV, ISC (Catálogo 08) e ICBPER calculados en el dominio con `Decimal`.
   - Correlativo atómico.
-  - **XML generado desde las clases del XSD OASIS UBL 2.1**, validado, firmado (XMLDSig) y enviado a la OSE; el estado sale del CDR.
+  - **XML generado desde las clases del XSD OASIS UBL 2.1**, validado, firmado (XMLDSig) y enviado a SUNAT por SOAP `sendBill`; el estado sale del CDR.
+  - los **7 comprobantes del caso fueron aceptados por el servicio beta de SUNAT** (CDR código 0, [evidencia](docs/evidencia-sunat/README.md)).
 - **Migración del sistema antiguo** (`fecha`, `ingreso`, `salida`, `producto`, `nro_documento`) al inventario permanente de la RS 234-2006, ficha por ficha o por lotes, con observaciones y conciliación.
 - **Libros electrónicos PLE 14.1** (Registro de Ventas) **y 12.1** (Inventario en unidades físicas):
   - estructura verificada campo por campo contra el **Excel oficial del Anexo 2** (PLE 5.0);
@@ -25,15 +26,16 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 
 | Verificación | Resultado | Cómo comprobarlo |
 |---|---|---|
-| Pruebas automáticas | **614**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
+| Pruebas automáticas | **747**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
 | Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
-| Tipado estático | **0 errores** en 61 archivos | `mypy` |
+| Tipado estático | **0 errores** en 63 archivos | `mypy` |
 | Estilo y errores comunes | **0 avisos** | `ruff check .` |
 | Vulnerabilidades en dependencias | **0 conocidas** | `pip-audit -r requirements.txt` |
 | Regla de dependencias hexagonal | Verificada por prueba | `tests/integration/test_arquitectura.py` |
 | Intercambio de adaptadores | Las pruebas de API corren contra **memoria y SQLite** con el mismo resultado | `tests/conftest.py` (fixture `persistencia`) |
 | Contrato OpenAPI = código | Verificado por prueba | `tests/acceptance/test_contrato.py` |
 | XML contra los XSD oficiales OASIS | Cada XML generado se valida antes y después de firmar | `tests/unit/generacion_xml/` |
+| XML aceptado por SUNAT | **7 de 7 con CDR código 0** en el servicio beta; la evidencia se re-verifica sin red en cada CI y en vivo cada semana | [`docs/evidencia-sunat/`](docs/evidencia-sunat/README.md) · workflow `sunat-beta` |
 | TXT del PLE contra la fuente oficial | Estructura comparada con el Excel del Anexo 2; **12.1 validado por el programa PLE de SUNAT** | [`docs/evidencia-ple/`](docs/evidencia-ple/README.md) |
 | Imagen Docker | Se construye, levanta, emite una factura (201) y no corre como root | job `contenedor` de la CI |
 
@@ -43,10 +45,10 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 |:-:|---|---|
 | 1 | Análisis del caso, normativa y casos de uso | [`docs/analisis/`](docs/analisis): [brechas y riesgos](docs/analisis/01-caso-brechas-y-riesgos.md) · [marco normativo y estudio del XSD](docs/analisis/02-marco-normativo.md) · [casos de uso](docs/analisis/03-casos-de-uso.md) · [atributos de calidad](docs/analisis/04-atributos-de-calidad.md) |
 | 2 | Modelo de dominio y DTOs | [`src/domain/`](src/domain) (sin dependencias externas) · [`specs/domain/modelo-dominio.md`](specs/domain/modelo-dominio.md) · DTO en [`esquemas.py`](src/adapters/inbound/http/esquemas.py) |
-| 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0011) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
+| 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [`specs/adr/`](specs/adr) (0001-0012) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
 | 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) (generado desde el código y verificado) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
-| 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**, columnas PLE 14.1 / 12.1 · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
-| 6 | Pruebas y evidencia | [`tests/`](tests) (614 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
+| 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**; las columnas PLE 14.1 / 12.1 y de contrato también se verifican (Anexo 2, TXT generado y OpenAPI), así que ninguna fila queda sin ubicación comprobada · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (747 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
 ## Arquitectura en una imagen
 
@@ -61,7 +63,7 @@ flowchart LR
     MEM["persistencia: memoria o SQLite"] -.-> PORTS
     UBL["UBL: xsdata + lxml"] -.-> PORTS
     SIG["firma: signxml"] -.-> PORTS
-    OSE["OSE (simulada)"] -.-> PORTS
+    OSE["SUNAT: SOAP sendBill<br/>(beta / producción) u OSE simulada"] -.-> PORTS
 ```
 
 ```
@@ -70,7 +72,7 @@ src/
 ├── application/     casos de uso + puertos (typing.Protocol) + comandos
 ├── adapters/
 │   ├── inbound/     http/ (FastAPI: controladores, vistas, DTO, problem+json, seguridad) · cli.py · traduccion.py
-│   └── outbound/    persistencia (memoria y SQLite), ubl (generador xsdata + generated/ + validador), firma (signxml), ose, reloj
+│   └── outbound/    persistencia (memoria y SQLite), ubl (generador xsdata + generated/ + validador), firma (signxml), ose (SUNAT SOAP y simulada), reloj
 ├── bootstrap.py     raíz de composición (único lugar que conoce las clases concretas)
 ├── config.py        configuración por variables de entorno
 └── main.py          app ASGI
@@ -90,7 +92,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest -q --cov                     # 614 pruebas + cobertura
+pytest -q --cov                     # 747 pruebas + cobertura
 pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
 ruff check . && mypy                # estilo y tipos
 
@@ -116,6 +118,8 @@ Tokens de **desarrollo**; en producción se definen con `ABC_API_TOKENS`:
 | `ABC_PLAZO_ENVIO_DIAS` | `3` | Antigüedad máxima de la fecha de emisión |
 | `ABC_API_TOKENS` | tokens `dev-*` | JSON `{"token": ["alcance", ...]}` |
 | `ABC_CERTIFICADO_PFX` / `ABC_CERTIFICADO_CONTRASENA` | autofirmado en memoria | Certificado digital del emisor (nunca se versiona) |
+| `ABC_SUNAT_ENDPOINT` | sin valor: OSE simulada | `beta` (servicio de pruebas de SUNAT), `produccion` o una URL `billService` ([ADR 0012](specs/adr/0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md)) |
+| `ABC_SUNAT_USUARIO_SOL` / `ABC_SUNAT_CLAVE_SOL` | `MODDATOS` / `moddatos` (beta) | Usuario SOL secundario; producción exige uno real y el certificado `ABC_CERTIFICADO_PFX` |
 | `ABC_BASE_DATOS` | sin valor: memoria · Docker: `/datos/abc.db` | Archivo SQLite; los datos sobreviven a reinicios ([ADR 0011](specs/adr/0011-persistencia-sqlite-como-segundo-adaptador.md)) |
 
 ## Endpoints
@@ -144,17 +148,19 @@ Todos los errores usan `application/problem+json` (RFC 9457) con un `codigo` est
 | `python scripts/matriz.py` | Regenera la matriz (MD + CSV) desde `matriz.yaml`, calculando la cardinalidad desde los XSD |
 | `python scripts/generar_ejemplos.py` | Regenera `docs/ejemplos/` con salidas reales (XML firmado, JSON, TXT del PLE) |
 | `python scripts/preparar_validacion_ple.py` | Regenera `docs/evidencia-ple/paquete/`, los archivos para validar con el programa PLE de SUNAT |
+| `python scripts/validar_en_sunat_beta.py` | Envía los 7 comprobantes del caso al servicio beta de SUNAT y guarda los CDR en `docs/evidencia-sunat/` (requiere internet) |
 | `scripts/generar_clases_ubl.ps1` / `.sh` | Regenera las clases xsdata desde los XSD oficiales |
 
 Hay una prueba por cada artefacto generado que falla si quedó desactualizado.
 
 ## Límites conocidos
 
-- La OSE es **simulada**: verifica la firma y el XSD y devuelve un CDR, pero no aplica todas las reglas de validación de SUNAT.
+- El envío a SUNAT se probó en el **servicio beta** (sin efecto tributario). Producción usa el mismo adaptador, pero exige certificado digital y usuario SOL reales; sin ellos la configuración no arranca.
+- Las boletas se envían una por una (`sendBill`), lo que SUNAT admite. El resumen diario (`sendSummary`) no está implementado.
 - La persistencia es en memoria o SQLite (un servidor). Para varios servidores, los mismos puertos sobre PostgreSQL.
-- La estructura de los TXT del PLE se verifica contra el Excel oficial del Anexo 2 ([ADR 0010](specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)). Falta cargarlos en el programa PLE de escritorio, que además valida contra el padrón RUC.
+- La estructura de los TXT del PLE se verifica contra el Excel oficial del Anexo 2 ([ADR 0010](specs/adr/0010-estructura-ple-en-el-dominio-validada-contra-el-anexo-2.md)). El 12.1 pasó además el programa PLE de SUNAT; el estado del 14.1 está en [`docs/evidencia-ple/`](docs/evidencia-ple/README.md).
 
-Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009, 0010 y 0011.
+Detalle y plan de producción en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md#límites-declarados) y en los ADR 0002, 0004, 0009, 0010, 0011 y 0012.
 
 ## Licencia
 

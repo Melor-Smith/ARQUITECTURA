@@ -81,3 +81,98 @@ def test_cardinalidad_calculada_desde_el_xsd(xpath, esperado, obligatorio):
 def test_un_xpath_inexistente_en_el_xsd_se_detecta():
     with pytest.raises(ValueError, match="no es hijo"):
         matriz.EsquemaUBL().cardinalidad("/Invoice/cbc:CampoInventado")
+
+
+# --- Ubicaciones fuera del XML: campos del PLE y contrato OpenAPI ---------------------
+# No todo dato tiene XPath (inventario, tipo de cambio). Esas filas se anclan al campo del
+# TXT del PLE o al contrato de la API, y esas columnas también se verifican: ninguna fila
+# queda sin al menos una ubicación comprobada contra un artefacto real.
+
+COLUMNAS_FUENTE = {"id", "dato", "norma", "sunat", "xpath", "contrato", "legado", "ple_141", "ple_121", "error",
+                   "prueba"}
+PAQUETE_PLE = RAIZ / "docs" / "evidencia-ple" / "paquete"
+OPENAPI = yaml.safe_load((RAIZ / "specs" / "contracts" / "openapi.yaml").read_text(encoding="utf-8"))
+
+
+def test_cada_fila_usa_solo_columnas_conocidas():
+    # Una coma sin comillas en un mapeo YAML en línea crea columnas falsas y trunca el valor
+    # (le pasó a T42: "UN/ECE 5305 (S, E, O, G)" se partió en cuatro claves).
+    raras = {fila["id"]: sorted(set(fila) - COLUMNAS_FUENTE) for fila in FILAS if set(fila) - COLUMNAS_FUENTE}
+    assert raras == {}
+
+
+def _campos_ple(valor: object) -> list[int]:
+    """'17 / 18 (salida en negativo)' -> [17, 18]; '(nombre de archivo)' -> []."""
+    inicio = re.match(r"[\d,/\s]+", str(valor or ""))
+    return [int(n) for n in re.findall(r"\d+", inicio.group(0))] if inicio else []
+
+
+def _columnas_txt(libro: str) -> list[list[str]]:
+    lineas = []
+    for archivo in PAQUETE_PLE.rglob(f"LE*{libro}00*.TXT"):
+        # read_bytes: read_text convertiría el CRLF del formato en "\n".
+        lineas += [ln.split("|")[:-1] for ln in archivo.read_bytes().decode("utf-8").split("\r\n") if ln]
+    return lineas
+
+
+@pytest.mark.parametrize(("columna", "libro", "estructura"), [
+    ("ple_141", "1401", "ESTRUCTURA_141"),
+    ("ple_121", "1201", "ESTRUCTURA_121"),
+])
+def test_cada_campo_ple_citado_existe_en_el_anexo_2_y_el_sistema_lo_llena(columna, libro, estructura):
+    from src.domain import ple_estructura
+
+    campos = {c.numero for c in getattr(ple_estructura, estructura)}
+    lineas = _columnas_txt(libro)
+    assert lineas, f"no hay TXT {libro} en {PAQUETE_PLE}"
+    citados = {(fila["id"], n) for fila in FILAS for n in _campos_ple(fila.get(columna))}
+    assert citados
+    assert {(i, n) for i, n in citados if n not in campos} == set(), "campo inexistente en el Anexo 2"
+    vacios = {(i, n) for i, n in citados if not any(ln[n - 1] for ln in lineas)} - set(SIN_MUESTRA_EN_EL_PAQUETE)
+    assert vacios == set(), "el TXT generado nunca llena ese campo"
+
+
+#: Campos condicionales que los ejemplos del caso no llenan, con la prueba que sí los ejerce.
+SIN_MUESTRA_EN_EL_PAQUETE = {
+    ("T66", 5): "test_credito_que_vence_el_mes_siguiente_informa_el_campo_5",  # el crédito del caso vence en 2027
+}
+
+
+def test_los_campos_sin_muestra_tienen_su_prueba():
+    definidas = "\n".join(p.read_text(encoding="utf-8") for p in (RAIZ / "tests").rglob("test_*.py"))
+    assert all(f"def {prueba}(" in definidas for prueba in SIN_MUESTRA_EN_EL_PAQUETE.values())
+
+
+def _resolver(esquema: dict, ruta: list[str]) -> bool:
+    if "$ref" in esquema:
+        return _resolver(OPENAPI["components"]["schemas"][esquema["$ref"].rsplit("/", 1)[1]], ruta)
+    for clave in ("anyOf", "oneOf", "allOf"):
+        if clave in esquema:
+            return any(_resolver(rama, ruta) for rama in esquema[clave])
+    if "items" in esquema:
+        return _resolver(esquema["items"], ruta)
+    if not ruta:
+        return True
+    return ruta[0] in esquema.get("properties", {}) and _resolver(esquema["properties"][ruta[0]], ruta[1:])
+
+
+def _ruta_contrato(valor: object) -> list[str]:
+    """'lineas[].isc.monto (respuesta)' -> ['lineas', 'isc', 'monto']; '(constante)' -> []."""
+    texto = re.sub(r"\s*\(.*\)$", "", str(valor or "")).replace("[]", "")
+    return texto.split(".") if texto else []
+
+
+CON_CONTRATO = [fila for fila in FILAS if _ruta_contrato(fila.get("contrato"))]
+
+
+@pytest.mark.parametrize("fila", CON_CONTRATO, ids=[x["id"] for x in CON_CONTRATO])
+def test_cada_campo_del_contrato_existe_en_el_openapi(fila):
+    ruta = _ruta_contrato(fila["contrato"])
+    assert any(_resolver(esquema, ruta) for esquema in OPENAPI["components"]["schemas"].values()), fila["contrato"]
+
+
+def test_ninguna_fila_queda_sin_ubicacion_verificada():
+    sin_ubicacion = [fila["id"] for fila in FILAS
+                     if not (fila.get("xpath") or _campos_ple(fila.get("ple_141")) or _campos_ple(fila.get("ple_121"))
+                             or _ruta_contrato(fila.get("contrato")))]
+    assert sin_ubicacion == []

@@ -2,10 +2,10 @@
 
 > **Enunciado.** Implementar la generación de XML a partir del XSD Invoice 2.1, en el lenguaje del dominio. La evaluación serán pruebas unitarias de generación. Fecha límite: 05/11/2026 a medianoche.
 
-**Respuesta en una línea.** Las clases Python se **generan desde los XSD oficiales** con xsdata. Un adaptador traduce el agregado del dominio (`Comprobante`, `Linea`, `Totales`, `FormaPago`…) a esas clases, y **77 pruebas unitarias de generación** (más 30 del dominio para el importe en letras y la forma de pago) verifican cada bloque del XML, su conformidad con el XSD y la regresión contra XML de referencia.
+**Respuesta en una línea.** Las clases Python se **generan desde los XSD oficiales** con xsdata. Un adaptador traduce el agregado del dominio (`Comprobante`, `Linea`, `Totales`, `FormaPago`…) a esas clases, y **92 pruebas unitarias de generación** (más 30 del dominio para el importe en letras y la forma de pago) verifican cada bloque del XML, su conformidad con el XSD y la regresión contra XML de referencia.
 
 ```powershell
-pytest tests/unit/generacion_xml -v          # 77 pruebas unitarias de generación
+pytest tests/unit/generacion_xml -v          # 92 pruebas unitarias de generación
 python -m src.adapters.inbound.cli generar-xml specs/ejemplos/factura.json --fecha 2026-10-22
 ```
 
@@ -64,7 +64,7 @@ Están en [`tests/unit/generacion_xml/`](../tests/unit/generacion_xml). Todas pa
 | [`test_cabecera.py`](../tests/unit/generacion_xml/test_cabecera.py) | Raíz según el tipo, versión UBL 2.1 y personalización 2.0, `cbc:ID` con correlativo de 8 dígitos, fecha y hora, `InvoiceTypeCode` + Cat. 51, moneda en el documento y en **cada** importe, importe en letras, referencia a la firma | 16 |
 | [`test_partes.py`](../tests/unit/generacion_xml/test_partes.py) | RUC, razón social, establecimiento y ubigeo del emisor; cliente con RUC, DNI o no domiciliado; escape de `&` | 6 |
 | [`test_lineas.py`](../tests/unit/generacion_xml/test_lineas.py) | Una línea por cada `Linea`, unidad del Cat. 03 por línea (KGM, NIU, ZZ), valor y precio unitario, código de producto, **orden de los elementos según el XSD**, `CreditedQuantity` y `DebitedQuantity` | 8 |
-| [`test_tributos.py`](../tests/unit/generacion_xml/test_tributos.py) | IGV (S, 18 %, afectación 10), exonerado (E) e inafecto (O), exportación (G), ISC de los **tres sistemas del Catálogo 08** con su base y su monto, IGV sobre (valor + ISC), ICBPER, cuadre de subtotales por línea y por documento | 13 |
+| [`test_tributos.py`](../tests/unit/generacion_xml/test_tributos.py) | IGV (S, 18 %, afectación 10), exonerado (E) e inafecto (O), exportación (G), ISC de los **tres sistemas del Catálogo 08** con su base y su monto, IGV sobre (valor + ISC), ICBPER, cuadre de subtotales por línea y por documento; **reglas 3108 y 3277 de SUNAT** en todos los comprobantes | 28 |
 | [`test_totales_pago_y_referencias.py`](../tests/unit/generacion_xml/test_totales_pago_y_referencias.py) | Totales; `RequestedMonetaryTotal` en notas de débito; forma de pago al contado y al crédito con cuotas; vale como documento relacionado tipo 99; referencia y motivo de las notas (Cat. 09 / 10) | 9 |
 | [`test_conformidad_y_regresion.py`](../tests/unit/generacion_xml/test_conformidad_y_regresion.py) | Los 8 escenarios **validan contra el XSD oficial**; cualquier texto (`& < > " '`, `]]>`, Ñ, €) produce XML válido; **regresión byte a byte** contra los XML de referencia; determinismo; el `DigestValue` depende solo del contenido | 25 |
 | [`test_letras_y_pagos.py`](../tests/unit/test_letras_y_pagos.py) | Importe en letras (0 a millones, apócopes UN y VEINTIÚN) y reglas de la forma de pago | 30 |
@@ -78,6 +78,8 @@ $env:ACTUALIZAR_ESPERADOS="1"; pytest tests/unit/generacion_xml; Remove-Item Env
 ```
 
 **Defecto encontrado por estas pruebas.** En las líneas exoneradas e inafectas el IGV se serializaba como `0` en lugar de `0.00`. Se corrigió en el dominio (los importes en cero ahora llevan 2 decimales), y desde entonces se verifica que **ningún importe** de los XML de referencia quede sin dos decimales.
+
+**Defectos encontrados por SUNAT.** Al enviar los XML al servicio beta de SUNAT, la factura con ISC fue rechazada por dos reglas que el XSD no expresa. La regla **3108** exige base × tasa = monto del ISC también en el sistema 02 (monto fijo), así que ahora se informa la tasa equivalente. La regla **3277** exige que la base global del IGV no incluya el ISC. Las dos se corrigieron y quedaron como pruebas en `test_tributos.py`. Después de corregirlas, SUNAT aceptó los siete comprobantes ([evidencia](evidencia-sunat/README.md)).
 
 ## 4. Ejecutarlo
 

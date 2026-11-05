@@ -8,7 +8,7 @@
 | [`ple/anexo2/estructuras-ple-5.0.xls`](ple/anexo2/estructuras-ple-5.0.xls) | Excel oficial de SUNAT (Anexo 2 de la RS 286-2009, PLE 5.0); las pruebas comparan contra él la estructura del dominio |
 | [`domain/modelo-dominio.md`](domain/modelo-dominio.md) | Objetos de valor, invariantes, fórmulas tributarias y estados |
 | [`architecture/arquitectura.md`](architecture/arquitectura.md) | MVC dentro del hexágono, puertos y adaptadores, secuencia de emisión y diagrama de clases |
-| [`adr/`](adr) | Decisiones de arquitectura 0001 a 0011 |
+| [`adr/`](adr) | Decisiones de arquitectura 0001 a 0012 |
 | [`contracts/openapi.yaml`](contracts/openapi.yaml) | Contrato OpenAPI **generado desde el código** y verificado por `tests/acceptance/test_contrato.py` |
 | [`contracts/ubl-2.1/xsd/`](contracts/ubl-2.1/xsd) | XSD oficiales OASIS UBL 2.1 completos (maindoc + `common/`), usados para generar las clases y para validar |
 | [`ejemplos/`](ejemplos) | Payloads válidos (alimentan los `examples` del OpenAPI y una prueba verifica que la API los acepta) y [`ejemplos/invalidos/`](ejemplos/invalidos): 16 contraejemplos, cada uno con el HTTP y el código de error esperados en `esperados.yaml` |

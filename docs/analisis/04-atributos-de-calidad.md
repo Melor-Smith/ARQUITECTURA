@@ -6,7 +6,7 @@ Cada atributo tiene una meta verificable y la evidencia que hoy la respalda. Si 
 |---|---|---|---|
 | AC-01 | **Exactitud tributaria** | 0 diferencias entre los totales calculados y el XML; importes siempre con 2 decimales | `tests/unit/test_tributos.py`; `test_tax_total_de_cada_linea_suma_sus_subtotales`; auditoría de decimales en los XML de referencia |
 | AC-02 | **Rendimiento** | p95 de la emisión completa (cálculo, XML, validación XSD ×2, firma y OSE simulada) < 500 ms en el proceso | `tests/integration/test_rendimiento.py`: **mediana 8,8 ms, p95 10,2 ms** en el equipo de desarrollo, sin red. La latencia de la OSE real se suma aparte |
-| AC-03 | **Integridad** | XML firmado; cualquier alteración posterior se detecta | `test_la_ose_simulada_acepta_y_detecta_un_xml_alterado_despues_de_firmar` |
+| AC-03 | **Integridad** | XML firmado; cualquier alteración posterior se detecta | `test_la_ose_simulada_acepta_y_detecta_un_xml_alterado_despues_de_firmar`; SUNAT real también lo rechaza con 2335 (respuesta grabada de beta en `test_firma_alterada_es_rechazo_2335`) |
 | AC-04 | **Consistencia de la numeración** | Correlativo único y sin huecos por rechazos de negocio, aun con concurrencia | `test_concurrencia.py` (200 reservas concurrentes); `test_rechazo_de_negocio_no_consume_correlativo` |
 | AC-05 | **Disponibilidad de la venta** | La venta no se bloquea si la OSE cae | `TestOse`: 202 + reenvío; 503 con `Retry-After` |
 | AC-06 | **Conformidad del contrato** | El contrato publicado y el código no divergen | `test_el_openapi_versionado_coincide_con_el_generado_por_el_codigo`; 16 contraejemplos |

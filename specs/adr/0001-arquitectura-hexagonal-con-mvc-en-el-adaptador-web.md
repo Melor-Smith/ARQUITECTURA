@@ -33,6 +33,6 @@ Ninguno de los puertos dibujados existía. Además, la solución debe correr en 
 
 ## Consecuencias
 
-- Cambiar memoria → PostgreSQL, o la OSE simulada → la real, se hace en un solo archivo (`bootstrap.py`).
+- Cambiar memoria → PostgreSQL, o la OSE simulada → la real, se hace en un solo archivo (`bootstrap.py`). Ya se hizo dos veces sin tocar el núcleo: SQLite ([ADR 0011](0011-persistencia-sqlite-como-segundo-adaptador.md)) y el envío real a SUNAT ([ADR 0012](0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md)).
 - Las pruebas de dominio corren en milisegundos y sin HTTP.
 - Hay más archivos que en un MVC plano: es el costo de poder sustituir adaptadores.

@@ -85,6 +85,7 @@ def test_rango_de_adr():
 @pytest.mark.parametrize("afirmacion", [
     r"12\.1[^.\n]{0,40}usan? la tabla 6",  # el PLE 5.2.0.7 exige UN/ECE en el campo 16
     r"persistencia es (solo )?en memoria\.",  # hay adaptador SQLite (ADR 0011)
+    r"OSE es (un adaptador )?\*\*simulad",  # hay envío real a SUNAT, probado en beta (ADR 0012)
 ])
 def test_no_quedan_afirmaciones_superadas(afirmacion):
     hallazgos = [str(d.relative_to(RAIZ)) for d in DOCUMENTOS if re.search(afirmacion, d.read_text(encoding="utf-8"))]

@@ -1,6 +1,6 @@
 # Respuesta a la revisión (38/100): observación → corrección → evidencia
 
-Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (614 pruebas).
+Cada fila indica qué se corrigió y **dónde comprobarlo**: un archivo del código y una prueba automática que falla si la corrección se pierde. Para reproducir todo: `pytest -q` (747 pruebas).
 
 Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorrelativo` significa la clase de pruebas `TestSerieYCorrelativo` dentro de ese archivo.
 
@@ -62,7 +62,7 @@ Convención de rutas: `tests/acceptance/test_api_comprobantes.py::TestSerieYCorr
 
 | Observación | Corrección |
 |---|---|
-| Dos ADR con número 0001. | Un número por decisión (hoy ADR 0001 a 0011), en [`specs/adr/`](../specs/adr). |
+| Dos ADR con número 0001. | Un número por decisión (hoy ADR 0001 a 0012), en [`specs/adr/`](../specs/adr). |
 | Dos especificaciones 001 con la matriz duplicada. | Una sola especificación BDD ([`specs/features/001-facturacion-e-inventario.md`](../specs/features/001-facturacion-e-inventario.md)) y una sola matriz ([`specs/traceability/matriz-trazabilidad.md`](../specs/traceability/matriz-trazabilidad.md)). |
 | Plantilla XML en `specs/templates`. | Eliminada. En su lugar, [`docs/ejemplos/`](ejemplos) contiene **salidas reales** generadas por el sistema (`python scripts/generar_ejemplos.py`). |
 
@@ -97,18 +97,30 @@ El detalle está en el [ADR 0010](../specs/adr/0010-estructura-ple-en-el-dominio
 
 Por último, el 12.1 se validó con el **programa PLE 5.2.0.7 oficial de SUNAT**, que entregó una constancia de **información consistente** después de corregir dos reglas que solo el validador oficial reveló. Las rondas, la constancia y sus totales de control están en [`docs/evidencia-ple/`](evidencia-ple/README.md).
 
+## Tercera iteración: de "valida contra el XSD" a "SUNAT lo acepta"
+
+| Hueco | Qué se hizo | Evidencia |
+|---|---|---|
+| Ningún XML se había enviado a SUNAT: la OSE simulada solo verifica firma y XSD | Adaptador real `ClienteSunatSoap` (SOAP `sendBill`) del mismo puerto `ClienteOSE`. Los 7 comprobantes del caso se emitieron por la API contra el **servicio beta de SUNAT**: **7 de 7 con CDR código 0** | [`docs/evidencia-sunat/`](evidencia-sunat/README.md), [ADR 0012](../specs/adr/0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md), `test_evidencia_sunat.py`, `test_cliente_sunat_soap.py` (respuestas reales grabadas) |
+| SUNAT rechazó FA01-1 por la regla **3108**: el ISC de monto fijo (sistema 02) no llevaba `cbc:Percent` | Se informa la tasa equivalente monto / base | `test_regla_3108_base_por_tasa_es_el_monto_del_isc`, `test_isc_monto_fijo_informa_la_tasa_equivalente` |
+| SUNAT rechazó FA01-1 por la regla **3277**: la base global del IGV incluía el ISC | La base global es la suma de los valores de venta gravados sin ISC, igual que el campo 14 del PLE 14.1 | `test_regla_3277_base_global_del_igv_es_el_valor_de_venta_gravado_sin_isc` |
+| En la matriz, una coma sin comillas partía la norma de T42 en columnas falsas (`UN/ECE 5305 (S`) | Corregido, y una prueba rechaza cualquier columna desconocida | `test_cada_fila_usa_solo_columnas_conocidas` |
+| Las ocho filas de la matriz sin XML (inventario, tipo de cambio) no tenían ubicación verificada | Las columnas PLE se comprueban contra el Anexo 2 y contra el TXT generado, y la columna de contrato contra el OpenAPI. Ninguna fila queda sin ubicación comprobada | `test_cada_campo_ple_citado_existe_en_el_anexo_2_y_el_sistema_lo_llena`, `test_cada_campo_del_contrato_existe_en_el_openapi`, `test_ninguna_fila_queda_sin_ubicacion_verificada` |
+
+Las dos reglas de SUNAT se comprobaron por mutación: revertir cualquiera de las correcciones hace fallar la CI.
+
 ## Aciertos que se conservaron
 
 - **Catálogo 08** con `cbc:TierRange`. Ahora además se **calcula** el ISC de los tres sistemas.
 - **TaxScheme** 1000/IGV/VAT, 2000/ISC/EXC y 7152/ICBPER/OTH, `CustomizationID` 2.0 y `TaxExemptionReasonCode`.
-- **Ciclo rojo → verde**: se pasó de 20 a 614 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
+- **Ciclo rojo → verde**: se pasó de 20 a 747 pruebas, incluidas pruebas de arquitectura, de contrato y de la matriz.
 - **Los puertos del diagrama hexagonal**, que ahora existen en el código.
 - **Diagnóstico RS 234-2006 y distribución MSI/APK**, conservados en el ADR 0008.
 
 ## Límites declarados
 
-- **OSE.** La OSE es un adaptador **simulado**: verifica la firma y el XSD, pero no aplica las más de 1 500 reglas de validación de SUNAT. El adaptador real (SOAP `sendBill` o REST de una OSE) implementa el mismo puerto `ClienteOSE`.
+- **Envío a SUNAT.** El adaptador real `ClienteSunatSoap` se probó contra el **servicio beta** de SUNAT, que no tiene efecto tributario, no valida contra el padrón RUC y acepta certificados autofirmados. Producción usa el mismo adaptador con certificado y usuario SOL reales, y la configuración se niega a arrancar sin ellos. La OSE simulada se conserva para las pruebas deterministas ([ADR 0012](../specs/adr/0012-envio-real-a-sunat-y-validacion-contra-el-servicio-beta.md)).
 - **Firma.** En desarrollo se usa un certificado autofirmado generado en memoria. En producción se carga el `.pfx` del emisor (`ABC_CERTIFICADO_PFX`).
 - **Persistencia.** Hay dos adaptadores de los mismos puertos: memoria (desarrollo) y **SQLite** (`ABC_BASE_DATOS`). Este último tiene transacciones reales, `SAVEPOINT`, correlativo con `… RETURNING` y restricción `UNIQUE`, y toda la suite de API corre contra ambos ([ADR 0011](../specs/adr/0011-persistencia-sqlite-como-segundo-adaptador.md)). Para varios servidores, el mismo diseño sobre PostgreSQL.
 - **Fuera de alcance.** No se soportan las operaciones gratuitas (afectaciones 11-17, 21, 31-37), los anticipos, las detracciones, el resumen diario de boletas ni la comunicación de baja.
-- **PLE.** La estructura de los TXT 14.1 y 12.1 se verifica automáticamente contra el Excel oficial del Anexo 2 de la RS 286-2009/SUNAT (PLE 5.0). Falta cargarlos en el programa PLE de escritorio, que aplica además validaciones contra el padrón RUC; la estructura está aislada en `ple_estructura.py`, así que una nueva versión del Anexo 2 se actualiza en un solo lugar.
+- **PLE.** La estructura de los TXT 14.1 y 12.1 se verifica automáticamente contra el Excel oficial del Anexo 2 de la RS 286-2009/SUNAT (PLE 5.0). El 12.1 pasó además el programa PLE de SUNAT; el estado del 14.1 está en [`docs/evidencia-ple/`](evidencia-ple/README.md). La estructura está aislada en `ple_estructura.py`, así que una nueva versión del Anexo 2 se actualiza en un solo lugar.
