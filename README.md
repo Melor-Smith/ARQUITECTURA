@@ -3,9 +3,19 @@
 **Universidad Nacional Agraria de la Selva** · Facultad de Ingeniería en Informática y Sistemas
 **Curso:** Arquitectura de Software · **Grupo:** "A"
 **Alumno:** Melor Smith Yanac Osorio
-**Fase 1 (Spec-First):** examen de medio curso, 19/10/2026 · **Taller 2:** generación del XML, 05/11/2026
+**Fase 1 (Spec-First):** examen de medio curso, 19/10/2026 · **Taller 2 (segundo parcial):** generación del XML y formulario de venta, 12/11/2026
 
 [![CI](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml/badge.svg)](https://github.com/Melor-Smith/ARQUITECTURA/actions/workflows/ci.yml) [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
+
+## Ver el Taller 2 en un minuto
+
+| Qué | Cómo |
+|---|---|
+| **Abrir la interfaz** "Registrar venta" | **Doble clic en [`iniciar.bat`](iniciar.bat)** (Windows) o `python iniciar.py` (cualquier sistema). Solo requiere Python 3.10 o superior: la primera vez instala las dependencias (alrededor de un minuto), levanta el servidor y abre el navegador en `http://127.0.0.1:8000/venta` |
+| **Generar el XML** | El formulario trae cargada la venta del caso (una motocicleta de S/ 5 000.00). Pulsar **Generar XML**: se ven los importes, la matriz "dato SUNAT → etiqueta UBL" y el XML sin firma, validado contra `UBL-Invoice-2.1.xsd` |
+| **Validarlo en Nubefact** | **Copiar XML** → pegarlo en <https://probar-xml.nubefact.com/> → destino **OSE**, marcar **Firmar** y pulsar **Enviar** (sin pulsar *BeautifyXML*) → CDR 0, "ha sido ACEPTADA". [Evidencia](docs/evidencia-nubefact/README.md) |
+| **Pruebas unitarias de generación** | `pip install -r requirements-dev.txt` y luego `pytest tests/unit/generacion_xml -v` |
+| **El caso y la explicación** | [`docs/TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md) |
 
 ## Guía del evaluador
 
@@ -15,9 +25,9 @@
 | 2. Diagramas MVC con visión hexagonal | [`docs/diagramas/`](docs/diagramas): [03 MVC](docs/diagramas/03-mvc-actual.svg) · [04 hexagonal](docs/diagramas/04-hexagonal.svg) · [05 evolución](docs/diagramas/05-evolucion.svg) → [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) |
 | 3. Contratos API (Spec-First) | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) → [`specs/ejemplos/`](specs/ejemplos) → [`invalidos/`](specs/ejemplos/invalidos) · decisión en el [ADR 0013](specs/adr/0013-contrato-escrito-primero-y-verificado-contra-el-codigo.md) |
 | 4. Matriz de trazabilidad SUNAT ↔ UBL | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) |
-| Taller 2 | [`docs/TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md) → [`tests/unit/generacion_xml/`](tests/unit/generacion_xml) |
+| Taller 2 (segundo parcial) | [`docs/TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md) (el caso y el formulario) → formulario **`http://localhost:8000/venta`** → [`tests/unit/generacion_xml/`](tests/unit/generacion_xml) → [evidencia de Nubefact](docs/evidencia-nubefact/README.md) |
 | Informe consolidado | [`entregable/Informe-ABC-SpecFirst.pdf`](entregable/Informe-ABC-SpecFirst.pdf) (y `.docx`) |
-| Extras (fuera del enunciado) | SUNAT beta ([evidencia](docs/evidencia-sunat/README.md)), PLE ([evidencia](docs/evidencia-ple/README.md)), SQLite, Docker, prototipo MSI ([ADR 0008](specs/adr/0008-distribucion-msi-y-apk.md)) |
+| Extras (fuera del enunciado) | SUNAT beta ([evidencia](docs/evidencia-sunat/README.md)), OSE-DEMO de Nubefact ([evidencia](docs/evidencia-nubefact/README.md)), PLE ([evidencia](docs/evidencia-ple/README.md)), SQLite, Docker, prototipo MSI ([ADR 0008](specs/adr/0008-distribucion-msi-y-apk.md)) |
 
 ## Cronología de entregas
 
@@ -25,6 +35,7 @@
 |---|---|---|
 | 22/10/2026 | **Fase 1 (Spec-First)** del examen de medio curso, evaluada con 38/100 | commits `954bbb2` a `6e77748` |
 | 05/11/2026 | Corrección completa de las observaciones, **Taller 2** (generación del XML), PLE y envío a SUNAT beta | commits `0ded039` a `46b375e` · detalle en [`docs/CORRECCIONES.md`](docs/CORRECCIONES.md) |
+| 12/11/2026 | **Taller 2 (segundo parcial):** descripción del caso, formulario "Registrar venta" que genera el XML sin firma y prueba en el OSE-DEMO de Nubefact | [`TALLER-2-generacion-xml.md`](docs/TALLER-2-generacion-xml.md) · [evidencia de Nubefact](docs/evidencia-nubefact/README.md) |
 | 05/11/2026 | **Cuarta iteración:** contrato escrito primero, diagramas renderizados, informe PDF, ADR 0008 decidido, seguridad de tokens | commits posteriores a `46b375e` · [`CORRECCIONES.md`, cuarta iteración](docs/CORRECCIONES.md#cuarta-iteración-metodología-presentación-y-seguridad-revisión-del-0511) |
 
 **La versión válida es la rama `main`.** La rama `codigo-completo` conserva la entrega del 22/10 tal como se presentó; no tiene cambios posteriores.
@@ -55,9 +66,9 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 
 | Verificación | Resultado | Cómo comprobarlo |
 |---|---|---|
-| Pruebas automáticas | **879**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
+| Pruebas automáticas | **944**, en Python 3.10, 3.12 y 3.13 | `pytest -q` |
 | Cobertura del código propio (sin las clases generadas del XSD) | **97 %**, con mínimo exigido del 90 % | `pytest --cov` |
-| Tipado estático | **0 errores** en 65 archivos | `mypy` |
+| Tipado estático | **0 errores** en 70 archivos | `mypy` |
 | Estilo y errores comunes | **0 avisos** | `ruff check .` |
 | Vulnerabilidades en dependencias | **0 conocidas** | `pip-audit -r requirements.txt` |
 | Regla de dependencias hexagonal | Verificada por prueba | `tests/integration/test_arquitectura.py` |
@@ -77,13 +88,13 @@ Cada número sale de una herramienta que corre en la [CI](.github/workflows/ci.y
 | 3 | Arquitectura MVC → Hexagonal | [`specs/architecture/arquitectura.md`](specs/architecture/arquitectura.md) · [9 diagramas](docs/diagramas) · [`specs/adr/`](specs/adr) (0001-0014) · reglas verificadas en [`test_arquitectura.py`](tests/integration/test_arquitectura.py) |
 | 4 | Contrato API | [`specs/contracts/openapi.yaml`](specs/contracts/openapi.yaml) y [`schemas/`](specs/contracts/schemas) (**escritos primero**; el código se verifica contra ellos) · Swagger en `/docs` · [ejemplos](specs/ejemplos) y [contraejemplos](specs/ejemplos/invalidos) |
 | 5 | Matriz de trazabilidad | [`specs/traceability/matriz-trazabilidad.md`](specs/traceability/matriz-trazabilidad.md) y [`matriz.csv`](specs/traceability/matriz.csv): 72 filas, cardinalidad **calculada del XSD**, 64 XPath **verificados contra XML reales**; las columnas PLE 14.1 / 12.1 y de contrato también se verifican (Anexo 2, TXT generado y OpenAPI), así que ninguna fila queda sin ubicación comprobada · [`specs/ple/`](specs/ple) (con el [Anexo 2 oficial](specs/ple/anexo2)) |
-| 6 | Pruebas y evidencia | [`tests/`](tests) (879 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
+| 6 | Pruebas y evidencia | [`tests/`](tests) (944 pruebas) · [`docs/ejemplos/`](docs/ejemplos) (XML firmados, respuestas y TXT del PLE **generados por el sistema**) |
 
 ## Arquitectura en una imagen
 
 ```mermaid
 flowchart LR
-    HTTP["Adaptador HTTP (MVC)<br/>controladores · vistas JSON/XML/TXT · DTO"] --> APP
+    HTTP["Adaptador HTTP (MVC)<br/>controladores · vistas JSON/XML/TXT/HTML · DTO"] --> APP
     CLI["Adaptador CLI<br/>generar-xml (Taller 2)"] --> APP
     subgraph APP["application"]
         UC["casos de uso"] --> PORTS["puertos (Protocol)"]
@@ -121,11 +132,11 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-pytest -q --cov                     # 879 pruebas + cobertura
+pytest -q --cov                     # 944 pruebas + cobertura
 pytest tests/unit/generacion_xml -v # solo las pruebas del Taller 2
 ruff check . && mypy                # estilo y tipos
 
-uvicorn src.main:app --reload       # http://localhost:8000/docs
+uvicorn src.main:app --reload       # http://localhost:8000/venta (formulario del Taller 2) · /docs (API)
 
 # Taller 2: generar XML firmados sin levantar el servidor
 python -m src.adapters.inbound.cli generar-xml specs/ejemplos/factura.json specs/ejemplos/factura-credito.json --fecha 2026-10-22

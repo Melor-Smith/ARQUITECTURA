@@ -91,6 +91,21 @@ class EmitirComprobanteCmd:
 
 
 @dataclass(frozen=True, slots=True)
+class GenerarXmlVentaCmd:
+    """Venta registrada en el formulario web (Taller 2): de aquí sale el XML UBL 2.1.
+
+    Solo factura o boleta. Igual que en la emisión, no trae impuestos, totales ni correlativo:
+    los calcula el dominio. ``incluir_firma`` es opcional porque el XML se valida sin firma.
+    """
+
+    tipo: TipoComprobante
+    serie: str
+    cliente: ClienteCmd
+    lineas: tuple[LineaCmd, ...]
+    incluir_firma: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class MigrarFichaLegadoCmd:
     fecha: dt.date | str  # texto tal como venía en el sistema antiguo; el dominio lo interpreta
     ingreso: Decimal

@@ -34,6 +34,7 @@ jobs:
           --collect-data signxml
           --add-data "specs/contracts/ubl-2.1/xsd;specs/contracts/ubl-2.1/xsd"
           --add-data "specs/ejemplos;specs/ejemplos"
+          --add-data "specs/traceability/matriz.csv;specs/traceability"
       - name: Prueba de humo del ejecutable (levanta la API y responde /salud)
         run: dist/abc-facturacion/abc-facturacion.exe --salud
       - name: Construir el MSI con WiX 5

@@ -37,7 +37,7 @@ Cada brecha está enlazada con lo que la cierra en el sistema y con la prueba qu
 | Riesgo | Prob. | Impacto | Mitigación implementada |
 |---|---|---|---|
 | Cambio de una tasa o de un catálogo por SUNAT | Alta | Medio | Tasas y catálogos en un solo módulo del dominio (`tributos.py`, `catalogos.py`) |
-| Rechazo de la OSE por un detalle del XML | Media | Alto | XML generado desde el XSD, validado antes y después de firmar; 92 pruebas de generación y regresión, y los 7 comprobantes del caso aceptados por el servicio beta de SUNAT |
+| Rechazo de la OSE por un detalle del XML | Media | Alto | XML generado desde el XSD, validado antes y después de firmar; 118 pruebas de generación y regresión, y los 7 comprobantes del caso aceptados por el servicio beta de SUNAT |
 | Caída de la OSE en horario de venta | Media | Alto | La venta no se bloquea: 202 `PENDIENTE_ENVIO` y reenvío posterior |
 | Doble emisión por reintentos de red | Media | Alto | `Idempotency-Key` |
 | Migración con datos sucios | Alta | Medio | Lotes que no se detienen, fichas observadas y conciliación por producto |

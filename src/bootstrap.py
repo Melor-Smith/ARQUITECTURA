@@ -50,6 +50,7 @@ from src.application.casos_uso.inventario import (
     MigrarLoteLegado,
 )
 from src.application.casos_uso.libros import GenerarInventario121, GenerarRegistroVentas141
+from src.application.casos_uso.venta_xml import GenerarXmlVenta
 from src.application.puertos import (
     ClienteOSE,
     GeneradorIdentificadores,
@@ -82,6 +83,7 @@ class Contenedor:
     consultar_kardex: ConsultarKardex
     registro_ventas_141: GenerarRegistroVentas141
     inventario_121: GenerarInventario121
+    generar_xml_venta: GenerarXmlVenta
     #: Libera los recursos de los adaptadores (la conexión SQLite) al apagar el servicio.
     cerrar: Callable[[], None] = field(default=lambda: None)
 
@@ -164,6 +166,7 @@ def construir_contenedor(
         ose = ClienteSunatSoap(ruc=str(emisor.ruc), reloj=reloj, endpoint=configuracion.sunat_endpoint,
                                usuario_sol=configuracion.sunat_usuario_sol, clave_sol=configuracion.sunat_clave_sol)
     ose = ose or OseSimulada(validador=_VALIDADOR, reloj=reloj, modo=configuracion.modo_ose)
+    generador, firma = GeneradorUblXsdata(), FirmaXmlDsig(certificado)
     emitir = EmitirComprobante(
         emisor=emisor,
         plazo_envio_dias=configuracion.plazo_envio_dias,
@@ -176,9 +179,9 @@ def construir_contenedor(
         kardex=kardex,
         migraciones=migraciones,
         ids=ids,
-        generador_ubl=GeneradorUblXsdata(),
+        generador_ubl=generador,
         validador_xsd=_VALIDADOR,
-        firma=FirmaXmlDsig(certificado),
+        firma=firma,
         ose=ose,
     )
     consultar = ConsultarComprobante(comprobantes=comprobantes)
@@ -201,4 +204,10 @@ def construir_contenedor(
                                          establecimiento_por_defecto=establecimiento),
         registro_ventas_141=GenerarRegistroVentas141(ruc=emisor.ruc, comprobantes=comprobantes),
         inventario_121=GenerarInventario121(ruc=emisor.ruc, kardex=kardex),
+        # El formulario /venta entrega el XML indentado y con ext/ds declarados en la raíz (ver GeneradorUblXsdata).
+        generar_xml_venta=GenerarXmlVenta(
+            emisor=emisor, plazo_envio_dias=configuracion.plazo_envio_dias, reloj=reloj, secuencia=p.secuencia,
+            generador_ubl=GeneradorUblXsdata(sangria="  ", declarar_prefijos_de_firma=True),
+            validador_xsd=_VALIDADOR, firma=firma,
+        ),
     )

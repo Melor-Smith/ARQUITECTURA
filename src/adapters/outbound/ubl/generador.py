@@ -40,13 +40,28 @@ def _catalogo(numero: str) -> str:
 
 
 class GeneradorUblXsdata:
-    def __init__(self) -> None:
-        self._serializador = XmlSerializer(config=SerializerConfig(xml_declaration=True, encoding="UTF-8"))
+    def __init__(self, sangria: str | None = None, *, declarar_prefijos_de_firma: bool = False) -> None:
+        """Opciones de presentación que usa el formulario ``/venta``. No cambian ningún dato del comprobante.
+
+        * ``sangria``: el XML sale indentado, legible para una persona.
+        * ``declarar_prefijos_de_firma``: ``<Invoice>`` declara también ``ext`` (CommonExtensionComponents-2) y
+          ``ds`` (XMLDSig), como los ejemplos de SUNAT, aunque el XML aún no tenga firma. Así, quien agregue la
+          firma después (por ejemplo, el OSE-DEMO de Nubefact al marcar "Firmar") puede insertar
+          ``<ext:UBLExtensions>`` sin declarar el prefijo. Sin esto responde 0306: *The prefix "ext" for element
+          "ext:UBLExtensions" is not bound*. Declarar un prefijo sin usarlo es válido (Namespaces in XML 1.0).
+
+        Por defecto el XML es compacto y sin esas declaraciones: la emisión, los XML de referencia y la evidencia
+        de SUNAT se comparan byte a byte. En todos los casos el XML valida contra el XSD.
+        """
+        self._serializador = XmlSerializer(
+            config=SerializerConfig(xml_declaration=True, encoding="UTF-8", indent=sangria)
+        )
+        self._prefijos = ("cac", "cbc", "ext", "ds") if declarar_prefijos_de_firma else ("cac", "cbc")
 
     def generar(self, comprobante: Comprobante) -> bytes:
         documento, raiz = self._documento(comprobante)
         ns_map: dict[str | None, str] = {None: NAMESPACES[raiz]}
-        ns_map.update({k: v for k, v in NAMESPACES.items() if k in ("cac", "cbc")})
+        ns_map.update({k: v for k, v in NAMESPACES.items() if k in self._prefijos})
         return self._serializador.render(documento, ns_map=ns_map).encode("utf-8")
 
     # --- documento ---------------------------------------------------------------------

@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from src.adapters.inbound.http.controladores import comprobantes, inventario, libros
+from src.adapters.inbound.http.controladores import comprobantes, inventario, libros, venta
 from src.adapters.inbound.http.esquemas import Salud
 from src.adapters.inbound.http.openapi import instalar_openapi
 from src.adapters.inbound.http.problemas import registrar_manejadores
@@ -58,6 +58,7 @@ def crear_app(contenedor: Contenedor | None = None) -> FastAPI:
     app.include_router(comprobantes.router)
     app.include_router(inventario.router)
     app.include_router(libros.router)
+    app.include_router(venta.router)  # vista HTML del Taller 2 (/venta); no es parte de la API /api/v1
 
     @app.get("/salud", response_model=Salud, tags=["Salud"], summary="Estado del servicio")
     def salud(request: Request) -> Salud:

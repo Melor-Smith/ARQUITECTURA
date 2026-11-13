@@ -15,10 +15,11 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Código y lo que necesita en ejecución: los XSD oficiales (validación del XML) y los
-# ejemplos del contrato (examples del OpenAPI).
+# ejemplos del contrato (examples del OpenAPI) y la matriz que muestra el formulario /venta.
 COPY src ./src
 COPY specs/contracts/ubl-2.1/xsd ./specs/contracts/ubl-2.1/xsd
 COPY specs/ejemplos ./specs/ejemplos
+COPY specs/traceability/matriz.csv ./specs/traceability/matriz.csv
 
 # Nunca como root. Los datos (SQLite) viven en un volumen: sobreviven a reinicios y actualizaciones.
 RUN useradd --create-home --uid 10001 abc && mkdir /datos && chown abc /datos

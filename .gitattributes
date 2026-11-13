@@ -10,8 +10,12 @@ docs/ejemplos/*.txt -text
 docs/evidencia-ple/paquete/** -text
 # Evidencia de SUNAT beta: XML firmados y respuestas tal como viajaron (la firma depende de cada byte).
 docs/evidencia-sunat/** -text
+# Evidencia del OSE-DEMO de Nubefact: XML y CDR tal como se enviaron y recibieron.
+docs/evidencia-nubefact/*.xml -text
 tests/fixtures/** -text
 # Binarios: diagramas renderizados e informe.
 *.png binary
 *.pdf binary
 *.docx binary
+# El lanzador de Windows necesita CRLF.
+*.bat text eol=crlf

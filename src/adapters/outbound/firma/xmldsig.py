@@ -82,6 +82,8 @@ class FirmaXmlDsig:
         # signxml reemplaza este marcador por la firma, en este lugar exacto del documento.
         etree.SubElement(contenido, f"{{{_DS}}}Signature", Id="placeholder", nsmap={"ds": _DS})
         raiz.insert(0, extensiones)
+        # Si el XML viene indentado, la firma conserva la sangría; en el XML compacto (sin texto) no cambia nada.
+        extensiones.tail = raiz.text
 
         firmado = self._firmador.sign(raiz, key=self._certificado.clave_privada,
                                       cert=self._certificado.certificado_pem.decode("ascii"))

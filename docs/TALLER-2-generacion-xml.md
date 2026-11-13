@@ -1,15 +1,81 @@
 # Taller 2 (segundo parcial): generación del XML a partir de `UBL-Invoice-2.1.xsd`
 
-> **Enunciado.** Implementar la generación de XML a partir del XSD Invoice 2.1, en el lenguaje del dominio. La evaluación serán pruebas unitarias de generación. Fecha límite: 05/11/2026 a medianoche.
+> **Enunciado.**
+> - Describir el caso.
+> - Implementación de la generación de XML a partir del XSD Invoice 2.1, en el lenguaje de su dominio.
+> - El test serán pruebas unitarias de generación.
+> - Fecha límite: 12/11/2026 a la medianoche (se evalúa clonando el repositorio, rama `main`).
+>
+> **Indicaciones de clase.** Una interfaz pequeña donde se registra una venta (por ejemplo, una motocicleta) y un
+> botón "Generar XML" que entrega el archivo `.xml` **sin firma**, validado y aceptado en el OSE-DEMO de Nubefact.
 
-**Respuesta en una línea.** Las clases Python se **generan desde los XSD oficiales** con xsdata. Un adaptador traduce el agregado del dominio (`Comprobante`, `Linea`, `Totales`, `FormaPago`…) a esas clases, y **92 pruebas unitarias de generación** (más 30 del dominio para el importe en letras y la forma de pago) verifican cada bloque del XML, su conformidad con el XSD y la regresión contra XML de referencia.
+**Respuesta en una línea.** Las clases Python se **generan desde los XSD oficiales** con xsdata. Un adaptador traduce el agregado del dominio (`Comprobante`, `Linea`, `Totales`, `FormaPago`…) a esas clases. El formulario **"Registrar venta"** (`/venta`) lleva una venta al XML con esas mismas reglas, y **118 pruebas unitarias de generación** (más 30 del dominio para el importe en letras y la forma de pago) verifican cada bloque del XML, su conformidad con el XSD y la regresión contra XML de referencia. La factura del caso fue **aceptada por el OSE-DEMO de Nubefact** ([evidencia](evidencia-nubefact/README.md)).
 
 ```powershell
-pytest tests/unit/generacion_xml -v          # 92 pruebas unitarias de generación
+uvicorn src.main:app                         # http://localhost:8000/venta  → formulario "Registrar venta"
+pytest tests/unit/generacion_xml -v          # 118 pruebas unitarias de generación
 python -m src.adapters.inbound.cli generar-xml specs/ejemplos/factura.json --fecha 2026-10-22
 ```
 
 ---
+
+## 0. El caso
+
+**ABC Software Corp** (RUC 20556677884, nombre comercial ABC DISTRIBUCIONES) es una empresa mediana que comercializa abarrotes y mercadería al por mayor y menor. Hoy registra sus ventas en un software básico de almacén que no emite comprobantes electrónicos, no calcula bien los impuestos y no produce el XML que exige SUNAT (RS 097-2012). El análisis completo del caso está en [`analisis/01-caso-brechas-y-riesgos.md`](analisis/01-caso-brechas-y-riesgos.md).
+
+**Caso de estudio de este taller: una venta.** ABC vende **una motocicleta de 150 cc para reparto** a la Distribuidora de Abarrotes El Sol S.A.C. (RUC 20123456786), al contado, por **S/ 5 000.00 con IGV**. El vendedor la registra en el formulario y el sistema produce la factura electrónica en UBL 2.1:
+
+| Paso | Quién | Qué ocurre | Dónde |
+|---|---|---|---|
+| 1 | Vendedor | Registra la venta: factura, cliente con RUC, producto, cantidad 1, **valor unitario sin IGV 4 237.29**, gravado (Cat. 07 = 10) | Formulario `/venta` |
+| 2 | Dominio | Valida las reglas SUNAT (factura → RUC con módulo 11, serie F, fecha del día) y calcula: valor de venta **4 237.29**, IGV 18 % **762.71**, total **5 000.00**, "CINCO MIL CON 00/100 SOLES", forma de pago Contado | `Linea.calcular`, `Totales`, `BorradorComprobante` |
+| 3 | Sistema | Asigna el correlativo (el vendedor solo elige la serie) | puerto `SecuenciaCorrelativos` |
+| 4 | Generador | Llena las clases del XSD (`Invoice`, `InvoiceLine`, `TaxTotal`…) y serializa el XML **sin firma** | `GeneradorUblXsdata` |
+| 5 | Validador | Valida el XML contra `UBL-Invoice-2.1.xsd`. Si no valida, no se entrega | `ValidadorXsdLxml` |
+| 6 | Vendedor | Descarga el XML y lo prueba en el OSE-DEMO de Nubefact: **CDR 0, aceptada** | [`evidencia-nubefact/`](evidencia-nubefact/README.md) |
+
+**Reglas del caso que el sistema hace cumplir:**
+- factura solo a clientes con RUC;
+- boleta (serie B) a personas; si supera **S/ 700**, el cliente debe identificarse con DNI, carné, pasaporte o RUC;
+- IGV 18 % sobre el valor de venta en las operaciones gravadas; exonerado (20) e inafecto (30) sin IGV;
+- la forma de pago se informa en la factura (RS 193-2020).
+
+**Fuera del alcance de este taller** (según las indicaciones de clase): la firma con certificado real, el envío a SUNAT, la guía de remisión y la consulta de RUC al padrón. La firma XMLDSig y el envío a SUNAT beta ya existen en el proyecto, pero el formulario entrega el XML sin firma por defecto.
+
+## 0.1 El formulario "Registrar venta"
+
+**Para abrirlo basta un doble clic en [`iniciar.bat`](../iniciar.bat)** (o `python iniciar.py`). El lanzador solo usa la biblioteca estándar de Python:
+1. la primera vez crea `.venv` e instala `requirements.txt`;
+2. levanta el servidor en `127.0.0.1` (si el puerto 8000 está ocupado, usa el siguiente libre);
+3. abre el navegador en `/venta`.
+
+Las siguientes veces arranca directo. Se verificó desde una copia limpia del repositorio, sin `.venv`. Sin el lanzador:
+
+```powershell
+uvicorn src.main:app        # abrir http://localhost:8000/venta
+```
+
+| Parte del formulario | Qué hace |
+|---|---|
+| **Comprobante** | Factura (01) o boleta (03) y la serie. Cada visita propone una **serie nueva** (F o B + 3 caracteres): el OSE-DEMO de Nubefact es compartido y un número ya usado da el error **1033**. El correlativo es automático |
+| **Cliente** | Documento del Catálogo 06 (RUC, DNI, carné, pasaporte o sin documento), número, nombre y dirección |
+| **Productos** | Descripción libre, unidad (Cat. 03), cantidad, **valor unitario sin IGV** y afectación (Cat. 07: 10, 20 o 30). El producto no tiene que existir en el inventario |
+| **Incluir firma** | Desmarcada: el XML sale **sin firma**, sin `ext:UBLExtensions` (que en el XSD es opcional). No se deja un `ext:ExtensionContent` vacío porque el XSD no lo admite. La raíz `<Invoice>` declara de todos modos los prefijos `ext` y `ds`, como los ejemplos de SUNAT, para que quien firme después (Nubefact con su casilla "Firmar") pueda insertar la firma; sin esa declaración Nubefact responde 0306. Marcada: firma XMLDSig con el certificado de prueba. **Ningún dato del comprobante cambia**: solo la presentación del XML |
+| **Generar XML** | Muestra los importes que calculó el dominio, la **matriz** y el XML, con los botones **Descargar XML** y **Copiar XML** |
+
+**La matriz del resultado.** No hay una plantilla XML con huecos. La correspondencia "dato SUNAT → etiqueta UBL" ya existe en la [matriz de trazabilidad](../specs/traceability/matriz-trazabilidad.md). El formulario evalúa cada XPath de esa matriz sobre el XML recién generado y muestra, para la venta concreta, el dato, su catálogo, la etiqueta UBL y el valor que quedó. Por ejemplo, T03 `cbc:ID` = `FM0T-1` y T62 `cac:LegalMonetaryTotal/cbc:PayableAmount` = `5000.00`.
+
+**Si algo no cumple, el XML no se entrega:** el error vuelve al formulario y se marca en su campo. Por ejemplo, una boleta de la moto sin documento del cliente responde *"Las boletas mayores a S/ 700.00 deben identificar al cliente…"* en el campo del documento.
+
+**Cómo encaja en la arquitectura.** El formulario es un adaptador de entrada más, como la API y la línea de comandos:
+
+| Capa | Archivo | Responsabilidad |
+|---|---|---|
+| Controlador (C de MVC) | [`controladores/venta.py`](../src/adapters/inbound/http/controladores/venta.py) | `GET /venta` y `POST /venta`. No figura en el OpenAPI: es una vista HTML, no parte de la API `/api/v1` |
+| Traducción | [`formulario_venta.py`](../src/adapters/inbound/http/formulario_venta.py) | Campos HTML → `GenerarXmlVentaCmd` (`Decimal`, catálogos). No calcula impuestos |
+| Vista (V de MVC) | [`vistas/venta.py`](../src/adapters/inbound/http/vistas/venta.py) y [`vistas/matriz_ubl.py`](../src/adapters/inbound/http/vistas/matriz_ubl.py) | HTML hecho en el servidor, sin librerías externas y con cabeceras de seguridad (CSP) |
+| Caso de uso | [`casos_uso/venta_xml.py`](../src/application/casos_uso/venta_xml.py) | `GenerarXmlVenta`: mismas reglas del dominio y mismos puertos que la emisión, pero se detiene en el XML (no registra, no mueve el Kardex, no envía) |
+
 
 ## 1. Del XSD a las clases: nada se escribe a mano
 
@@ -57,7 +123,11 @@ Código: [`src/adapters/outbound/ubl/generador.py`](../src/adapters/outbound/ubl
 
 ## 3. Pruebas unitarias de generación
 
-Están en [`tests/unit/generacion_xml/`](../tests/unit/generacion_xml). Todas parten de objetos del dominio construidos por [`fabrica.py`](../tests/unit/generacion_xml/fabrica.py), sin HTTP ni base de datos. Los escenarios son: factura al contado, factura al crédito, factura completa (gravado, ISC 01/02/03, ICBPER, exonerado, inafecto), exportación en USD, factura de un vale antiguo, boleta, nota de crédito y nota de débito.
+Están en [`tests/unit/generacion_xml/`](../tests/unit/generacion_xml) y corren sin HTTP ni base de datos.
+- **Escenarios del dominio:** parten de objetos construidos por [`fabrica.py`](../tests/unit/generacion_xml/fabrica.py). Son factura al contado, factura al crédito, factura completa (gravado, ISC 01/02/03, ICBPER, exonerado, inafecto), exportación en USD, factura de un vale antiguo, boleta, nota de crédito y nota de débito.
+- **Caso de estudio (la motocicleta):** parte del comando que produce el formulario (`GenerarXmlVentaCmd`) y recorre el caso de uso `GenerarXmlVenta` con los adaptadores reales de generación, validación y firma.
+
+La vista web en sí (formulario, errores marcados en su campo, descarga, cabeceras de seguridad) tiene sus pruebas de aceptación en [`tests/acceptance/test_vista_venta.py`](../tests/acceptance/test_vista_venta.py), con memoria y con SQLite.
 
 | Archivo | Qué verifica | Pruebas |
 |---|---|---|
@@ -67,6 +137,7 @@ Están en [`tests/unit/generacion_xml/`](../tests/unit/generacion_xml). Todas pa
 | [`test_tributos.py`](../tests/unit/generacion_xml/test_tributos.py) | IGV (S, 18 %, afectación 10), exonerado (E) e inafecto (O), exportación (G), ISC de los **tres sistemas del Catálogo 08** con su base y su monto, IGV sobre (valor + ISC), ICBPER, cuadre de subtotales por línea y por documento; **reglas 3108 y 3277 de SUNAT** en todos los comprobantes | 28 |
 | [`test_totales_pago_y_referencias.py`](../tests/unit/generacion_xml/test_totales_pago_y_referencias.py) | Totales; `RequestedMonetaryTotal` en notas de débito; forma de pago al contado y al crédito con cuotas; vale como documento relacionado tipo 99; referencia y motivo de las notas (Cat. 09 / 10) | 9 |
 | [`test_conformidad_y_regresion.py`](../tests/unit/generacion_xml/test_conformidad_y_regresion.py) | Los 8 escenarios **validan contra el XSD oficial**; cualquier texto (`& < > " '`, `]]>`, Ñ, €) produce XML válido; **regresión byte a byte** contra los XML de referencia; determinismo; el `DigestValue` depende solo del contenido | 25 |
+| [`test_venta_formulario.py`](../tests/unit/generacion_xml/test_venta_formulario.py) | **El caso de estudio:** la moto da 4237.29 + 762.71 = 5000.00, NIU y afectación 10; producto libre sin inventario; **sin firma no hay `ext:UBLExtensions` y el XML valida contra el XSD**; con firma lleva XMLDSig; sin comentarios antes de `<Invoice>`; correlativo automático; boleta con DNI; se rechazan la boleta de más de S/ 700 sin identificar, la factura a DNI, la serie del otro tipo y las notas; XML indentado una etiqueta por línea, con `ext` y `ds` declarados en la raíz, la firma aún válida y sin tocar el XML compacto de la emisión; la matriz muestra el valor de cada etiqueta | 26 |
 | [`test_letras_y_pagos.py`](../tests/unit/test_letras_y_pagos.py) | Importe en letras (0 a millones, apócopes UN y VEINTIÚN) y reglas de la forma de pago | 30 |
 
 ### XML de referencia ("golden files")
@@ -100,7 +171,7 @@ Salida esperada:
 ✓ nota-credito.json → salida-xml\20556677884-07-FC01-1.xml  [ACEPTADO]  total 49.56 PEN  hash …
 ```
 
-La línea de comandos ([`cli.py`](../src/adapters/inbound/cli.py)) es un **segundo adaptador de entrada**: usa el mismo caso de uso que la API HTTP. Es la prueba práctica de que el hexágono no depende de FastAPI.
+La línea de comandos ([`cli.py`](../src/adapters/inbound/cli.py)) es un **segundo adaptador de entrada**: usa el mismo caso de uso que la API HTTP. Es la prueba práctica de que el hexágono no depende de FastAPI. El formulario `/venta` es el tercero.
 
 ## 5. Cómo encaja con el proyecto corregido
 
